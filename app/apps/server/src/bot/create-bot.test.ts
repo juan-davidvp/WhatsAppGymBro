@@ -2,6 +2,7 @@ import { templateById } from '@gymbro/content';
 import type { Update, UserFromGetMe } from 'grammy/types';
 import { describe, expect, it } from 'vitest';
 import { createLogger } from '../logger.js';
+import { inMemoryDependencies } from '../testing/in-memory.js';
 import { createBot } from './create-bot.js';
 
 const TOKEN = '123456789:AAFakeTokenForTestsOnly_abcdefghijklmn';
@@ -31,7 +32,8 @@ interface ApiCall {
 function setup(options: { failWith?: Error } = {}) {
   const lines: string[] = [];
   const logger = createLogger({ level: 'debug', secrets: [TOKEN], write: (l) => lines.push(l) });
-  const bot = createBot({ token: TOKEN, logger, botInfo: BOT_INFO });
+  const { deps } = inMemoryDependencies();
+  const bot = createBot({ token: TOKEN, logger, deps, botInfo: BOT_INFO });
   const calls: ApiCall[] = [];
   bot.api.config.use(async (_prev, method, payload) => {
     calls.push({ method, payload: payload as Record<string, unknown> });
