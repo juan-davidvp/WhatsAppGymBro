@@ -3,7 +3,7 @@ titulo: Expresiones de alerta y recursos de ayuda (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 creado: 2026-10-19
 actualizado: 2026-10-19
 deriva_de: [seguridad-y-cumplimiento, plantillas-de-mensajes, estrategia-de-pruebas]
@@ -201,6 +201,12 @@ Señales que describe `F90`: dolor intenso, hinchazón, no poder apoyar peso, de
 - `se me hinchó`
 - `está hinchado`
 - `está hinchada`
+- `hinchazón`
+- `rodilla hinchada`
+- `tobillo hinchado`
+- `codo hinchado`
+- `muñeca hinchada`
+- `hombro hinchado`
 - `no puedo apoyar`
 - `no puedo mover`
 - `se me salió el hombro`
@@ -244,6 +250,7 @@ Las pruebas automáticas comprueban que cada texto produce la categoría esperad
 | ¿dónde consigo clembuterol? | `substances` |
 | me duele mucho la rodilla al hacer sentadilla | `pain` |
 | sentí un tirón en la espalda | `pain` |
+| tengo la rodilla hinchada después de sentadilla | `pain` |
 | hoy me duele un poco la pierna por el entreno de ayer | — |
 | me voy a matar entrenando pierna hoy | — |
 | me muero de hambre después del gym | — |
@@ -253,6 +260,7 @@ Las pruebas automáticas comprueban que cada texto produce la categoría esperad
 | comí una barra de 200 calorías | — |
 | me corté el pelo y me fui al gym | — |
 | quiero bajar un poco de grasa | — |
+| me siento hinchado después de almorzar | — |
 
 ## 6. Límites conocidos
 

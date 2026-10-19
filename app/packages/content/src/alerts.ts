@@ -3,7 +3,7 @@ import { alertCategoryEntrySchema } from './schemas.js';
 
 /**
  * Expresiones de alerta y recursos de ayuda (RN-SEG-007, `[VALIDAR-PROFESIONAL]`),
- * transcritos de `vault/output/sdd/contenido/expresiones-de-alerta.md` (v0.1.0).
+ * transcritos de `vault/output/sdd/contenido/expresiones-de-alerta.md` (v0.1.1).
  *
  * Borrador basado en fuentes oficiales y clínicas (F82–F93), redactado a pedido del
  * PO el 2026-10-19 para la Fase 0. Antes de la alfa lo firma un profesional (Q4):
@@ -185,6 +185,12 @@ export const ALERT_CATEGORIES_CATALOG = z.array(alertCategoryEntrySchema).parse(
       'se me hinchó',
       'está hinchado',
       'está hinchada',
+      'hinchazón',
+      'rodilla hinchada',
+      'tobillo hinchado',
+      'codo hinchado',
+      'muñeca hinchada',
+      'hombro hinchado',
       'no puedo apoyar',
       'no puedo mover',
       'se me salió el hombro',
