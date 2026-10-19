@@ -126,3 +126,43 @@ export function botAuthorUpdate(text: string, updateId = 1): Update {
     message: baseMessage({ text, from: { id: 7, is_bot: true, first_name: 'otro' } }),
   };
 }
+
+// ── Ayudantes para recorrer el onboarding ─────────────────────────────────────
+
+export interface Sent {
+  text: string;
+  buttons: { text: string; callback_data: string }[];
+}
+
+export function sent(calls: ApiCall[]): Sent[] {
+  return calls
+    .filter((c) => c.method === 'sendMessage')
+    .map((c) => ({
+      text: String(c.payload['text']),
+      buttons: (
+        (
+          c.payload['reply_markup'] as
+            { inline_keyboard: { text: string; callback_data: string }[][] } | undefined
+        )?.inline_keyboard ?? []
+      ).flat(),
+    }));
+}
+
+/** Toca el botón con ese texto del último mensaje que lo tenga. */
+export function tapData(calls: ApiCall[], label: string): string {
+  const button = sent(calls)
+    .flatMap((m) => m.buttons)
+    .findLast((b) => b.text === label);
+  if (!button) throw new Error(`No hay botón ${label}`);
+  return button.callback_data;
+}
+
+export async function startAnd(...labels: string[]) {
+  const setup = setupTestBot();
+  let updateId = 1;
+  await setup.bot.handleUpdate(textUpdate('/start', updateId++));
+  for (const label of labels) {
+    await setup.bot.handleUpdate(callbackUpdate(tapData(setup.calls, label), updateId++));
+  }
+  return { ...setup, nextUpdateId: () => updateId++ };
+}

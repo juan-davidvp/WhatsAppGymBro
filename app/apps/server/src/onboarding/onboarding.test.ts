@@ -2,45 +2,7 @@ import { PRIVACY_POLICY_VERSION, renderTemplate, templateById } from '@gymbro/co
 import { CONSENT_CATEGORIES, PARAMETERS } from '@gymbro/domain';
 import { describe, expect, it } from 'vitest';
 import { encodeCallbackData, parseCallbackData } from '../bot/callback-data.js';
-import { callbackUpdate, setupTestBot, textUpdate, type ApiCall } from '../testing/telegram.js';
-
-interface Sent {
-  text: string;
-  buttons: { text: string; callback_data: string }[];
-}
-
-function sent(calls: ApiCall[]): Sent[] {
-  return calls
-    .filter((c) => c.method === 'sendMessage')
-    .map((c) => ({
-      text: String(c.payload['text']),
-      buttons: (
-        (
-          c.payload['reply_markup'] as
-            { inline_keyboard: { text: string; callback_data: string }[][] } | undefined
-        )?.inline_keyboard ?? []
-      ).flat(),
-    }));
-}
-
-/** Toca el botón con ese texto del último mensaje que lo tenga. */
-function tapData(calls: ApiCall[], label: string): string {
-  const button = sent(calls)
-    .flatMap((m) => m.buttons)
-    .findLast((b) => b.text === label);
-  if (!button) throw new Error(`No hay botón ${label}`);
-  return button.callback_data;
-}
-
-async function startAnd(...labels: string[]) {
-  const setup = setupTestBot();
-  let updateId = 1;
-  await setup.bot.handleUpdate(textUpdate('/start', updateId++));
-  for (const label of labels) {
-    await setup.bot.handleUpdate(callbackUpdate(tapData(setup.calls, label), updateId++));
-  }
-  return { ...setup, nextUpdateId: () => updateId++ };
-}
+import { callbackUpdate, sent, startAnd, tapData, textUpdate } from '../testing/telegram.js';
 
 const policyText = renderTemplate('PV-01', { horas_borrado: PARAMETERS.data.deletionMaxHours });
 

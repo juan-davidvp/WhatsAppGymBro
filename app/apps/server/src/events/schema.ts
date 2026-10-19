@@ -43,6 +43,12 @@ export const EVENT_PROPS_SCHEMAS = {
   onboarding_step_completed: z.strictObject({ step: z.enum(ONBOARDING_STEPS) }),
   consent_given: z.strictObject({ categories: z.array(z.enum(CONSENT_CATEGORIES)).min(1) }),
   consent_declined: z.strictObject({ categories: z.array(z.enum(CONSENT_CATEGORIES)).min(1) }),
+  age_gate_failed: z.strictObject({}),
+  screening_completed: z.strictObject({
+    type: z.enum(['pre_activity', 'food_body']),
+    result: z.enum(['clear', 'flag', 'not_done']),
+  }),
+  number_free_mode_enabled: z.strictObject({}),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

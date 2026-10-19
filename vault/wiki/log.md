@@ -236,3 +236,29 @@ relacionados: [index, inicio]
 - Servidor: `app/apps/server/src/onboarding/onboarding.ts` (casos de uso que devuelven respuestas; el bot solo las envía), `/start`, `/privacidad`, botones `v1:ob:<paso>:<valor>` y `v1:pv:<valor>`. `consents` guarda solo inserciones (historial; vale la más reciente) con la versión de la política. Eventos `onboarding_started`, `consent_given`, `consent_declined` y `onboarding_step_completed`, cada uno con esquema propio.
 - Escenarios de HU-009-1 en `onboarding.test.ts` (aceptar, ver la política, no aceptar, no saltarse el aviso, botón viejo, texto en lugar de botón, retomar con `/start`, dar y retirar desde `/privacidad`) y repositorio contra MongoDB en memoria.
 - Lecturas elegidas: aceptar el aviso autoriza las 5 categorías que nombra (el aviso las describe juntas); el tamizaje previo a la actividad se mantiene sin autorización porque es una medida de seguridad (RN-SEG-002), pero sin autorización no se guarda su resultado (se decide en T-031). Retirar la autorización no borra lo ya guardado: PV-03 remite a `/borrar_datos`.
+
+## [2026-10-19] decision | Tamizajes: PAR-Q+ por enlace y SCOFF colombiano adaptado (P-082)
+- La investigación (fuentes `F96`–`F102`) mostró tres cosas:
+  - las condiciones del PAR-Q+ prohíben incorporarlo en encuestas electrónicas o productos sin permiso escrito, y prohíben cambiar su texto (`F97`);
+  - el SCOFF no tiene una licencia formal publicada;
+  - el SCOFF se validó en mujeres, y su sensibilidad es menor cuando hay más hombres (`F102`).
+- El PO decide (2026-10-19):
+  - **PAR-Q+ por enlace:** el bot enlaza al formulario oficial en español y pregunta solo el resultado ([Todo NO] [Algún SÍ] [No lo hice]). "No lo hice" arranca con intensidad baja, como "Algún SÍ".
+  - **SCOFF:** traducción colombiana de Rueda et al. (`F100`, CC BY), pasada a masculino y tuteo `[adaptación propia]`.
+  - Antes de la alfa: firma profesional y permisos de uso (Q4).
+- Nueva página [[tamizajes]]. Nuevo **P-082** `safety.scoffPositiveMinYes` = 2 (duro, `[V]`). RN-SEG-002 y RN-SEG-003 citan [[tamizajes]] ([[reglas-de-negocio]] v0.4.0, [[parametros]] v0.4.0).
+- [[plantillas-de-mensajes]] v0.4.0: §3.1 con TZ-01 a TZ-11.
+- **Conflicto resuelto a favor de la regla:** la pregunta 4 del SCOFF usaba "gordo", que RN-MSJ-011 prohíbe en las plantillas. Se reformuló como "¿Sientes que te sobra peso…?" y queda anotado para la revisión profesional.
+- [[modelo-de-datos]] v0.1.4 añade `users.settings.lowIntensityStart`.
+
+## [2026-10-19] implementar | T-031 Edad, tamizajes y modo sin números
+- Dominio: `preActivityScreeningOutcome` ahora recibe el resultado del PAR-Q+ que cuenta el usuario, e `isScoffPositive` aplica P-082 (pruebas RN-SEG-002 y RN-SEG-003).
+- Contenido: `packages/content/src/screenings.ts` (enlace al PAR-Q+ y preguntas del SCOFF), con una prueba de sincronía con [[tamizajes]].
+- Servidor:
+  - **Edad (RN-SEG-001):** con "No" se borra todo lo guardado y el evento `age_gate_failed` queda sin seudónimo. Con "Sí" se guarda solo la confirmación.
+  - **PAR-Q+:** guarda la consecuencia (`lowIntensityStart`) y, con autorización `screening`, el resultado. [Ya tengo autorización] y el resultado tardío funcionan también después del onboarding (botones `v1:sc:…`).
+  - **SCOFF:** 5 preguntas de 1 toque. La cuenta de "sí" viaja en el botón y las respuestas no se guardan. Si es positivo: modo sin números, recurso de ayuda y `number_free_mode_enabled`.
+  - **Eventos:** `screening_completed` lleva solo tipo y resultado.
+  - **Borrado:** el puerto `UserDataEraser` y su adaptador MongoDB borran al usuario de todas las colecciones; la prueba no encuentra rastros (base de T-034).
+- Pendiente para T-032: si el SCOFF es positivo y el objetivo elegido era perder grasa, hay que volver a pedir el objetivo sin esa opción (RN-SEG-003).
+- Pregunta abierta para el profesional: ¿un "sí" a la pregunta 1 (vómito) debería disparar CU-02 por sí solo ([[tamizajes]] §2)?

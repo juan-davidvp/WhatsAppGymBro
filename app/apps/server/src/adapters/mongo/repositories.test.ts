@@ -6,6 +6,8 @@ import { mealIdempotencyKey } from './idempotency.js';
 import { ensureIndexes } from './indexes.js';
 import {
   consentsRepository,
+  screeningsRepository,
+  userDataEraser,
   daysRepository,
   eventsRepository,
   mealsRepository,
@@ -218,5 +220,71 @@ describe('FR-001-01 · el paso del onboarding se guarda', () => {
     expect(
       (await users.findOrCreate({ telegramUserId: 77, chatId: 77, now })).onboarding.step,
     ).toBe('age');
+  });
+});
+
+describe('RN-SEG-001 · RN-SEG-002 · ajustes de seguridad del usuario', () => {
+  it('confirma la mayoría de edad y guarda las consecuencias de los tamizajes', async () => {
+    const users = usersRepository(db);
+    const user = await users.findOrCreate({ telegramUserId: 88, chatId: 88, now });
+    expect(user.isAdultConfirmedAt).toBeNull();
+    await users.confirmAdult(user.id, now);
+    await users.updateSettings(user.id, { lowIntensityStart: true, numberFreeMode: true });
+    const after = await users.findOrCreate({ telegramUserId: 88, chatId: 88, now });
+    expect(after.isAdultConfirmedAt).toEqual(now);
+    expect(after.settings).toMatchObject({
+      lowIntensityStart: true,
+      numberFreeMode: true,
+      intensity: 'NORMAL',
+    });
+  });
+
+  it('un tamizaje guarda solo tipo, resultado y fecha', async () => {
+    await screeningsRepository(db).record({
+      userId: 'u3',
+      type: 'food_body',
+      result: 'flag',
+      at: now,
+    });
+    const doc = await db.collection('screenings').findOne({}, { projection: { _id: 0 } });
+    expect(Object.keys(doc ?? {}).sort()).toEqual(['at', 'result', 'type', 'userId']);
+  });
+});
+
+describe('RN-DAT-003 · RN-SEG-001 · borrar a un usuario no deja rastros', () => {
+  it('borra sus documentos en todas las colecciones, desvincula sus eventos y no toca a otros', async () => {
+    const users = usersRepository(db);
+    const target = await users.findOrCreate({ telegramUserId: 501, chatId: 501, now });
+    const other = await users.findOrCreate({ telegramUserId: 502, chatId: 502, now });
+    const perUser = Object.keys(COLLECTIONS).filter(
+      (name) => !['users', 'events', 'processed_updates'].includes(name),
+    );
+    for (const name of perUser) {
+      // Cada campo de índice con un valor propio, para no chocar con los índices únicos.
+      const keys = (COLLECTIONS[name as keyof typeof COLLECTIONS] ?? []).flatMap((i) => i.keys);
+      const doc = (userId: string, side: string) => ({
+        ...Object.fromEntries(keys.map((key) => [key, `${name}-${side}-${key}`])),
+        userId,
+      });
+      await db.collection(name).insertMany([doc(target.id, 'a'), doc(other.id, 'b')]);
+    }
+    await db.collection('events').insertMany([
+      { userRef: target.id, name: 'meal_logged', at: now },
+      { userRef: other.id, name: 'meal_logged', at: now },
+    ]);
+
+    await userDataEraser(db).eraseUser(target.id);
+
+    const leftovers: string[] = [];
+    for (const name of Object.keys(COLLECTIONS)) {
+      const text = JSON.stringify(await db.collection(name).find().toArray());
+      if (text.includes(target.id)) leftovers.push(name);
+    }
+    expect(leftovers).toEqual([]);
+    expect(await db.collection('events').countDocuments({ userRef: null })).toBe(1);
+    for (const name of perUser) {
+      expect(await db.collection(name).countDocuments({ userId: other.id })).toBe(1);
+    }
+    expect(await db.collection('users').countDocuments({ telegramUserId: 502 })).toBe(1);
   });
 });

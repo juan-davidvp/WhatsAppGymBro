@@ -7,6 +7,7 @@ import {
   assertUserConfigurable,
   canCreateProfile,
   foodBodyScreeningOutcome,
+  isScoffPositive,
   HARD_PARAMETER_CODES,
   imagePolicy,
   overuseSignal,
@@ -26,23 +27,44 @@ describe('RN-SEG-001 · solo mayores de edad', () => {
   });
 });
 
-describe('RN-SEG-002 · tamizaje previo a la actividad', () => {
-  it('con una respuesta positiva recomienda consulta e inicia con intensidad baja', () => {
+describe('RN-SEG-002 · tamizaje previo a la actividad (PAR-Q+ por enlace)', () => {
+  it('algún SÍ: recomienda consulta, arranca suave y se guarda como flag', () => {
     expect(
-      preActivityScreeningOutcome({ answers: [false, true], authorizationConfirmed: false }),
-    ).toEqual({ recommendMedicalConsult: true, planIntensity: 'low' });
+      preActivityScreeningOutcome({ report: 'some_yes', authorizationConfirmed: false }),
+    ).toEqual({ result: 'flag', recommendMedicalConsult: true, planIntensity: 'low' });
   });
 
   it('con la autorización confirmada vuelve a la intensidad normal', () => {
     expect(
-      preActivityScreeningOutcome({ answers: [true], authorizationConfirmed: true }).planIntensity,
+      preActivityScreeningOutcome({ report: 'some_yes', authorizationConfirmed: true })
+        .planIntensity,
     ).toBe('normal');
   });
 
-  it('todo negativo: intensidad normal y sin recomendación', () => {
+  it('todo NO: intensidad normal, sin recomendación, se guarda como clear', () => {
     expect(
-      preActivityScreeningOutcome({ answers: [false, false], authorizationConfirmed: false }),
-    ).toEqual({ recommendMedicalConsult: false, planIntensity: 'normal' });
+      preActivityScreeningOutcome({ report: 'all_no', authorizationConfirmed: false }),
+    ).toEqual({ result: 'clear', recommendMedicalConsult: false, planIntensity: 'normal' });
+  });
+
+  it('sin hacerlo: arranca suave y no hay resultado que guardar', () => {
+    expect(
+      preActivityScreeningOutcome({ report: 'not_done', authorizationConfirmed: false }),
+    ).toEqual({ result: null, recommendMedicalConsult: false, planIntensity: 'low' });
+  });
+});
+
+describe('RN-SEG-003 · SCOFF positivo con P-082 o más "sí"', () => {
+  it('por debajo del punto de corte es negativo; en el punto de corte, positivo', () => {
+    const cut = PARAMETERS.safety.scoffPositiveMinYes;
+    expect(isScoffPositive(cut - 1)).toBe(false);
+    expect(isScoffPositive(cut)).toBe(true);
+    expect(isScoffPositive(5)).toBe(true);
+    expect(isScoffPositive(0)).toBe(false);
+  });
+  it('rechaza cuentas inválidas', () => {
+    expect(() => isScoffPositive(-1)).toThrow('RN-SEG-003');
+    expect(() => isScoffPositive(1.5)).toThrow('RN-SEG-003');
   });
 });
 

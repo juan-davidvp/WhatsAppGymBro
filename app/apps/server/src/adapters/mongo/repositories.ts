@@ -9,6 +9,8 @@ import {
 import { MongoServerError, ObjectId, type Db } from 'mongodb';
 import type {
   ConsentsRepository,
+  ScreeningsRepository,
+  UserDataEraser,
   DaysRepository,
   EventsRepository,
   MealRecord,
@@ -22,6 +24,7 @@ import type {
   UsersRepository,
 } from '../../ports/repositories.js';
 import { setIdempotencyKey } from './idempotency.js';
+import { COLLECTIONS } from './schema.js';
 
 /** Repositorios MongoDB (T-020). Idempotentes ante toques y updates repetidos. */
 
@@ -62,11 +65,13 @@ export function usersRepository(db: Db): UsersRepository {
       const defaults: Omit<UserDocument, '_id' | 'telegramUserId' | 'chatId'> = {
         status: 'active',
         timezone: PARAMETERS.user.defaultTimezone,
+        isAdultConfirmedAt: null,
         settings: {
           intensity: 'NORMAL',
           quietHours: PARAMETERS.messages.quietHours,
           gamificationEnabled: true,
           numberFreeMode: false,
+          lowIntensityStart: false,
         },
         onboarding: { step: 'privacy', completedAt: null },
         createdAt: now,
@@ -85,6 +90,20 @@ export function usersRepository(db: Db): UsersRepository {
       if (!document) throw new Error('No se pudo crear el usuario');
       const { _id, ...rest } = document;
       return { id: _id.toHexString(), ...rest };
+    },
+    async confirmAdult(userId, at) {
+      await collection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { isAdultConfirmedAt: at } },
+      );
+    },
+    async updateSettings(userId, settings) {
+      const $set = Object.fromEntries(
+        Object.entries(settings).map(([key, value]) => [`settings.${key}`, value]),
+      );
+      if (Object.keys($set).length > 0) {
+        await collection.updateOne({ _id: new ObjectId(userId) }, { $set });
+      }
     },
     async setOnboardingStep(userId, step) {
       await collection.updateOne(
@@ -226,6 +245,30 @@ export function consentsRepository(db: Db): ConsentsRepository {
     },
     async hasDecided(userId) {
       return (await collection.countDocuments({ userId }, { limit: 1 })) > 0;
+    },
+  };
+}
+
+export function screeningsRepository(db: Db): ScreeningsRepository {
+  const collection = db.collection('screenings');
+  return {
+    async record({ userId, type, result, at }) {
+      await collection.insertOne({ userId, type, result, at });
+    },
+  };
+}
+
+/** Colecciones sin datos de un usuario concreto. */
+const NOT_PER_USER = new Set(['users', 'events', 'processed_updates']);
+
+export function userDataEraser(db: Db): UserDataEraser {
+  return {
+    async eraseUser(userId) {
+      for (const name of Object.keys(COLLECTIONS)) {
+        if (!NOT_PER_USER.has(name)) await db.collection(name).deleteMany({ userId });
+      }
+      await db.collection('events').updateMany({ userRef: userId }, { $set: { userRef: null } });
+      await db.collection('users').deleteOne({ _id: new ObjectId(userId) });
     },
   };
 }

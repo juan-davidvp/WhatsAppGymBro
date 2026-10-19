@@ -23,11 +23,15 @@ export interface UserRecord {
   readonly chatId: number;
   readonly status: UserStatus;
   readonly timezone: string;
+  /** RN-SEG-001: solo la confirmación de mayoría de edad, nunca la fecha de nacimiento. */
+  readonly isAdultConfirmedAt: Date | null;
   readonly settings: {
     readonly intensity: Intensity;
     readonly quietHours: { readonly start: LocalTime; readonly end: LocalTime };
     readonly gamificationEnabled: boolean;
     readonly numberFreeMode: boolean;
+    /** RN-SEG-002: el plan arranca con intensidad baja hasta que haya autorización. */
+    readonly lowIntensityStart: boolean;
   };
   readonly onboarding: { readonly step: OnboardingStep; readonly completedAt: Date | null };
   readonly createdAt: Date;
@@ -38,6 +42,33 @@ export interface UsersRepository {
   findOrCreate(input: { telegramUserId: number; chatId: number; now: Date }): Promise<UserRecord>;
   /** Guarda el paso del onboarding en el que quedó (FR-001-01: reanudar). */
   setOnboardingStep(userId: string, step: OnboardingStep): Promise<void>;
+  confirmAdult(userId: string, at: Date): Promise<void>;
+  /** Consecuencias de seguridad de los tamizajes (tamizajes §3). */
+  updateSettings(
+    userId: string,
+    settings: Partial<Pick<UserRecord['settings'], 'lowIntensityStart' | 'numberFreeMode'>>,
+  ): Promise<void>;
+}
+
+export type ScreeningType = 'pre_activity' | 'food_body';
+
+export interface ScreeningsRepository {
+  /** Solo el resultado, nunca las respuestas (tamizajes §3). */
+  record(input: {
+    userId: string;
+    type: ScreeningType;
+    result: 'clear' | 'flag';
+    at: Date;
+  }): Promise<void>;
+}
+
+export interface UserDataEraser {
+  /**
+   * RN-DAT-003: borra todos los documentos del usuario en todas las colecciones y
+   * desvincula sus eventos (`userRef` = null). También se usa cuando no es mayor de
+   * edad (RN-SEG-001: no se crea el perfil).
+   */
+  eraseUser(userId: string): Promise<void>;
 }
 
 export interface ConsentsRepository {

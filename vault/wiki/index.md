@@ -61,11 +61,11 @@ relacionados: [inicio, log, leeme-output]
 - [[constitucion]] — Principios I–XI, restricciones, flujo de trabajo, definición de terminado y gobernanza. `[en revisión v1.0.0]`
 - [[glosario]] — Lenguaje ubicuo y nombres en código. `[en revisión]`
 - [[reglas-de-negocio]] — Fuente única de las 103 reglas `RN` (14 por validar con un profesional). `[en revisión]`
-- [[parametros]] — Los 81 valores `P-001…P-081` que el código replica en `parameters.ts`. `[en revisión]`
+- [[parametros]] — Los 82 valores `P-001…P-082` que el código replica en `parameters.ts`. `[en revisión]`
 - [[spec-000-vision-fase-0]] — Mapa de specs, orden de implementación, MoSCoW, requisitos no funcionales y criterios globales. `[borrador]`
 - Specs por módulo: [[spec-001-onboarding-y-objetivo]] · [[spec-002-plan-y-sesion-del-dia]] · [[spec-003-registro-de-entrenamiento]] · [[spec-004-registro-de-nutricion]] · [[spec-005-dia-que-cuenta-y-gamificacion]] · [[spec-006-progreso-logros-y-mantenimiento]] · [[spec-007-proactividad-y-mensajes]] · [[spec-008-integraciones]] · [[spec-009-seguridad-y-privacidad]]. `[borrador]`
 - Plan: [[plan-tecnico]] · [[modelo-de-datos]] · [[plan-de-medicion]] · [[estrategia-de-pruebas]]. `[borrador]`
-- Contenido: [[plantillas-de-mensajes]] · [[catalogo-de-logros-y-niveles]] · [[catalogo-de-ejercicios-base]] · [[alimentos-accesibles-base]] · [[expresiones-de-alerta]]. `[borrador]`
+- Contenido: [[plantillas-de-mensajes]] · [[catalogo-de-logros-y-niveles]] · [[catalogo-de-ejercicios-base]] · [[alimentos-accesibles-base]] · [[expresiones-de-alerta]] · [[tamizajes]]. `[borrador]`
 - [[tareas-fase-0]] — Tareas por hito (M0–M10) con dependencias, paralelismo y criterio de terminado. `[borrador]`
 
 ## Archivo

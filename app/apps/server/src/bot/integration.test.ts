@@ -5,6 +5,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ensureIndexes } from '../adapters/mongo/indexes.js';
 import {
   consentsRepository,
+  screeningsRepository,
+  userDataEraser,
   eventsRepository,
   processedUpdatesRepository,
   riskSignalsRepository,
@@ -46,6 +48,8 @@ function realBot() {
       users: usersRepository(db),
       riskSignals: riskSignalsRepository(db),
       consents: consentsRepository(db),
+      screenings: screeningsRepository(db),
+      eraser: userDataEraser(db),
       events: createEventEmitter({
         repository: eventsRepository(db),
         logger,

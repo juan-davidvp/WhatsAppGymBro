@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.3.0
+version: 0.4.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -120,6 +120,24 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | PV-03 | Hecho: dejo de pedirte datos sensibles. Si quieres borrar lo que ya está guardado, usa /borrar_datos. |
 
 > PV-01 es la política provisional de la Fase 0, que puede operar sin política pública (RN-DAT-007); se muestra con [Ver política] y con /privacidad. Antes de la alfa la reemplaza el texto legal con su responsable designado (Q5). `{horas_borrado}` = P-065.
+
+### 3.1 Tamizajes `[VALIDAR-PROFESIONAL]`
+
+> Instrumentos, fuentes y limitaciones en [[tamizajes]]. `{enlace_parq}` = enlace al PAR-Q+ oficial en español ([[tamizajes]] §1); `{recurso_local}` = recurso verificado de la categoría `extreme_restriction` ([[expresiones-de-alerta]] §4).
+
+| ID | Texto |
+|---|---|
+| TZ-01 | Antes de armar tu plan, un chequeo de salud de 2 minutos: el PAR-Q+ oficial en español, 7 preguntas de sí o no: {enlace_parq} ¿Cómo te fue? [Todo NO] [Algún SÍ] [No lo hice] |
+| TZ-02 | Con algún SÍ, lo indicado es hablar con un médico antes de empezar. Tu plan arranca suave hasta que me confirmes que tienes su autorización. [Ya tengo autorización] |
+| TZ-03 | Sin el chequeo, tu plan arranca suave. Cuando lo completes, cuéntame cómo te fue. [Todo NO] [Algún SÍ] |
+| TZ-04 | Listo: tu plan deja el arranque suave. |
+| TZ-05 | Ahora 5 preguntas rápidas sobre tu relación con la comida. Responde con sinceridad: guardo solo el resultado, no tus respuestas. |
+| TZ-06 | 1/5 · ¿Te provocas el vómito porque te sientes muy lleno? [Sí] [No] |
+| TZ-07 | 2/5 · ¿Te preocupa haber perdido el control sobre la cantidad de comida que comes? [Sí] [No] |
+| TZ-08 | 3/5 · ¿Has perdido recientemente más de 7 kg en un período de 3 meses? [Sí] [No] |
+| TZ-09 | 4/5 · ¿Sientes que te sobra peso aunque los demás digan que estás demasiado delgado? [Sí] [No] |
+| TZ-10 | 5/5 · ¿Dirías que la comida domina tu vida? [Sí] [No] |
+| TZ-11 | Gracias por responder. Tu progreso se va a mostrar sin números: sin gramos, peso ni calorías. Si la comida te genera angustia, hablar con un profesional ayuda: {recurso_local} |
 
 ## 4. Respuestas de cuidado (seguridad) `[VALIDAR-PROFESIONAL]`
 

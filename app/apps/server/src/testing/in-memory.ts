@@ -2,7 +2,7 @@ import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
-import type { UserRecord } from '../ports/repositories.js';
+import type { ScreeningType, UserRecord } from '../ports/repositories.js';
 
 /**
  * Dobles en memoria de los puertos del bot, solo para pruebas de los adaptadores.
@@ -21,18 +21,38 @@ export interface InMemoryOptions {
   onboardingCompleted?: boolean;
 }
 
+export interface ConsentRow {
+  userId: string;
+  category: ConsentCategory;
+  granted: boolean;
+  at: Date;
+  policyVersion: string;
+}
+
+export interface ScreeningRow {
+  userId: string;
+  type: ScreeningType;
+  result: 'clear' | 'flag';
+  at: Date;
+}
+
 export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const processed = new Set<number>();
   const users = new Map<number, UserRecord>();
   const riskSignals: { userId: string; category: string; at: Date }[] = [];
   const events: EmittedEvent[] = [];
-  const consents: {
-    userId: string;
-    category: ConsentCategory;
-    granted: boolean;
-    at: Date;
-    policyVersion: string;
-  }[] = [];
+  const consents: ConsentRow[] = [];
+  const screenings: ScreeningRow[] = [];
+
+  /** Reemplaza el usuario con ese id aplicando `change`. */
+  function updateUser(userId: string, change: (user: UserRecord) => UserRecord): void {
+    for (const [key, user] of users) if (user.id === userId) users.set(key, change(user));
+  }
+
+  /** Quita del arreglo las filas de ese usuario (sin cambiar la referencia). */
+  function removeRows<T extends { userId: string }>(rows: T[], userId: string): void {
+    for (let i = rows.length - 1; i >= 0; i--) if (rows[i]?.userId === userId) rows.splice(i, 1);
+  }
 
   const emitter: EventEmitter = {
     emit(name, subject, props = {}) {
@@ -59,11 +79,13 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           chatId,
           status: 'active',
           timezone: PARAMETERS.user.defaultTimezone,
+          isAdultConfirmedAt: null,
           settings: {
             intensity: 'NORMAL',
             quietHours: PARAMETERS.messages.quietHours,
             gamificationEnabled: true,
             numberFreeMode: false,
+            lowIntensityStart: false,
           },
           onboarding: { step: 'privacy', completedAt: options.onboardingCompleted ? now : null },
           createdAt: now,
@@ -72,10 +94,15 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve(user);
       },
       setOnboardingStep(userId, step) {
-        for (const [key, user] of users) {
-          if (user.id === userId)
-            users.set(key, { ...user, onboarding: { ...user.onboarding, step } });
-        }
+        updateUser(userId, (user) => ({ ...user, onboarding: { ...user.onboarding, step } }));
+        return Promise.resolve();
+      },
+      confirmAdult(userId, at) {
+        updateUser(userId, (user) => ({ ...user, isAdultConfirmedAt: at }));
+        return Promise.resolve();
+      },
+      updateSettings(userId, settings) {
+        updateUser(userId, (user) => ({ ...user, settings: { ...user.settings, ...settings } }));
         return Promise.resolve();
       },
     },
@@ -99,6 +126,22 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve(consents.some((c) => c.userId === userId));
       },
     },
+    screenings: {
+      record(row) {
+        screenings.push(row);
+        return Promise.resolve();
+      },
+    },
+    eraser: {
+      eraseUser(userId) {
+        for (const [key, user] of users) if (user.id === userId) users.delete(key);
+        removeRows(consents, userId);
+        removeRows(screenings, userId);
+        removeRows(riskSignals, userId);
+        for (const event of events) if (event.subject?.userId === userId) event.subject = null;
+        return Promise.resolve();
+      },
+    },
     riskSignals: {
       record(userId, category, at) {
         if (options.failRiskSignals) return Promise.reject(new Error('mongo caído'));
@@ -109,5 +152,5 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     events: emitter,
   };
 
-  return { deps, users, riskSignals, events, consents };
+  return { deps, users, riskSignals, events, consents, screenings };
 }

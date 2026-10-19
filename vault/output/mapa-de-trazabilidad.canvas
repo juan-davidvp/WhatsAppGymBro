@@ -485,7 +485,7 @@
 			"x": 1840,
 			"y": 398,
 			"width": 360,
-			"height": 434,
+			"height": 510,
 			"color": "4",
 			"label": "Output · plan, contenido y tareas — Contenido"
 		},
@@ -535,10 +535,19 @@
 			"height": 60
 		},
 		{
+			"id": "n-tamizajes",
+			"type": "file",
+			"file": "output/sdd/contenido/tamizajes.md",
+			"x": 1860,
+			"y": 824,
+			"width": 320,
+			"height": 60
+		},
+		{
 			"id": "grupo-Tareas",
 			"type": "group",
 			"x": 1840,
-			"y": 872,
+			"y": 948,
 			"width": 360,
 			"height": 130,
 			"color": "4",
@@ -549,7 +558,7 @@
 			"type": "file",
 			"file": "output/sdd/tareas/tareas-fase-0.md",
 			"x": 1860,
-			"y": 918,
+			"y": 994,
 			"width": 320,
 			"height": 60
 		},

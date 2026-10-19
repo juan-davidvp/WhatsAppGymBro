@@ -20,7 +20,9 @@ export type CallbackAction =
   /** Respuesta a una pregunta del onboarding. */
   | { action: 'ob'; step: OnboardingStep; value: string }
   /** Decisión sobre la política desde /privacidad (fuera del onboarding). */
-  | { action: 'pv'; value: string };
+  | { action: 'pv'; value: string }
+  /** Tamizaje previo a la actividad fuera de su paso: autorización o resultado tardío. */
+  | { action: 'sc'; value: string };
 
 function checkSize(data: string): string {
   const bytes = new TextEncoder().encode(data).length;
@@ -42,7 +44,8 @@ export function encodeCallbackData(action: CallbackAction): string {
     case 'ob':
       return checkSize(`${VERSION}:ob:${action.step}:${checkValue(action.value)}`);
     case 'pv':
-      return checkSize(`${VERSION}:pv:${checkValue(action.value)}`);
+    case 'sc':
+      return checkSize(`${VERSION}:${action.action}:${checkValue(action.value)}`);
   }
 }
 
@@ -61,8 +64,13 @@ export function parseCallbackData(data: string): CallbackAction | null {
   ) {
     return { action: 'ob', step: arg as OnboardingStep, value };
   }
-  if (action === 'pv' && arg !== undefined && value === undefined && VALUE.test(arg)) {
-    return { action: 'pv', value: arg };
+  if (
+    (action === 'pv' || action === 'sc') &&
+    arg !== undefined &&
+    value === undefined &&
+    VALUE.test(arg)
+  ) {
+    return { action, value: arg };
   }
   return null;
 }

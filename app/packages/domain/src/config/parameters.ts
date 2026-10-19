@@ -230,6 +230,8 @@ export const PARAMETERS = {
     weeksTrainingAllRestDays: 2,
     /** P-071 · RN-SEG-007 · duro · [V] · kcal por día (dieta de muy bajas calorías, F93) */
     veryLowCalorieDailyMax: 800,
+    /** P-082 · RN-SEG-003 · duro · [V] (F99, F101) · respuestas "sí" del SCOFF para un resultado positivo */
+    scoffPositiveMinYes: 2,
   },
   data: {
     /** P-065 · RN-DAT-003 · duro · horas */

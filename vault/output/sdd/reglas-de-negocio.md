@@ -3,11 +3,11 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.3.0
+version: 0.4.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
-fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71, F82, F93]
+fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71, F82, F93, F96, F97, F99]
 relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 ---
 
@@ -153,8 +153,8 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | ID | Regla | Parámetros | Origen |
 |---|---|---|---|
 | RN-SEG-001 | Solo pueden usar el bot mayores de 18 años (edad declarada); si no, no se crea el perfil. | — | ADR-004 |
-| RN-SEG-002 | Tamizaje previo a la actividad en el onboarding; con alguna respuesta positiva se recomienda consulta médica y el plan inicia con intensidad baja hasta que el usuario confirme que tiene autorización. `[VALIDAR-PROFESIONAL]` | — | [[seguridad-y-cumplimiento]] |
-| RN-SEG-003 | Tamizaje breve de relación con la comida y el cuerpo; si es positivo: modo sin números, recursos profesionales y sin objetivos de pérdida de peso. `[VALIDAR-PROFESIONAL]` | — | `F42`, `F60` |
+| RN-SEG-002 | Tamizaje previo a la actividad en el onboarding (PAR-Q+ oficial por enlace; el bot pregunta solo el resultado, [[tamizajes]] §1); con alguna respuesta positiva, o sin el tamizaje hecho, se recomienda consulta médica y el plan inicia con intensidad baja hasta que el usuario confirme que tiene autorización (o cuente que todo fue NO). `[VALIDAR-PROFESIONAL]` | — | [[seguridad-y-cumplimiento]], `F96`, `F97` |
+| RN-SEG-003 | Tamizaje breve de relación con la comida y el cuerpo (SCOFF, [[tamizajes]] §2), positivo con P-082 o más respuestas "sí"; si es positivo: modo sin números, recursos profesionales y sin objetivos de pérdida de peso. `[VALIDAR-PROFESIONAL]` | P-082 | `F42`, `F60`, `F99`–`F102` |
 | RN-SEG-004 | Los límites de seguridad (RN-OBJ-004, RN-OBJ-005 y parámetros marcados como duros) no son configurables por el usuario. | — | Constitución V |
 | RN-SEG-005 | Nunca se recomiendan suplementos, fármacos ni sustancias, incluidos esteroides anabólicos; ante preguntas, respuesta de cuidado y derivación. | — | `F60` |
 | RN-SEG-006 | Si el usuario marca dolor en un ejercicio, se detiene su progresión y se ofrece una variante; si el dolor se repite en P-062 sesiones, se recomienda consulta profesional. | P-062 | [[seguridad-y-cumplimiento]] |

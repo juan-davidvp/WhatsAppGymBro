@@ -3,6 +3,8 @@ import { MongoClient } from 'mongodb';
 import { ensureIndexes } from './adapters/mongo/indexes.js';
 import {
   consentsRepository,
+  screeningsRepository,
+  userDataEraser,
   eventsRepository,
   processedUpdatesRepository,
   riskSignalsRepository,
@@ -54,6 +56,8 @@ async function main(): Promise<void> {
         users: usersRepository(db),
         riskSignals: riskSignalsRepository(db),
         consents: consentsRepository(db),
+        screenings: screeningsRepository(db),
+        eraser: userDataEraser(db),
         events: createEventEmitter({
           repository: eventsRepository(db),
           logger,

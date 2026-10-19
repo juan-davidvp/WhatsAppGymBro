@@ -6,6 +6,7 @@ import type { Logger } from '../logger.js';
 import {
   answerOnboarding,
   answerPrivacy,
+  answerScreening,
   isOnboardingComplete,
   privacyCommand,
   promptFor,
@@ -16,6 +17,8 @@ import type {
   ConsentsRepository,
   ProcessedUpdatesRepository,
   RiskSignalsRepository,
+  ScreeningsRepository,
+  UserDataEraser,
   UsersRepository,
 } from '../ports/repositories.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
@@ -32,6 +35,8 @@ export interface BotDependencies {
   users: UsersRepository;
   riskSignals: RiskSignalsRepository;
   consents: ConsentsRepository;
+  screenings: ScreeningsRepository;
+  eraser: UserDataEraser;
   events: EventEmitter;
 }
 
@@ -127,6 +132,8 @@ export function createBot({
         return sendAll(ctx, await answerOnboarding(user, action.step, action.value, useCases));
       case 'pv':
         return sendAll(ctx, await answerPrivacy(user, action.value, useCases));
+      case 'sc':
+        return sendAll(ctx, await answerScreening(user, action.value, useCases));
       case 'nav':
         // Las pantallas de Hoy, Comida y Progreso llegan con sus tareas (T-04x…).
         return;
@@ -137,8 +144,8 @@ export function createBot({
   // pregunta con sus botones (SPEC-001 §8); después, CU-07. Nunca conversación.
   handlers.on('message', async (ctx) => {
     const user = ctx.user;
-    const prompt = user && !isOnboardingComplete(user) ? promptFor(user.onboarding.step) : null;
-    if (prompt) return sendAll(ctx, [prompt]);
+    const prompt = user && !isOnboardingComplete(user) ? promptFor(user.onboarding.step) : [];
+    if (prompt.length > 0) return sendAll(ctx, prompt);
     return sendOutOfDomain(ctx);
   });
 
