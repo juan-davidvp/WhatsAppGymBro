@@ -24,3 +24,6 @@ export {
   type DayStatus,
   type DayType,
 } from './day/day.js';
+export * from './gamification/streak.js';
+export * from './gamification/xp.js';
+export * from './gamification/weekly.js';

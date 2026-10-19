@@ -146,3 +146,14 @@ relacionados: [index, inicio]
 - RN cubiertas: RN-DQC-001 a RN-DQC-007 (pruebas con su ID; propiedades con fast-check para RN-DQC-001, RN-DQC-004 y RN-DQC-007).
 - Archivos: `app/packages/domain/src/time/zoned.ts` (fechas locales y conversión de hora local a UTC con horario de verano, sin E/S) y `app/packages/domain/src/day/day.ts` (`operationalDate`, `evaluateDay`, `loggingGraceEnd`, `isDayClosable`, `closeDay`).
 - Decisiones de implementación: los días se cierran en orden y el estado guarda solo la última fecha cerrada (un cierre repetido o atrasado no cambia nada, FR-005-02); en descanso, "completo" exige mitad de comida y recuperación activa aunque se haya entrenado (lectura literal de RN-DQC-004). Dependencia nueva de desarrollo: `fast-check` (plan técnico §1).
+
+## [2026-10-19] implementar | T-015 Gamificación
+- RN cubiertas: RN-GAM-001 a RN-GAM-014 (pruebas con su ID; propiedades: racha ≤ total, comodines ≤ P-034, XP nunca baja y ningún día supera P-039, bitácora solo crece, temporadas en lunes).
+- Archivos: `app/packages/domain/src/gamification/` — `streak.ts` (racha, comodines, reparación), `xp.ts` (libro de XP solo de suma, tope diario, niveles, bonificación de regreso), `weekly.ts` (semana cumplida, misiones, liga personal, temporadas, bitácora, Reto 66). Las funciones devuelven los nombres de evento de SPEC-005 §7 (`streak_extended`, `freeze_used`…) para que el caso de uso los emita.
+- Lecturas elegidas donde la regla admite más de una (para revisión del PO):
+  - RN-GAM-002: el día salvado con comodín no cuenta, así que reinicia la serie de P-033 días para ganar el siguiente comodín.
+  - RN-GAM-003: reparar devuelve la racha anterior más los días que cuenten desde la ruptura; no se ofrece reparación si la racha rota era 0.
+  - RN-GAM-005: el tope diario P-039 se aplica a todos los eventos del día, también a los semanales (semana cumplida, misión). Un domingo con sesión y semana cumplida puede recortar la misión.
+  - RN-GAM-008: meta = ⌊P-041 × lo logrado⌋ con mínimo 1 `[inferencia]` (la regla no fija el mínimo); la tercera misión es de constancia (días que cuentan); la de variedad queda para después.
+  - RN-GAM-010: el dominio calcula los límites de cada temporada; el tema y la meta no existen todavía en el contenido de la bóveda.
+  - SPEC-005 §8: una semana en pausa o sin sesiones planificadas no se evalúa.
