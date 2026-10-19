@@ -26,7 +26,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | T-003 [P] ✅ | `packages/content` con esquemas zod para plantillas, logros, niveles, ejercicios, alimentos y expresiones de alerta; transcribir los catálogos de `vault/output/sdd/contenido/` | RN-MSJ-010/011/012, RN-PLAN-010, RN-NUT-008 | T-001 | Pruebas de contenido de [[estrategia-de-pruebas]] §4 en verde |
 | T-004 [P] ✅ | `apps/server`: grammY con *long polling*, configuración por variables de entorno, registros con redacción | NFR-07, RN-DAT-006 | T-001 | El bot responde `/start` en local |
 | T-005 [P] ✅ | `infra/docker-compose.yml` (Mongo) y `.env.example` | [[plan-tecnico]] §10 | T-001 | `docker compose up` levanta la base |
-| T-006 | Integración continua: tipos, estilo, pruebas y `herramientas/lint_trazabilidad.py` | Constitución | T-001 | El *pipeline* falla si una RN no tiene prueba |
+| T-006 ✅ | Integración continua: tipos, estilo, pruebas y `herramientas/lint_trazabilidad.py` | Constitución | T-001 | El *pipeline* falla si una RN no tiene prueba |
 
 ## M1 · Dominio (pruebas primero)
 

@@ -47,7 +47,7 @@ Nunca solo en el código. Usar `/cambiar-regla`: primero la bóveda, luego la pr
 
 Disponibles desde T-001; los comandos `pnpm` se ejecutan **dentro de `app/`** (ahí está el `package.json` raíz del monorepo). Ajustar esta sección si cambian.
 
-- `pnpm install` · `pnpm test` · `pnpm typecheck` · `pnpm lint` · `pnpm format:check` · `pnpm dev` (bot en *long polling*, desde T-004)
+- `pnpm install` · `pnpm test` · `pnpm typecheck` · `pnpm lint` · `pnpm format:check` · `pnpm dev` (bot en *long polling*, desde T-004) · `pnpm check` (todo lo que corre la integración continua, `.github/workflows/ci.yml`)
 - `cp app/infra/.env.example app/infra/.env` (completar) · `docker compose -f app/infra/docker-compose.yml up -d` — MongoDB local (usuario de la aplicación con `readWrite` solo sobre `gymbro`)
 - `python3 herramientas/lint_trazabilidad.py` — bóveda · `--codigo` añade RN ↔ pruebas · `--corregir` completa `fuentes` en el frontmatter
 - `python3 herramientas/generar_mapa_trazabilidad.py` — regenera el lienzo al crear o renombrar páginas

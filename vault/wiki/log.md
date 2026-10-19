@@ -136,3 +136,8 @@ relacionados: [index, inicio]
 - Cambios: [[reglas-de-negocio]] v0.2.1 (RN-SEG-007 cita P-071 y la página), [[parametros]] v0.2.0, [[plantillas-de-mensajes]] v0.2.0 (CU-08), [[glosario]] (`AlertCategory`), [[spec-009-seguridad-y-privacidad]] §10, [[seguridad-y-cumplimiento]] §4, [[leeme-output]], [[index]] y lienzo regenerado.
 - Código: `packages/domain/src/safety/risk-signal.ts` (detector puro: normaliza, compara por palabras completas, aplica P-071 y la prioridad; devuelve solo la categoría), `packages/content/src/alerts.ts` (catálogo transcrito), CU-08 y `renderCareResponse`. Pruebas RN-SEG-007: detector, coincidencia con la bóveda, calidad del catálogo y los 25 casos de verificación.
 - Observación para el PO: por el *red-team* de [[estrategia-de-pruebas]] §5, preguntar por creatina o proteína en polvo activa CU-03 y, por RN-SEG-007, pausa las mecánicas de juego ese día. Si parece excesivo, se puede separar en una ruta de "no recomendación" sin pausa.
+
+## [2026-10-19] implementar | T-006 Integración continua
+- `.github/workflows/ci.yml` (GitHub Actions, en cada *push* y *pull request*): instala con `--frozen-lockfile` y ejecuta tipos, ESLint, Prettier, pruebas y `herramientas/lint_trazabilidad.py --codigo`. Permisos de solo lectura; cancela ejecuciones anteriores de la misma rama.
+- `pnpm check` (dentro de `app/`) corre lo mismo en local; documentado en `CLAUDE.md` (Comandos).
+- Verificación: `actionlint` 1.7.7 sin errores sobre el *workflow*; `pnpm check` en verde (550 pruebas, trazabilidad 0 errores); quitando el ID de la prueba de RN-NUT-008, la trazabilidad termina con código 1 (`regla-sin-prueba`), así que el *pipeline* falla; *pipeline* simulado en un clon limpio.
