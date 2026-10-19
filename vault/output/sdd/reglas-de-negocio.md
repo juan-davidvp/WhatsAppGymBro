@@ -3,7 +3,7 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.2.1
+version: 0.2.2
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
@@ -77,7 +77,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 |---|---|---|---|
 | RN-NUT-001 | El método de registro por defecto son las **porciones con la mano**: palma (proteína), mano ahuecada (carbohidrato), puño (verdura), pulgar (grasa). | — | `F61`, ADR-012 |
 | RN-NUT-002 | Meta de proteína diaria = peso × P-026 g/kg, expresada en palmas de P-027 g, redondeada al 0,5 más cercano. `[VALIDAR-PROFESIONAL]` | P-026, P-027 | `F56`, `F57` |
-| RN-NUT-003 | La mitad de comida se cumple cuando la proteína registrada del día alcanza al menos P-028 % de la meta. En modo sin números: 3 comidas con al menos una porción de proteína. | P-028 | ADR-010 |
+| RN-NUT-003 | La mitad de comida se cumple cuando la proteína registrada del día alcanza al menos P-028 % de la meta. En modo sin números: P-072 comidas con al menos una porción de proteína. | P-028, P-072 | ADR-010 |
 | RN-NUT-004 | Una comida puede guardarse como frecuente y registrarse luego con 1 toque; existe "repetir ayer". | — | FB-001-08 |
 | RN-NUT-005 | Las propuestas de la IA (foto o texto) **nunca** se registran sin confirmación del usuario. | — | ADR-007 |
 | RN-NUT-006 | Las sugerencias de comida dependen del tipo de día; se prioriza la proteína total del día sobre el horario. `[VALIDAR-PROFESIONAL]` | — | `F56`, FB-001-04 |

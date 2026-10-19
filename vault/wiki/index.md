@@ -61,7 +61,7 @@ relacionados: [inicio, log, leeme-output]
 - [[constitucion]] — Principios I–XI, restricciones, flujo de trabajo, definición de terminado y gobernanza. `[en revisión v1.0.0]`
 - [[glosario]] — Lenguaje ubicuo y nombres en código. `[en revisión]`
 - [[reglas-de-negocio]] — Fuente única de las 103 reglas `RN` (13 por validar con un profesional). `[en revisión]`
-- [[parametros]] — Los 71 valores `P-001…P-071` que el código replica en `parameters.ts`. `[en revisión]`
+- [[parametros]] — Los 72 valores `P-001…P-072` que el código replica en `parameters.ts`. `[en revisión]`
 - [[spec-000-vision-fase-0]] — Mapa de specs, orden de implementación, MoSCoW, requisitos no funcionales y criterios globales. `[borrador]`
 - Specs por módulo: [[spec-001-onboarding-y-objetivo]] · [[spec-002-plan-y-sesion-del-dia]] · [[spec-003-registro-de-entrenamiento]] · [[spec-004-registro-de-nutricion]] · [[spec-005-dia-que-cuenta-y-gamificacion]] · [[spec-006-progreso-logros-y-mantenimiento]] · [[spec-007-proactividad-y-mensajes]] · [[spec-008-integraciones]] · [[spec-009-seguridad-y-privacidad]]. `[borrador]`
 - Plan: [[plan-tecnico]] · [[modelo-de-datos]] · [[plan-de-medicion]] · [[estrategia-de-pruebas]]. `[borrador]`

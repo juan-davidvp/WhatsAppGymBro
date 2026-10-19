@@ -99,6 +99,8 @@ export const PARAMETERS = {
     proteinGPerPalm: 25,
     /** P-028 · RN-NUT-003 · % de la meta de proteína */
     halfThresholdPct: 80,
+    /** P-072 · RN-NUT-003 · comidas con al menos una palma (modo sin números) */
+    numberFreeMealsWithProtein: 3,
   },
   day: {
     /** P-029 · RN-DQC-001 · duro · hora local de cierre del día operativo */

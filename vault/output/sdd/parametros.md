@@ -3,7 +3,7 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.2.0
+version: 0.2.1
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
@@ -58,6 +58,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-026 | `nutrition.proteinGPerKg` | 1,6 g/kg/día | 1,4–2,2 | RN-NUT-002 | No | [V] (`F56`, `F57`) |
 | P-027 | `nutrition.proteinGPerPalm` | 25 g | 20–30 | RN-NUT-002 | No | [V] |
 | P-028 | `nutrition.halfThresholdPct` | 80 % | 70–100 | RN-NUT-003 | No | — |
+| P-072 | `nutrition.numberFreeMealsWithProtein` | 3 comidas | — | RN-NUT-003 | No | — |
 
 ## Día que cuenta y gamificación
 

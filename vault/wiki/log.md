@@ -167,3 +167,10 @@ relacionados: [index, inicio]
 - RN cubiertas: RN-ENT-001 a RN-ENT-006 (pruebas con su ID; propiedad: registrar más series nunca descompleta una sesión). Archivo: `app/packages/domain/src/training/training.ts` (confirmar y corregir series, "La hice tal cual", progresión doble, estancamiento, sesión completada, e1RM de Epley, récords, actividad importada). `packages/content` comprueba que los patrones de movimiento del dominio y del catálogo coinciden.
 - Observación para el PO: P-023 vale **0,67**, no 2/3. Leído literalmente, con 6, 9 o 12 series planificadas exige una serie más de las que daría 2/3 (4/6 = 0,667 < 0,67). Se implementa el valor de la bóveda; si la intención era 2/3, cambiar P-023 con `/cambiar-regla`.
 - Lecturas elegidas: la primera vez que se hace un ejercicio no hay récord (no hay máximo previo); el núcleo (`CORE`) usa el incremento de tren superior; el estancamiento compara la mejor marca de las últimas P-022 sesiones con el máximo anterior.
+
+## [2026-10-19] decision | P-072: comidas con proteína en modo sin números
+- RN-NUT-003 decía "3 comidas" dentro del texto; por la constitución VII el número pasa a [[parametros]] como **P-072** `nutrition.numberFreeMealsWithProtein` = 3 (sin cambio de comportamiento). [[reglas-de-negocio]] v0.2.2, [[parametros]] v0.2.1.
+
+## [2026-10-19] implementar | T-013 Nutrición
+- RN cubiertas: RN-NUT-001 a RN-NUT-008 (pruebas con su ID; propiedad: la meta en palmas es múltiplo de 0,5 y está a ≤ 0,25 del valor exacto). Archivo: `app/packages/domain/src/nutrition/nutrition.ts` (porciones con la mano, meta de proteína, mitad de comida con y sin números, frecuentes en 1 toque, "repetir ayer" como propuesta, confirmación obligatoria de propuestas, foco en la proteína total del día, calorías siempre desactivadas).
+- Lecturas elegidas: la proteína de un registro por porciones sale solo de las palmas (P-027); los alimentos del catálogo usan su proteína aproximada. "Repetir ayer" crea propuestas que se confirman, igual que las de la IA (RN-NUT-005).
