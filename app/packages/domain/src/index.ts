@@ -27,3 +27,5 @@ export {
 export * from './gamification/streak.js';
 export * from './gamification/xp.js';
 export * from './gamification/weekly.js';
+export * from './goals/goals.js';
+export * from './goals/maintenance.js';

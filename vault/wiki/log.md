@@ -157,3 +157,8 @@ relacionados: [index, inicio]
   - RN-GAM-008: meta = ⌊P-041 × lo logrado⌋ con mínimo 1 `[inferencia]` (la regla no fija el mínimo); la tercera misión es de constancia (días que cuentan); la de variedad queda para después.
   - RN-GAM-010: el dominio calcula los límites de cada temporada; el tema y la meta no existen todavía en el contenido de la bóveda.
   - SPEC-005 §8: una semana en pausa o sin sesiones planificadas no se evalúa.
+
+## [2026-10-19] implementar | T-010 Objetivos y mantenimiento
+- RN cubiertas: RN-OBJ-001 a RN-OBJ-013 y RN-MAN-001 a RN-MAN-005 (pruebas con su ID; propiedades: siempre un único objetivo activo, ninguna meta aceptada viola P-004/P-005 ni el IMC P-006, progreso siempre entre 0 y 100 %).
+- Archivos: `app/packages/domain/src/goals/goals.ts` (objetivo activo e historial, validación y propuesta de metas de peso con alternativas seguras, media móvil, progreso, cumplimiento, completado parcial, revisión de fase) y `goals/maintenance.ts` (decisión, banda, aviso fuera de banda, temporadas de maestría, intensidad Baja).
+- Lecturas elegidas (para revisión del PO): la meta propuesta por defecto usa el ritmo máximo seguro (P-004/P-005) en P-001 semanas; [Más conservadora] la reduce en el adaptador. "Sostener la meta P-007 semanas" = todos los días de esa ventana con media móvil en la meta o más allá. La revisión de fase (RN-OBJ-013) solo marca ritmos más rápidos que el límite. Si el usuario ya está bajo el IMC mínimo y pide perder, la meta segura es mantener su peso. Una semana sin media de peso no cuenta como fuera de la banda de mantenimiento.

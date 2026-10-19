@@ -32,7 +32,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-010 [P] | `goals/`: meta propuesta, límites, media móvil, progreso, cumplimiento, cierres | RN-OBJ-001 a 013, RN-MAN-001 a 005 | T-002 | Cada RN con pruebas nombradas por su ID |
+| T-010 [P] ✅ | `goals/`: meta propuesta, límites, media móvil, progreso, cumplimiento, cierres | RN-OBJ-001 a 013, RN-MAN-001 a 005 | T-002 | Cada RN con pruebas nombradas por su ID |
 | T-011 [P] | `plan/`: generador A/B/C, divisiones, volumen, duración, descanso, sin deuda | RN-PLAN-001 a 010 | T-002, T-003 | Pruebas por RN + propiedad "ningún plan viola el descanso" |
 | T-012 [P] | `training/`: completitud, progresión doble, estancamiento, e1RM y récords | RN-ENT-001 a 006 | T-002 | Pruebas por RN |
 | T-013 [P] | `nutrition/`: meta en palmas, mitad de comida, modo sin números | RN-NUT-001 a 008 | T-002, T-003 | Pruebas por RN |
