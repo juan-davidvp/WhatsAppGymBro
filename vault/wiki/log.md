@@ -141,3 +141,8 @@ relacionados: [index, inicio]
 - `.github/workflows/ci.yml` (GitHub Actions, en cada *push* y *pull request*): instala con `--frozen-lockfile` y ejecuta tipos, ESLint, Prettier, pruebas y `herramientas/lint_trazabilidad.py --codigo`. Permisos de solo lectura; cancela ejecuciones anteriores de la misma rama.
 - `pnpm check` (dentro de `app/`) corre lo mismo en local; documentado en `CLAUDE.md` (Comandos).
 - Verificación: `actionlint` 1.7.7 sin errores sobre el *workflow*; `pnpm check` en verde (550 pruebas, trazabilidad 0 errores); quitando el ID de la prueba de RN-NUT-008, la trazabilidad termina con código 1 (`regla-sin-prueba`), así que el *pipeline* falla; *pipeline* simulado en un clon limpio.
+
+## [2026-10-19] implementar | T-014 Día operativo, día que cuenta, completo, gracia y total
+- RN cubiertas: RN-DQC-001 a RN-DQC-007 (pruebas con su ID; propiedades con fast-check para RN-DQC-001, RN-DQC-004 y RN-DQC-007).
+- Archivos: `app/packages/domain/src/time/zoned.ts` (fechas locales y conversión de hora local a UTC con horario de verano, sin E/S) y `app/packages/domain/src/day/day.ts` (`operationalDate`, `evaluateDay`, `loggingGraceEnd`, `isDayClosable`, `closeDay`).
+- Decisiones de implementación: los días se cierran en orden y el estado guarda solo la última fecha cerrada (un cierre repetido o atrasado no cambia nada, FR-005-02); en descanso, "completo" exige mitad de comida y recuperación activa aunque se haya entrenado (lectura literal de RN-DQC-004). Dependencia nueva de desarrollo: `fast-check` (plan técnico §1).

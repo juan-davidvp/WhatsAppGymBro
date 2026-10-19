@@ -9,3 +9,18 @@ export {
   type AlertCatalogEntry,
   type RiskSignal,
 } from './safety/risk-signal.js';
+export * from './time/zoned.js';
+export {
+  closeDay,
+  evaluateDay,
+  initialCountedDaysState,
+  isDayClosable,
+  loggingGraceEnd,
+  operationalDate,
+  operationalDayStart,
+  type ClosedDay,
+  type CountedDaysState,
+  type DayInputs,
+  type DayStatus,
+  type DayType,
+} from './day/day.js';
