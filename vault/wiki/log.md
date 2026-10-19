@@ -90,3 +90,9 @@ relacionados: [index, inicio]
 - Dependencias (solo desarrollo, principio XI): typescript, @types/node, vitest, eslint, @eslint/js, typescript-eslint, eslint-config-prettier, prettier. TypeScript fijado en `~6.0.3` porque typescript-eslint 8.71 aún no admite TypeScript 7; `@types/node` en 22 para coincidir con Node LTS.
 - `CLAUDE.md` (Comandos): los comandos `pnpm` se ejecutan dentro de `app/`.
 - Siguiente: T-002 a T-005 en paralelo; T-006 (integración continua).
+
+## [2026-10-19] implementar | T-002 `parameters.ts` replica la tabla de parámetros
+- P-001 a P-070 en `app/packages/domain/src/config/parameters.ts`, agrupados como en la columna "Código" de [[parametros]], con el `P-###`, las reglas y `[V]` en un comentario encima de cada clave. Claves de `xp.table` y `messages.budget` según el [[glosario]] (`SessionVariant`, `Intensity`).
+- Prueba `parameters.test.ts` (141 casos): lee la tabla de la bóveda y, para cada fila, comprueba que el código existe, que los valores coinciden (números con coma decimal y punto de miles, horas, días de la semana y zona horaria, en orden) y que el comentario `P-###` está sobre su clave; además, que ningún valor del código queda sin fila. Comprobado que detecta un cambio en P-029, P-039, P-040 y P-070.
+- Límite: en los parámetros compuestos (P-014, P-016) la prueba compara los números, no las etiquetas de texto (`full_body`, `upper_lower`…).
+- ESLint impide en `packages/domain/src` (sin contar pruebas) importar módulos de Node y usar `process`, `Date.now()` y `Math.random()` (constitución VII).
