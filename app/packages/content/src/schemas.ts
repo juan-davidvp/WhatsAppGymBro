@@ -146,12 +146,14 @@ export type FrequentMealTemplate = z.infer<typeof frequentMealTemplateSchema>;
 
 // ── Expresiones de alerta (RN-SEG-007) ──────────────────────────────────────
 
+/** En orden de prioridad: si coinciden varias, gana la primera (expresiones-de-alerta.md §2). */
 export const ALERT_CATEGORIES = [
-  'extreme_restriction',
+  'distress',
+  'cardiac_warning',
   'purge',
+  'extreme_restriction',
   'substances',
   'pain',
-  'distress',
 ] as const;
 export const alertCategorySchema = z.enum(ALERT_CATEGORIES);
 export type AlertCategory = z.infer<typeof alertCategorySchema>;
@@ -160,7 +162,9 @@ export const alertCategoryEntrySchema = z.object({
   category: alertCategorySchema,
   /** Respuesta de cuidado `CU-…` de esa categoría. */
   careResponseId: z.string().regex(/^CU-\d{2}$/),
-  /** Expresiones que disparan la categoría. Vacía hasta la validación profesional (Q4). */
-  expressions: z.array(z.string().min(1)),
+  /** Expresiones que disparan la categoría; `{n}` = cifra de calorías ≤ P-071. */
+  expressions: z.array(z.string().min(1)).min(1),
+  /** Texto de `{recurso_local}` para su plantilla, o null si la plantilla no lo usa. */
+  helpResource: z.string().min(1).nullable(),
 });
 export type AlertCategoryEntry = z.infer<typeof alertCategoryEntrySchema>;

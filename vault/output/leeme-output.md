@@ -5,7 +5,7 @@ hito: H3
 estado: en-revision
 version: 0.1.0
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [index, propuesta-de-valor, registro-de-decisiones]
 fuentes: [F01, F77, F78, F79]
 relacionados: [constitucion, spec-000-vision-fase-0, tareas-fase-0, inicio]
@@ -23,14 +23,14 @@ relacionados: [constitucion, spec-000-vision-fase-0, tareas-fase-0, inicio]
 | [[constitucion]] | Principios no negociables (I–XI), restricciones, definición de terminado y gobernanza. Se importa en cada sesión de Claude Code | 1.0.0 | en-revision |
 | [[glosario]] | Términos del dominio y su nombre en código (inglés) | 0.1.0 | borrador |
 | [[reglas-de-negocio]] | **Fuente única** de las 103 reglas `RN-…` (13 por validar con un profesional) | 0.1.0 | en-revision |
-| [[parametros]] | Los 70 valores numéricos `P-001…P-070`, que el código replica en `parameters.ts` | 0.1.0 | en-revision |
+| [[parametros]] | Los 71 valores numéricos `P-001…P-071`, que el código replica en `parameters.ts` | 0.1.0 | en-revision |
 | [[spec-000-vision-fase-0]] | Mapa de specs, orden de implementación, MoSCoW, requisitos no funcionales y criterios globales | 0.1.0 | borrador |
 | [[spec-001-onboarding-y-objetivo]] · [[spec-002-plan-y-sesion-del-dia]] · [[spec-003-registro-de-entrenamiento]] · [[spec-004-registro-de-nutricion]] · [[spec-005-dia-que-cuenta-y-gamificacion]] · [[spec-006-progreso-logros-y-mantenimiento]] · [[spec-007-proactividad-y-mensajes]] · [[spec-008-integraciones]] · [[spec-009-seguridad-y-privacidad]] | Una spec por módulo: historias (HU) con escenarios Dado/Cuando/Entonces, requisitos (FR), reglas citadas, criterios de éxito (SC), eventos, casos borde, fuera de alcance y dudas `[NEEDS CLARIFICATION]` | 0.1.0 | borrador |
 | [[plan-tecnico]] | Stack, arquitectura hexagonal, estructura del repositorio, flujo de una actualización, planificador, IA acotada, despliegue | 0.1.0 | borrador |
 | [[modelo-de-datos]] | Colecciones, índices, invariantes, borrado total y retención | 0.1.0 | borrador |
 | [[plan-de-medicion]] | Eventos, métricas M00–M08 y salvaguardas G01–G06, protocolo N-de-1 | 0.1.0 | borrador |
 | [[estrategia-de-pruebas]] | Niveles, pruebas nombradas por `RN`, invariantes, *red-team*, aceptación manual en el gym, integración continua | 0.1.0 | borrador |
-| [[plantillas-de-mensajes]] · [[catalogo-de-logros-y-niveles]] · [[catalogo-de-ejercicios-base]] · [[alimentos-accesibles-base]] | Contenido versionado que el código carga desde `app/packages/content/` | 0.1.0 | borrador |
+| [[plantillas-de-mensajes]] · [[catalogo-de-logros-y-niveles]] · [[catalogo-de-ejercicios-base]] · [[alimentos-accesibles-base]] · [[expresiones-de-alerta]] | Contenido versionado que el código carga desde `app/packages/content/` | 0.1.0 | borrador |
 | [[tareas-fase-0]] | Tareas T-001…T-104 por hito, con dependencias, paralelismo y criterio de terminado | 0.1.0 | borrador |
 | [[mapa-de-trazabilidad.canvas]] | Lienzo de Obsidian con la cadena raw → wiki → output → código | 0.1.0 | borrador |
 

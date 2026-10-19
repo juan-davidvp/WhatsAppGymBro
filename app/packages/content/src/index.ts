@@ -8,4 +8,4 @@ export { LEVELS, ACHIEVEMENTS } from './achievements.js';
 export { EXERCISES, EXPRESS_EXCEPTIONS } from './exercises.js';
 export { FOODS, FREQUENT_MEAL_TEMPLATES } from './foods.js';
 export { ALERT_CATEGORIES_CATALOG, ALERT_EXPRESSIONS_VALIDATED } from './alerts.js';
-export { templateById } from './lookup.js';
+export { renderCareResponse, templateById } from './lookup.js';

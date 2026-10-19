@@ -212,6 +212,8 @@ export const PARAMETERS = {
     maxSessionsPerDay: 2,
     /** P-064 · RN-SEG-008 · duro · [V] · semanas */
     weeksTrainingAllRestDays: 2,
+    /** P-071 · RN-SEG-007 · duro · [V] · kcal por día (dieta de muy bajas calorías, F93) */
+    veryLowCalorieDailyMax: 800,
   },
   data: {
     /** P-065 · RN-DAT-003 · duro · horas */

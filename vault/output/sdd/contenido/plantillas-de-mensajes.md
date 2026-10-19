@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.2.0
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -117,7 +117,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 
 ## 4. Respuestas de cuidado (seguridad) `[VALIDAR-PROFESIONAL]`
 
-> Predefinidas, nunca generadas. `{recurso_local}` se reemplaza por recursos de ayuda **verificados y vigentes** para Colombia antes de la alfa (pendiente en SPEC-009).
+> Predefinidas, nunca generadas. `{recurso_local}` se reemplaza por el recurso de ayuda verificado de cada categoría (Línea 106 o 123), definido en [[expresiones-de-alerta]] §4.
 
 | ID | Categoría | Texto |
 |---|---|---|
@@ -128,3 +128,4 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | CU-05 | Angustia | Gracias por contármelo. No soy la ayuda adecuada para esto, pero hay personas que sí: {recurso_local}. Si estás en peligro, busca ayuda de emergencia ahora. |
 | CU-06 | Sobreuso | Vienes entrenando también en tus descansos. El músculo crece cuando descansas; ¿le damos un día libre? [Sí, descanso] [Ajustar plan] |
 | CU-07 | Pregunta fuera del dominio | Funciono con botones para tu entreno y tu comida. ¿Qué quieres hacer? [Hoy] [Comida] [Progreso] |
+| CU-08 | Síntomas cardíacos con el esfuerzo | Para el ejercicio ahora. Si la molestia en el pecho, la falta de aire o el mareo no pasan en unos minutos o empeoran, busca ayuda de emergencia ya: {recurso_local} |

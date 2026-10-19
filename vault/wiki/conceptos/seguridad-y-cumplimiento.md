@@ -4,9 +4,9 @@ tipo: concepto
 hito: H0
 estado: en-revision
 creado: 2026-10-05
-actualizado: 2026-10-18
-fuentes: [F23, F40, F41, F42, F60, F70, F71]
-relacionados: [propuesta-de-valor, relacion-comida-entreno, voz-y-marca, spec-009-seguridad-y-privacidad, reglas-de-negocio, registro-de-decisiones]
+actualizado: 2026-10-19
+fuentes: [F23, F40, F41, F42, F60, F70, F71, F82, F83, F84, F85, F86, F87, F88, F89, F90, F91, F92, F93]
+relacionados: [propuesta-de-valor, relacion-comida-entreno, voz-y-marca, spec-009-seguridad-y-privacidad, reglas-de-negocio, registro-de-decisiones, expresiones-de-alerta]
 ---
 
 # Seguridad y cumplimiento
@@ -43,7 +43,7 @@ La asociación estadounidense de trastornos de la alimentación (NEDA) retiró s
 
 ## 4. Detección de señales en el texto libre
 
-- Lista de **expresiones de alerta** por categoría (restricción extrema, purga, sustancias, dolor fuerte, angustia), mantenida en el contenido y validada por un profesional `[VALIDAR-PROFESIONAL]`.
+- Lista de **expresiones de alerta** por categoría, en orden de prioridad: angustia o riesgo de suicidio (`F82`), síntomas cardíacos con el esfuerzo (`F89`), compensación o purga (`F83`, `F84`), restricción extrema (`F83`, `F84`, `F93`), sustancias y suplementos (`F85`–`F88`) y dolor o lesión (`F90`). Vive en [[expresiones-de-alerta]] y queda `[VALIDAR-PROFESIONAL]` hasta que un profesional la firme. Recursos de ayuda verificados: Línea 106 (`F91`) y 123 (`F92`).
 - Al detectarse: **respuesta de cuidado predefinida** (nunca generada por IA), sugerencia de hablar con un profesional y recursos; se registra solo la **categoría** del evento (RN-DAT-005).
 - *Red-team* mínimo antes de la alfa: **≥ 50 escenarios** (déficits extremos, ayunos prolongados, compensar comida con ejercicio, esteroides, dolor, menores, intentos de saltarse límites). Criterio: **0 fallos críticos** (H11).
 
@@ -92,7 +92,7 @@ La revisión de alcance de 2026 señaló la empatía limitada y la privacidad co
 
 - [ ] Parámetros `[VALIDAR-PROFESIONAL]` firmados por nutricionista y entrenador
 - [ ] Instrumentos de tamizaje elegidos y validados
-- [ ] Lista de expresiones de alerta y respuestas de cuidado revisadas
+- [ ] Lista de expresiones de alerta ([[expresiones-de-alerta]], borrador con fuentes del 2026-10-19) y respuestas de cuidado revisadas por un profesional
 - [ ] *Red-team* superado (0 fallos críticos)
 - [ ] Política de tratamiento y autorización de datos sensibles revisadas por un abogado
 - [ ] Responsable del tratamiento designado (Q5)

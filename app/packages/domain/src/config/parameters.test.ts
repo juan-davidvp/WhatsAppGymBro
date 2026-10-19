@@ -106,8 +106,8 @@ function codePaths(): string[] {
 const rows = readVaultRows();
 
 describe('T-002 · parameters.ts replica parametros.md', () => {
-  it('la bóveda tiene 70 parámetros', () => {
-    expect(rows).toHaveLength(70);
+  it('la bóveda tiene 71 parámetros', () => {
+    expect(rows).toHaveLength(71);
   });
 
   it.each(rows)('$id · $code existe con el mismo valor', ({ code, value }) => {

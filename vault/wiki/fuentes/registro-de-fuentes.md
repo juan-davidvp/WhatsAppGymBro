@@ -4,14 +4,14 @@ tipo: fuente
 hito: H0
 estado: borrador
 creado: 2026-10-05
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 fuentes: []
 relacionados: [index, propuesta-de-valor]
 ---
 
 # Registro de fuentes
 
-> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
+> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81) y **2026-10-19** (F82–F93). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
 >
 > Para conservar el original de una fuente pública, guardarlo en `raw/` con el nombre `F##_titulo-corto.ext`.
 
@@ -156,6 +156,23 @@ relacionados: [index, propuesta-de-valor]
 | F76 | La FM — encuesta de Lanix sobre apps preferidas (Telegram 1 % como app más usada) | 2017-08-01 | C (desactualizada) | https://www.lafm.com.co/tecnologia/las-apps-prefieren-los-colombianos-segun-encuesta |
 | F81 | DataReportal — *Digital 2026: Colombia* | 2025-11-08 | B | https://datareportal.com/reports/digital-2026-colombia |
 
+## Seguridad: señales de alerta y recursos de ayuda (2026-10-19)
+
+| ID | Fuente | Fecha | Nivel | URL |
+|---|---|---|---|---|
+| F82 | NIMH — Señales de advertencia sobre el suicidio (español) | consultada 2026-10-19 | A | https://www.nimh.nih.gov/health/publications/espanol/senales-de-advertencia-sobre-el-suicidio/index.shtml |
+| F83 | NIMH — Trastornos de la alimentación: lo que debe saber (español) | consultada 2026-10-19 | A | https://www.nimh.nih.gov/health/publications/espanol/los-trastornos-de-la-alimentacion |
+| F84 | Manual MSD (versión para el público) — Bulimia nerviosa | consultada 2026-10-19 | B | https://www.msdmanuals.com/es/hogar/trastornos-de-la-salud-mental/trastornos-de-la-alimentaci%C3%B3n-y-de-la-conducta-alimentaria/bulimia-nerviosa |
+| F85 | Manual MSD (versión para el público) — Esteroides anabolizantes | rev. 2025-04 | B | https://www.msdmanuals.com/es/hogar/temas-especiales/drogas-recreativas-e-intoxicantes/esteroides-anabolizantes |
+| F86 | FDA — advertencia sobre SARM en adolescentes y adultos jóvenes | consultada 2026-10-19 | A | https://www.fda.gov/consumers/consumer-updates/fda-warns-use-selective-androgen-receptor-modulators-sarms-among-teens-young-adults |
+| F87 | FDA — advertencia sobre productos para bajar de peso y para el desempeño masculino con ingredientes ocultos (español) | consultada 2026-10-19 | A | https://www.fda.gov/news-events/press-announcements/la-fda-advierte-los-consumidores-que-eviten-ciertos-productos-para-mejorar-el-desempeno-masculino-y |
+| F88 | Cox y Piatkowski — "Eat clen? The normalisation of harmful clenbuterol use within digital fitness cultures", *Performance Enhancement & Health* 14(1) | 2025 | A (revisada por pares) | https://cronfa.swan.ac.uk/Record/cronfa70827 |
+| F89 | American Heart Association — Señales de advertencia de un ataque al corazón (español) | consultada 2026-10-19 | A | https://www.heart.org/-/media/Files/Health-Topics/Answers-by-Heart/Answers-by-Heart-SPANISH/Warning-Signs-Heart-Attack_Span.pdf |
+| F90 | NIAMS (NIH) — Lesiones deportivas: diagnóstico, tratamiento y pasos a seguir (español) | consultada 2026-10-19 | A | https://www.niams.nih.gov/es/informacion-de-salud/lesiones-deportivas/basics/diagnosis-treatment-and-steps-to-take |
+| F91 | Ministerio de Salud y Protección Social de Colombia — Línea 106 de salud mental | consultada 2026-10-19 | A | https://minsalud.gov.co/salud/publica/salud-mental/Paginas/linea-106.aspx |
+| F92 | Policía Nacional de Colombia — líneas de emergencia 123 y 155 | consultada 2026-10-19 | A | https://www.policia.gov.co/noticia/policia-nacional-sensibiliza-comunidad-sobre-uso-las-lineas-emergencia-123-155 |
+| F93 | NIDDK (NIH) — Diccionario: dieta muy baja en calorías (≈ 800 kcal/día o menos, con supervisión profesional) | consultada 2026-10-19 | A | https://www.niddk.nih.gov/Dictionary/V/very-low-calorie-diet |
+
 ## Pendientes de contraste
 
 - **F19:** obtener el artículo original de *Nutrients* 2025 y confirmar las cifras.
@@ -168,3 +185,5 @@ relacionados: [index, propuesta-de-valor]
 - **F65:** verificar las cifras en el portal del DANE.
 - **F76:** desactualizada (2017); reemplazar con un dato reciente de uso de Telegram en Colombia (H10).
 - **F73, F79, F80:** fuentes de terceros; confirmar en documentación oficial antes de implementar.
+- **F90, F92:** el texto se leyó a través del buscador (la página bloquea la descarga directa); confirmar en el sitio.
+- **F91, F92:** recursos de ayuda; reverificar vigencia cada 6 meses y antes de la alfa (dato volátil).

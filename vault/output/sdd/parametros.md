@@ -3,11 +3,11 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.1.0
+version: 0.2.0
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
-fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59]
+fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93]
 relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 ---
 
@@ -114,3 +114,4 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-065 | `data.deletionMaxHours` | 24 h | — | RN-DAT-003 | Sí | — |
 | P-068 | `ai.maxPhotoEstimatesPerDay` | 6 | — | Costo (H13) | Sí | `[supuesto]` |
 | P-069 | `user.defaultTimezone` | America/Bogota | — | RN-DQC-001 | No | ADR-016 |
+| P-071 | `safety.veryLowCalorieDailyMax` | 800 kcal/día | — | RN-SEG-007 | Sí | [V] (`F93`) |

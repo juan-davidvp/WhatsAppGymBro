@@ -485,7 +485,7 @@
 			"x": 1840,
 			"y": 398,
 			"width": 360,
-			"height": 358,
+			"height": 434,
 			"color": "4",
 			"label": "Output · plan, contenido y tareas — Contenido"
 		},
@@ -517,11 +517,20 @@
 			"height": 60
 		},
 		{
+			"id": "n-expresiones-de-alerta",
+			"type": "file",
+			"file": "output/sdd/contenido/expresiones-de-alerta.md",
+			"x": 1860,
+			"y": 672,
+			"width": 320,
+			"height": 60
+		},
+		{
 			"id": "n-plantillas-de-mensajes",
 			"type": "file",
 			"file": "output/sdd/contenido/plantillas-de-mensajes.md",
 			"x": 1860,
-			"y": 672,
+			"y": 748,
 			"width": 320,
 			"height": 60
 		},
@@ -529,7 +538,7 @@
 			"id": "grupo-Tareas",
 			"type": "group",
 			"x": 1840,
-			"y": 796,
+			"y": 872,
 			"width": 360,
 			"height": 130,
 			"color": "4",
@@ -540,7 +549,7 @@
 			"type": "file",
 			"file": "output/sdd/tareas/tareas-fase-0.md",
 			"x": 1860,
-			"y": 842,
+			"y": 918,
 			"width": 320,
 			"height": 60
 		},

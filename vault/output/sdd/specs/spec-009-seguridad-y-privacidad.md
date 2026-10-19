@@ -4,14 +4,14 @@ tipo: sdd-spec
 id: SPEC-009
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 fase: 0
 prioridad: P1
 depende_de: []
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [seguridad-y-cumplimiento, voz-y-marca, relacion-comida-entreno]
-fuentes: [F40, F42, F60, F71]
+fuentes: [F40, F42, F60, F71, F82, F91, F92, F93]
 relacionados: [spec-001-onboarding-y-objetivo, plantillas-de-mensajes, estrategia-de-pruebas, reglas-de-negocio]
 ---
 
@@ -90,6 +90,7 @@ Moderación de grupos, verificación documental de edad, atención clínica.
 
 ## 10. Aclaraciones pendientes
 
-- `[NEEDS CLARIFICATION: Q4]` Instrumentos de tamizaje (previo a la actividad; relación con la comida y el cuerpo) y lista de expresiones de alerta, validados por profesionales.
+- `[NEEDS CLARIFICATION: Q4]` Instrumentos de tamizaje (previo a la actividad; relación con la comida y el cuerpo), validados por profesionales.
+- **Lista de expresiones de alerta:** redactada el 2026-10-19 a pedido del PO a partir de fuentes oficiales ([[expresiones-de-alerta]], `F82`–`F93`); se usa en la Fase 0 y queda `[VALIDAR-PROFESIONAL]` hasta la firma de un profesional (Q4) antes de la alfa.
 - `[NEEDS CLARIFICATION: Q5]` Responsable del tratamiento y texto legal de la política antes de la alfa.
-- `[NEEDS CLARIFICATION]` Recursos de ayuda en Colombia (líneas y servicios) a incluir en las respuestas de cuidado, verificados y vigentes.
+- ~~Recursos de ayuda en Colombia~~ **Resuelta el 2026-10-19:** Línea 106 de salud mental (`F91`) y 123 de emergencias (`F92`), por categoría en [[expresiones-de-alerta]] §4. Reverificar vigencia cada 6 meses y antes de la alfa.

@@ -434,6 +434,13 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     text: 'Funciono con botones para tu entreno y tu comida. ¿Qué quieres hacer?',
     buttons: ['Hoy', 'Comida', 'Progreso'],
   },
+  {
+    id: 'CU-08',
+    kind: 'care',
+    when: 'Síntomas cardíacos con el esfuerzo',
+    text: 'Para el ejercicio ahora. Si la molestia en el pecho, la falta de aire o el mareo no pasan en unos minutos o empeoran, busca ayuda de emergencia ya: {recurso_local}',
+    buttons: [],
+  },
 ]);
 
 /** `{frase_semana}` de RS-01 y RS-03: lista rotativa sin juicios. */
