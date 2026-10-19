@@ -174,3 +174,12 @@ relacionados: [index, inicio]
 ## [2026-10-19] implementar | T-013 Nutrición
 - RN cubiertas: RN-NUT-001 a RN-NUT-008 (pruebas con su ID; propiedad: la meta en palmas es múltiplo de 0,5 y está a ≤ 0,25 del valor exacto). Archivo: `app/packages/domain/src/nutrition/nutrition.ts` (porciones con la mano, meta de proteína, mitad de comida con y sin números, frecuentes en 1 toque, "repetir ayer" como propuesta, confirmación obligatoria de propuestas, foco en la proteína total del día, calorías siempre desactivadas).
 - Lecturas elegidas: la proteína de un registro por porciones sale solo de las palmas (P-027); los alimentos del catálogo usan su proteína aproximada. "Repetir ayer" crea propuestas que se confirman, igual que las de la IA (RN-NUT-005).
+
+## [2026-10-19] decision | P-073: toques máximos para `cierre_del_dia`
+- RN-MSJ-016 decía "1–2 toques" dentro del texto; el número pasa a [[parametros]] como **P-073** `messages.dayClosingMaxTaps` = 2 (sin cambio de comportamiento). [[reglas-de-negocio]] v0.2.3, [[parametros]] v0.2.2.
+- `[NEEDS CLARIFICATION]` añadido a [[spec-007-proactividad-y-mensajes]] §10: CD-03 y CD-04 son para un día que ya cuenta, pero RN-MSJ-016 solo permite `cierre_del_dia` si el día no cuenta. El motor aplica la regla.
+
+## [2026-10-19] implementar | T-016 Motor de política de mensajes
+- RN cubiertas: RN-MSJ-001 a RN-MSJ-017 (RN-MSJ-011 en `packages/content`). SC-007-1: simulación de 60 días con 200 usuarios sintéticos (intensidad, días de entreno, candidatos, interacción y pausas aleatorios) y verificación independiente de cada envío: 0 violaciones de presupuesto de día y semana, silencio, separación o pausa. Comprobado que la simulación falla si se desactiva la separación mínima.
+- Archivo: `app/packages/domain/src/messaging/engine.ts` — `evaluateProactive` (decide y da el motivo de supresión), prioridad entre propósitos, `pickTemplate` (rotación sin repetir en P-058 días, azar recibido como parámetro), hora habitual, retroceso, regreso y reactivación, desvanecimiento, pausa, bloqueo, horas de cierre y de resumen. `packages/content` comprueba que el catálogo de propósitos coincide.
+- Lecturas elegidas: los presupuestos se cuentan por día operativo y por semana de lunes; el retroceso redondea la mitad hacia abajo; un candidato sin botones se suprime (`no_action`); la reactivación es un candidato marcado que el motor deja pasar durante la pausa por inactividad.

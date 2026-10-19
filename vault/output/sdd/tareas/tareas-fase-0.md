@@ -38,7 +38,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | T-013 [P] ✅ | `nutrition/`: meta en palmas, mitad de comida, modo sin números | RN-NUT-001 a 008 | T-002, T-003 | Pruebas por RN |
 | T-014 [P] ✅ | `day/`: día operativo, cuenta, completo, gracia, total | RN-DQC-001 a 007 | T-002 | Pruebas por RN + propiedad "el total nunca baja" |
 | T-015 [P] ✅ | `gamification/`: racha, comodines, reparación, semana, XP, niveles, misiones, Reto 66, regreso | RN-GAM-001 a 014 | T-014 | Pruebas por RN + propiedades de XP |
-| T-016 [P] | `messaging/`: motor de política puro + simulación de 60 días | RN-MSJ-001 a 017 | T-002 | SC-007-1 (0 violaciones) |
+| T-016 [P] ✅ | `messaging/`: motor de política puro + simulación de 60 días | RN-MSJ-001 a 017 | T-002 | SC-007-1 (0 violaciones) |
 | T-017 [P] | `safety/`: detector de expresiones de alerta, límites duros, sobreuso | RN-SEG-001 a 010 | T-003 | Pruebas por RN + primeros 50 casos de *red-team* |
 
 ## M2 · Servidor base

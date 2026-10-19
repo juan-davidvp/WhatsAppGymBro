@@ -3,7 +3,7 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.2.1
+version: 0.2.2
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
@@ -102,6 +102,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-059 | `messages.maxPauseDays` | 14 | — | RN-MSJ-013 | No | — |
 | P-060 | `messages.weeklySummaryAt` | Domingo 19:00 | — | RN-MSJ-017 | No | — |
 | P-066 | `messages.dayClosingAt` | 20:00 | — | RN-MSJ-016 | No | — |
+| P-073 | `messages.dayClosingMaxTaps` | 2 toques | — | RN-MSJ-016 | No | — |
 | P-067 | `metrics.actionWindowHours` | 2 h | — | [[plan-de-medicion]] | Sí | — |
 
 ## Integraciones, seguridad y datos

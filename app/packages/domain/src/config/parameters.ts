@@ -198,6 +198,8 @@ export const PARAMETERS = {
     weeklySummaryAt: { day: 'sunday', time: '19:00' },
     /** P-066 · RN-MSJ-016 · hora local */
     dayClosingAt: '20:00',
+    /** P-073 · RN-MSJ-016 · toques máximos de la acción que falta */
+    dayClosingMaxTaps: 2,
   },
   metrics: {
     /** P-067 · plan de medición · duro · horas */

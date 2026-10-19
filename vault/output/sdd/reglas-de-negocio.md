@@ -3,7 +3,7 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.2.2
+version: 0.2.3
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
@@ -134,7 +134,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | RN-MSJ-013 | `/pausa` detiene los mensajes proactivos entre 1 y P-059 días; los comandos siguen funcionando. | P-059 | ADR-011 |
 | RN-MSJ-014 | Si Telegram indica que el usuario bloqueó el bot, se detienen los envíos y se registra el evento `bot_blocked`. | — | ADR-002 |
 | RN-MSJ-015 | Solo el motor de política puede programar o enviar mensajes proactivos. | — | Constitución III |
-| RN-MSJ-016 | `cierre_del_dia` (P-066) solo se envía si el día todavía no cuenta y la acción que falta se puede hacer en 1–2 toques. | P-066 | ADR-011 |
+| RN-MSJ-016 | `cierre_del_dia` (P-066) solo se envía si el día todavía no cuenta y la acción que falta se puede hacer en P-073 toques o menos. | P-066, P-073 | ADR-011 |
 | RN-MSJ-017 | `resumen_semanal` se envía el domingo a la hora P-060 (si no cae en silencio) e incluye el plan de la semana siguiente. | P-060 | `F48` |
 
 ## RN-INT · Integraciones

@@ -4,12 +4,12 @@ tipo: sdd-spec
 id: SPEC-007
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 fase: 0
 prioridad: P1
 depende_de: [SPEC-002, SPEC-005]
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [proactividad-sin-spam, estrategia-anti-novedad, voz-y-marca]
 fuentes: [F47, F49, F50, F51]
 relacionados: [plantillas-de-mensajes, parametros, plan-tecnico, estrategia-de-pruebas]
@@ -97,4 +97,5 @@ Optimización con algoritmos de bandido (Fase 1+, cuando haya volumen), notifica
 
 ## 10. Aclaraciones pendientes
 
+- `[NEEDS CLARIFICATION]` Las plantillas CD-03 y CD-04 son para un día que **ya cuenta** y al que le falta proteína para quedar completo, pero RN-MSJ-016 dice que `cierre_del_dia` solo se envía si el día **todavía no cuenta**. El motor aplica la regla (CD-03/CD-04 no se envían). Propuesta: ampliar RN-MSJ-016 a "si el día no cuenta, o si cuenta y le falta solo la mitad de comida para quedar completo" (T-016, 2026-10-19).
 - `[NEEDS CLARIFICATION]` ¿`recordatorio_contextual` entra en la Fase 0? Propuesta: sí, solo con un disparador (ayer faltó y hoy hay hueco); el resto en Fase 1.
