@@ -4,7 +4,7 @@ tipo: inicio
 hito: H3
 estado: vigente
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 fuentes: [F01]
 relacionados: [index, propuesta-de-valor, leeme-output]
 ---
@@ -55,6 +55,6 @@ ADR-002 (Telegram en la Fase 0/01) · ADR-006 (bot estructurado, sin personaje) 
 > [!question] Responderlas desbloquea o ajusta trabajo concreto
 > - **Q1** ¿Colombia como mercado inicial? · **Q2** tu línea base personal · **Q3** presupuesto y semanas para la Fase 0
 > - **Q4** nutricionista y entrenador certificado (necesario antes de la alfa) · **Q5** responsable del tratamiento de datos
-> - **Q6** iPhone o Android; ¿Hevy, Strava o reloj? · **Q7** nombre y usuario del bot · **Q8** MongoDB o PostgreSQL · **Q9** Mini App en Fase 0 o 1
+> - **Q6** iPhone o Android; ¿Hevy, Strava o reloj? · **Q7** nombre y usuario del bot · ~~**Q8** MongoDB o PostgreSQL~~ (respondida: MongoDB) · **Q9** Mini App en Fase 0 o 1
 >
 > Detalle e impacto: [[propuesta-de-valor#19. Preguntas abiertas]].

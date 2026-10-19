@@ -22,24 +22,24 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
 | T-001 ✅ | Crear `app/` como monorepo (pnpm *workspaces*, TypeScript estricto, ESLint, Prettier, Vitest) | [[plan-tecnico]] §3 | — | `pnpm test` y `pnpm typecheck` corren en verde con un paquete vacío |
-| T-002 [P] | `packages/domain` con `config/parameters.ts` que replica [[parametros]] | P-001 a P-070 | T-001 | Una prueba verifica que cada `P-###` de la tabla existe en el archivo con el mismo valor |
-| T-003 [P] | `packages/content` con esquemas zod para plantillas, logros, niveles, ejercicios, alimentos y expresiones de alerta; transcribir los catálogos de `vault/output/sdd/contenido/` | RN-MSJ-010/011/012, RN-PLAN-010, RN-NUT-008 | T-001 | Pruebas de contenido de [[estrategia-de-pruebas]] §4 en verde |
-| T-004 [P] | `apps/server`: grammY con *long polling*, configuración por variables de entorno, registros con redacción | NFR-07, RN-DAT-006 | T-001 | El bot responde `/start` en local |
-| T-005 [P] | `infra/docker-compose.yml` (Mongo) y `.env.example` | [[plan-tecnico]] §10 | T-001 | `docker compose up` levanta la base |
-| T-006 | Integración continua: tipos, estilo, pruebas y `herramientas/lint_trazabilidad.py` | Constitución | T-001 | El *pipeline* falla si una RN no tiene prueba |
+| T-002 [P] ✅ | `packages/domain` con `config/parameters.ts` que replica [[parametros]] | P-001 a P-070 | T-001 | Una prueba verifica que cada `P-###` de la tabla existe en el archivo con el mismo valor |
+| T-003 [P] ✅ | `packages/content` con esquemas zod para plantillas, logros, niveles, ejercicios, alimentos y expresiones de alerta; transcribir los catálogos de `vault/output/sdd/contenido/` | RN-MSJ-010/011/012, RN-PLAN-010, RN-NUT-008 | T-001 | Pruebas de contenido de [[estrategia-de-pruebas]] §4 en verde |
+| T-004 [P] ✅ | `apps/server`: grammY con *long polling*, configuración por variables de entorno, registros con redacción | NFR-07, RN-DAT-006 | T-001 | El bot responde `/start` en local |
+| T-005 [P] ✅ | `infra/docker-compose.yml` (Mongo) y `.env.example` | [[plan-tecnico]] §10 | T-001 | `docker compose up` levanta la base |
+| T-006 ✅ | Integración continua: tipos, estilo, pruebas y `herramientas/lint_trazabilidad.py` | Constitución | T-001 | El *pipeline* falla si una RN no tiene prueba |
 
 ## M1 · Dominio (pruebas primero)
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-010 [P] | `goals/`: meta propuesta, límites, media móvil, progreso, cumplimiento, cierres | RN-OBJ-001 a 013, RN-MAN-001 a 005 | T-002 | Cada RN con pruebas nombradas por su ID |
+| T-010 [P] ✅ | `goals/`: meta propuesta, límites, media móvil, progreso, cumplimiento, cierres | RN-OBJ-001 a 013, RN-MAN-001 a 005 | T-002 | Cada RN con pruebas nombradas por su ID |
 | T-011 [P] | `plan/`: generador A/B/C, divisiones, volumen, duración, descanso, sin deuda | RN-PLAN-001 a 010 | T-002, T-003 | Pruebas por RN + propiedad "ningún plan viola el descanso" |
-| T-012 [P] | `training/`: completitud, progresión doble, estancamiento, e1RM y récords | RN-ENT-001 a 006 | T-002 | Pruebas por RN |
-| T-013 [P] | `nutrition/`: meta en palmas, mitad de comida, modo sin números | RN-NUT-001 a 008 | T-002, T-003 | Pruebas por RN |
-| T-014 [P] | `day/`: día operativo, cuenta, completo, gracia, total | RN-DQC-001 a 007 | T-002 | Pruebas por RN + propiedad "el total nunca baja" |
-| T-015 [P] | `gamification/`: racha, comodines, reparación, semana, XP, niveles, misiones, Reto 66, regreso | RN-GAM-001 a 014 | T-014 | Pruebas por RN + propiedades de XP |
-| T-016 [P] | `messaging/`: motor de política puro + simulación de 60 días | RN-MSJ-001 a 017 | T-002 | SC-007-1 (0 violaciones) |
-| T-017 [P] | `safety/`: detector de expresiones de alerta, límites duros, sobreuso | RN-SEG-001 a 010 | T-003 | Pruebas por RN + primeros 50 casos de *red-team* |
+| T-012 [P] ✅ | `training/`: completitud, progresión doble, estancamiento, e1RM y récords | RN-ENT-001 a 006 | T-002 | Pruebas por RN |
+| T-013 [P] ✅ | `nutrition/`: meta en palmas, mitad de comida, modo sin números | RN-NUT-001 a 008 | T-002, T-003 | Pruebas por RN |
+| T-014 [P] ✅ | `day/`: día operativo, cuenta, completo, gracia, total | RN-DQC-001 a 007 | T-002 | Pruebas por RN + propiedad "el total nunca baja" |
+| T-015 [P] ✅ | `gamification/`: racha, comodines, reparación, semana, XP, niveles, misiones, Reto 66, regreso | RN-GAM-001 a 014 | T-014 | Pruebas por RN + propiedades de XP |
+| T-016 [P] ✅ | `messaging/`: motor de política puro + simulación de 60 días | RN-MSJ-001 a 017 | T-002 | SC-007-1 (0 violaciones) |
+| T-017 [P] ✅ | `safety/`: detector de expresiones de alerta, límites duros, sobreuso | RN-SEG-001 a 010 | T-003 | Pruebas por RN + primeros 50 casos de *red-team* |
 
 ## M2 · Servidor base
 

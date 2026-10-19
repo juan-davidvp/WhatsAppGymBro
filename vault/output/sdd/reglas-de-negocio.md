@@ -3,11 +3,11 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.1.0
+version: 0.2.3
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
-fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71]
+fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71, F82, F93]
 relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 ---
 
@@ -58,7 +58,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | RN-PLAN-007 | Una sesión no realizada **no genera deuda**: no se duplica ni se suma a la siguiente; la rotación continúa. Puede reprogramarse dentro de la misma semana. | — | FB-001-17, `F46` |
 | RN-PLAN-008 | Al menos P-017 día de descanso por semana; los novatos no tienen más de P-018 días seguidos de fuerza. `[VALIDAR-PROFESIONAL]` | P-017, P-018 | Seguridad |
 | RN-PLAN-009 | El plan de la semana se publica con el resumen semanal (RN-MSJ-017) y la sesión del día está lista antes de la hora habitual. | — | FB-001-22 |
-| RN-PLAN-010 | Cada ejercicio de la versión A tiene equivalentes B y C del mismo patrón de movimiento según el catálogo de ejercicios. | — | FB-001-13 |
+| RN-PLAN-010 | Cada ejercicio de la versión A tiene equivalentes B y C del mismo patrón de movimiento según el catálogo de ejercicios, **salvo las excepciones exprés del catálogo**: los patrones que el catálogo deja sin versión C se compensan con el patrón que indica o se omiten en la sesión exprés. | — | FB-001-13 · decisión del PO 2026-10-19 |
 
 ## RN-ENT · Entrenamiento
 
@@ -77,7 +77,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 |---|---|---|---|
 | RN-NUT-001 | El método de registro por defecto son las **porciones con la mano**: palma (proteína), mano ahuecada (carbohidrato), puño (verdura), pulgar (grasa). | — | `F61`, ADR-012 |
 | RN-NUT-002 | Meta de proteína diaria = peso × P-026 g/kg, expresada en palmas de P-027 g, redondeada al 0,5 más cercano. `[VALIDAR-PROFESIONAL]` | P-026, P-027 | `F56`, `F57` |
-| RN-NUT-003 | La mitad de comida se cumple cuando la proteína registrada del día alcanza al menos P-028 % de la meta. En modo sin números: 3 comidas con al menos una porción de proteína. | P-028 | ADR-010 |
+| RN-NUT-003 | La mitad de comida se cumple cuando la proteína registrada del día alcanza al menos P-028 % de la meta. En modo sin números: P-072 comidas con al menos una porción de proteína. | P-028, P-072 | ADR-010 |
 | RN-NUT-004 | Una comida puede guardarse como frecuente y registrarse luego con 1 toque; existe "repetir ayer". | — | FB-001-08 |
 | RN-NUT-005 | Las propuestas de la IA (foto o texto) **nunca** se registran sin confirmación del usuario. | — | ADR-007 |
 | RN-NUT-006 | Las sugerencias de comida dependen del tipo de día; se prioriza la proteína total del día sobre el horario. `[VALIDAR-PROFESIONAL]` | — | `F56`, FB-001-04 |
@@ -134,7 +134,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | RN-MSJ-013 | `/pausa` detiene los mensajes proactivos entre 1 y P-059 días; los comandos siguen funcionando. | P-059 | ADR-011 |
 | RN-MSJ-014 | Si Telegram indica que el usuario bloqueó el bot, se detienen los envíos y se registra el evento `bot_blocked`. | — | ADR-002 |
 | RN-MSJ-015 | Solo el motor de política puede programar o enviar mensajes proactivos. | — | Constitución III |
-| RN-MSJ-016 | `cierre_del_dia` (P-066) solo se envía si el día todavía no cuenta y la acción que falta se puede hacer en 1–2 toques. | P-066 | ADR-011 |
+| RN-MSJ-016 | `cierre_del_dia` (P-066) solo se envía si el día todavía no cuenta y la acción que falta se puede hacer en P-073 toques o menos. | P-066, P-073 | ADR-011 |
 | RN-MSJ-017 | `resumen_semanal` se envía el domingo a la hora P-060 (si no cae en silencio) e incluye el plan de la semana siguiente. | P-060 | `F48` |
 
 ## RN-INT · Integraciones
@@ -158,7 +158,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | RN-SEG-004 | Los límites de seguridad (RN-OBJ-004, RN-OBJ-005 y parámetros marcados como duros) no son configurables por el usuario. | — | Constitución V |
 | RN-SEG-005 | Nunca se recomiendan suplementos, fármacos ni sustancias, incluidos esteroides anabólicos; ante preguntas, respuesta de cuidado y derivación. | — | `F60` |
 | RN-SEG-006 | Si el usuario marca dolor en un ejercicio, se detiene su progresión y se ofrece una variante; si el dolor se repite en P-062 sesiones, se recomienda consulta profesional. | P-062 | [[seguridad-y-cumplimiento]] |
-| RN-SEG-007 | El texto libre se revisa contra la lista de expresiones de alerta **antes de cualquier otra ruta**; si coincide, se responde con la respuesta de cuidado predefinida de su categoría y se pausan las mecánicas de juego ese día. `[VALIDAR-PROFESIONAL]` | — | `F42` |
+| RN-SEG-007 | El texto libre se revisa contra la lista de expresiones de alerta **antes de cualquier otra ruta**; si coincide, se responde con la respuesta de cuidado predefinida de su categoría y se pausan las mecánicas de juego ese día. La lista, las categorías, su prioridad y la forma de comparar viven en [[expresiones-de-alerta]]. `[VALIDAR-PROFESIONAL]` | P-071 | `F42`, `F82`–`F93` |
 | RN-SEG-008 | Hay señal de sobreuso si se registran más de P-063 sesiones en un día o se entrena en todos los días de descanso durante P-064 semanas; se envía un mensaje de cuidado y se sugiere descansar. | P-063, P-064 | `F60` |
 | RN-SEG-009 | No se solicitan ni se almacenan fotos del cuerpo. | — | `F60` |
 | RN-SEG-010 | La IA solo devuelve estructuras validadas por esquema (componentes y porciones); nunca texto de recomendación de salud dirigido al usuario. | — | ADR-007 |

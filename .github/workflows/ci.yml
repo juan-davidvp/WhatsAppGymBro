@@ -1,0 +1,57 @@
+# Integración continua (T-006; constitución VII y VIII).
+# Falla si fallan los tipos, el estilo o las pruebas, o si la trazabilidad
+# bóveda ↔ código se rompe: una RN exigible sin prueba con su ID, un P-### que
+# no está en parameters.ts, enlaces rotos o fuentes sin registrar.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tipos, estilo, pruebas y trazabilidad
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          # Toma la versión de "packageManager" en app/package.json.
+          package_json_file: app/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Tipos
+        run: pnpm typecheck
+
+      - name: Estilo (ESLint)
+        run: pnpm lint
+
+      - name: Formato (Prettier)
+        run: pnpm format:check
+
+      - name: Pruebas
+        run: pnpm test
+
+      - name: Trazabilidad (RN ↔ pruebas, P ↔ parameters.ts, bóveda)
+        working-directory: .
+        run: python3 herramientas/lint_trazabilidad.py --codigo

@@ -1,0 +1,37 @@
+# MongoDB local para desarrollo (plan técnico §10; ADR-015).
+# Base de datos decidida por el PO: MongoDB (Q8, 2026-10-19; ADR-015 aceptado).
+#
+#   cp app/infra/.env.example app/infra/.env   # y completar los valores
+#   docker compose -f app/infra/docker-compose.yml up -d
+#
+# Compose lee las variables de app/infra/.env (la carpeta de este archivo).
+# El puerto solo se publica en 127.0.0.1: la base no queda expuesta en la red.
+
+name: gymbro
+
+services:
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${MONGO_PORT:-27017}:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?definir MONGO_ROOT_USERNAME en app/infra/.env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?definir MONGO_ROOT_PASSWORD en app/infra/.env}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-gymbro}
+      # Los usa mongo-init/01-app-user.js para crear el usuario de la aplicación.
+      MONGO_DATABASE: ${MONGO_DATABASE:-gymbro}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME:?definir MONGO_APP_USERNAME en app/infra/.env}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?definir MONGO_APP_PASSWORD en app/infra/.env}
+    volumes:
+      - mongo-data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+volumes:
+  mongo-data:

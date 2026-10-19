@@ -3,9 +3,9 @@ titulo: Plan técnico de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [registro-de-decisiones, integraciones-y-ecosistema, proactividad-sin-spam, seguridad-y-cumplimiento]
 fuentes: [F69, F70, F71, F72, F77, F78]
 relacionados: [constitucion, modelo-de-datos, plan-de-medicion, estrategia-de-pruebas, tareas-fase-0, spec-000-vision-fase-0]
@@ -22,7 +22,7 @@ relacionados: [constitucion, modelo-de-datos, plan-de-medicion, estrategia-de-pr
 | Lenguaje | TypeScript en todo el sistema (Node.js LTS) | ADR-015 |
 | Bot | **grammY** (TypeScript; plugins de conversaciones, menús, sesiones, reintentos y límites de tasa) (`F72`) | ADR-015 |
 | Dominio | Paquete puro `@gymbro/domain` sin E/S, con parámetros centralizados | ADR-007, Constitución VII |
-| Persistencia | **MongoDB** (Atlas en la nube; contenedor local) con validación en la frontera (zod) | ADR-015 · `[NEEDS CLARIFICATION: Q8]` |
+| Persistencia | **MongoDB** (Atlas en la nube; contenedor local) con validación en la frontera (zod) | ADR-015 (Q8 respondida: MongoDB) |
 | Planificador | Bandeja de salida en la base de datos + ciclo cada minuto en el mismo proceso | SPEC-007 |
 | HTTP | Servidor ligero para el puente de ingesta, la API de la Mini App y el *webhook* de Telegram | SPEC-008 |
 | Imágenes | Plantillas SVG → PNG en el servidor (muro, resumen) | ADR-013 |
@@ -210,7 +210,6 @@ Plantillas SVG parametrizadas (muro de constancia, tarjeta de logro) renderizada
 
 ## 13. Decisiones pendientes
 
-- `[NEEDS CLARIFICATION: Q8]` MongoDB vs. PostgreSQL.
 - `[NEEDS CLARIFICATION: Q9]` Mini App en Fase 0 o Fase 1.
 - `[NEEDS CLARIFICATION]` Proveedor y modelo de IA para la foto (decidir con la prueba de 20 comidas, H14, y el costo, H13).
 - `[NEEDS CLARIFICATION]` Plataforma de despliegue.

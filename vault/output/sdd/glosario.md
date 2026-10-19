@@ -3,9 +3,9 @@ titulo: Glosario — lenguaje ubicuo de Gym Bro
 tipo: sdd-glosario
 hito: H3
 estado: en-revision
-version: 0.1.0
+version: 0.1.1
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, objetivos-y-progreso]
 fuentes: []
 relacionados: [constitucion, reglas-de-negocio, modelo-de-datos]
@@ -107,5 +107,6 @@ relacionados: [constitucion, reglas-de-negocio, modelo-de-datos]
 | Tamizaje | Preguntas de seguridad en el onboarding | `Screening` | RN-SEG-002/003 |
 | Señal de riesgo | Coincidencia con la lista de expresiones de alerta o con patrones de sobreuso | `RiskSignal` | RN-SEG-007/008 |
 | Respuesta de cuidado | Plantilla predefinida ante una señal de riesgo | `CareResponse` | RN-SEG-007 |
+| Categoría de alerta | Tipo de señal de riesgo en el texto libre, con prioridad y respuesta propias | `AlertCategory`: `distress`, `cardiac_warning`, `purge`, `extreme_restriction`, `substances`, `pain` | RN-SEG-007 |
 | Consentimiento | Autorización explícita y granular por categoría de dato | `Consent` | RN-DAT-001 |
 | Puente de ingesta | Endpoint con token por usuario para recibir actividades | `IngestionWebhook` | RN-INT-003 |

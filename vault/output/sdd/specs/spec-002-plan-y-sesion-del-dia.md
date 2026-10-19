@@ -4,12 +4,12 @@ tipo: sdd-spec
 id: SPEC-002
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.2
 fase: 0
 prioridad: P1
 depende_de: [SPEC-001]
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [constancia-en-cualquier-lugar, fundamentos-de-entrenamiento, flujos-de-usuario, objetivos-y-progreso]
 fuentes: []
 relacionados: [spec-003-registro-de-entrenamiento, spec-007-proactividad-y-mensajes, catalogo-de-ejercicios-base, parametros]
@@ -88,3 +88,4 @@ Planes de cardio específicos, deportes, programación por bloques avanzados, ru
 
 - `[NEEDS CLARIFICATION: Q4]` Validación profesional de P-014 a P-018 y del catálogo de ejercicios.
 - `[NEEDS CLARIFICATION]` ¿El usuario puede cambiar un ejercicio por otro de su mismo patrón? Propuesta: sí, en Fase 0 con botón [Cambiar ejercicio] (Should).
+- ~~`[NEEDS CLARIFICATION]`~~ **Resuelta el 2026-10-19:** el PO acepta las excepciones y RN-PLAN-010 queda redactada con "salvo las excepciones exprés del catálogo" (en casa y en exprés hay poca variedad de ejercicios). Contexto original: RN-PLAN-010 pedía equivalentes B y C para todo ejercicio A, pero el [[catalogo-de-ejercicios-base]] §3 deja sin versión C a `PULL_V` ("se compensa con PULL_H") y a `ARMS` ("—"), y el circuito exprés (§4) no los incluye. Propuesta: mantener esas dos excepciones y redactar RN-PLAN-010 como "…equivalentes B y C del mismo patrón, salvo las excepciones exprés del catálogo". Mientras tanto, el código las guarda como `EXPRESS_EXCEPTIONS` y la prueba de RN-PLAN-010 solo acepta esas dos (T-003).

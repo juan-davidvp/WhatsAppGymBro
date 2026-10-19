@@ -3,11 +3,11 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.1.0
+version: 0.2.2
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
-fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59]
+fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93]
 relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 ---
 
@@ -58,6 +58,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-026 | `nutrition.proteinGPerKg` | 1,6 g/kg/día | 1,4–2,2 | RN-NUT-002 | No | [V] (`F56`, `F57`) |
 | P-027 | `nutrition.proteinGPerPalm` | 25 g | 20–30 | RN-NUT-002 | No | [V] |
 | P-028 | `nutrition.halfThresholdPct` | 80 % | 70–100 | RN-NUT-003 | No | — |
+| P-072 | `nutrition.numberFreeMealsWithProtein` | 3 comidas | — | RN-NUT-003 | No | — |
 
 ## Día que cuenta y gamificación
 
@@ -101,6 +102,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-059 | `messages.maxPauseDays` | 14 | — | RN-MSJ-013 | No | — |
 | P-060 | `messages.weeklySummaryAt` | Domingo 19:00 | — | RN-MSJ-017 | No | — |
 | P-066 | `messages.dayClosingAt` | 20:00 | — | RN-MSJ-016 | No | — |
+| P-073 | `messages.dayClosingMaxTaps` | 2 toques | — | RN-MSJ-016 | No | — |
 | P-067 | `metrics.actionWindowHours` | 2 h | — | [[plan-de-medicion]] | Sí | — |
 
 ## Integraciones, seguridad y datos
@@ -114,3 +116,4 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-065 | `data.deletionMaxHours` | 24 h | — | RN-DAT-003 | Sí | — |
 | P-068 | `ai.maxPhotoEstimatesPerDay` | 6 | — | Costo (H13) | Sí | `[supuesto]` |
 | P-069 | `user.defaultTimezone` | America/Bogota | — | RN-DQC-001 | No | ADR-016 |
+| P-071 | `safety.veryLowCalorieDailyMax` | 800 kcal/día | — | RN-SEG-007 | Sí | [V] (`F93`) |

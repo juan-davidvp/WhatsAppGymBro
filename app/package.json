@@ -12,7 +12,9 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "dev": "pnpm --filter @gymbro/server dev",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && python3 ../herramientas/lint_trazabilidad.py --codigo"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -5,7 +5,7 @@ hito: H0
 estado: en-revision
 version: 0.2
 creado: 2026-10-05
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 autor: Juan David (Product Owner) · redacción asistida por Claude
 fuentes: [F08, F09, F10, F11, F13, F14, F15, F16, F17, F18, F25, F27, F29, F30, F31, F33, F35, F37, F38, F39, F40, F41, F42, F43, F45, F46, F47, F48, F49, F50, F51, F52, F53, F56, F57, F58, F59, F60, F62, F63, F64, F65, F66, F67, F69, F70, F71, F75, F76]
 relacionados: [usuario-cabeza-01, jobs-to-be-done, objetivos-y-progreso, estrategia-anti-novedad, cada-dia-cuenta, sistema-de-gamificacion, registro-sin-friccion, proactividad-sin-spam, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, voz-y-marca, flujos-de-usuario, registro-de-decisiones, reglas-de-negocio, spec-000-vision-fase-0]
@@ -538,7 +538,7 @@ gantt
 | Q5 | ¿Quién será el responsable del tratamiento de datos en la alfa? | Ley 1581 (`F40`) |
 | Q6 | ¿Usas iPhone o Android, y usas Hevy, Strava o algún reloj? | Prioriza el puente de ingesta y las integraciones |
 | Q7 | ¿Confirmas "Gym Bro" y qué usuario de bot quieres (`@…bot`)? | Marca y BotFather |
-| Q8 | ¿MongoDB (afín a tus habilidades) o PostgreSQL? | ADR-015 |
+| Q8 | ¿MongoDB (afín a tus habilidades) o PostgreSQL? | ADR-015 · **Respondida (2026-10-19): MongoDB** |
 | Q9 | ¿Mini App en la Fase 0 (Should) o en la Fase 1? | Alcance y tiempo |
 
 ---
