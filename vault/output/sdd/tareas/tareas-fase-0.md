@@ -21,7 +21,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-001 | Crear `app/` como monorepo (pnpm *workspaces*, TypeScript estricto, ESLint, Prettier, Vitest) | [[plan-tecnico]] §3 | — | `pnpm test` y `pnpm typecheck` corren en verde con un paquete vacío |
+| T-001 ✅ | Crear `app/` como monorepo (pnpm *workspaces*, TypeScript estricto, ESLint, Prettier, Vitest) | [[plan-tecnico]] §3 | — | `pnpm test` y `pnpm typecheck` corren en verde con un paquete vacío |
 | T-002 [P] | `packages/domain` con `config/parameters.ts` que replica [[parametros]] | P-001 a P-070 | T-001 | Una prueba verifica que cada `P-###` de la tabla existe en el archivo con el mismo valor |
 | T-003 [P] | `packages/content` con esquemas zod para plantillas, logros, niveles, ejercicios, alimentos y expresiones de alerta; transcribir los catálogos de `vault/output/sdd/contenido/` | RN-MSJ-010/011/012, RN-PLAN-010, RN-NUT-008 | T-001 | Pruebas de contenido de [[estrategia-de-pruebas]] §4 en verde |
 | T-004 [P] | `apps/server`: grammY con *long polling*, configuración por variables de entorno, registros con redacción | NFR-07, RN-DAT-006 | T-001 | El bot responde `/start` en local |

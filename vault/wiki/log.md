@@ -83,3 +83,10 @@ relacionados: [index, inicio]
 - `--corregir` completó la lista `fuentes` en 5 notas ([[parametros]], [[reglas-de-negocio]], [[benchmark-competitivo]], [[panorama-de-mercado]], [[propuesta-de-valor]]).
 - Advertencias aceptadas: 3 enlaces de [[propuesta-de-valor-v0-1]] a páginas que nunca se crearon (nota archivada; no se corrige). F02 está registrada pero ninguna nota la cita.
 - Siguiente: aprobación del PO de la v0.2 y de los ADR propuestos; respuestas a Q1–Q9; T-001 en Claude Code.
+
+## [2026-10-19] implementar | T-001 Monorepo `app/`
+- Sin RN ni eventos (tarea de preparación). Criterio cumplido: `pnpm test` (1 prueba de humo en `@gymbro/domain`) y `pnpm typecheck` en verde; también `pnpm lint` y `pnpm format:check`. Comprobado que un error de tipos y uno de estilo sembrados hacen fallar `typecheck` y `lint`.
+- Archivos: `app/package.json`, `app/pnpm-workspace.yaml` (`packages/*`, `apps/*`), `app/tsconfig.base.json` (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`), `app/eslint.config.js` (typescript-eslint *strict* + Prettier), `app/.prettierrc.json`, `app/vitest.config.ts`, `app/packages/domain/` (esqueleto vacío que llena T-002).
+- Dependencias (solo desarrollo, principio XI): typescript, @types/node, vitest, eslint, @eslint/js, typescript-eslint, eslint-config-prettier, prettier. TypeScript fijado en `~6.0.3` porque typescript-eslint 8.71 aún no admite TypeScript 7; `@types/node` en 22 para coincidir con Node LTS.
+- `CLAUDE.md` (Comandos): los comandos `pnpm` se ejecutan dentro de `app/`.
+- Siguiente: T-002 a T-005 en paralelo; T-006 (integración continua).
