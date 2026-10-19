@@ -49,6 +49,8 @@ export const EVENT_PROPS_SCHEMAS = {
     result: z.enum(['clear', 'flag', 'not_done']),
   }),
   number_free_mode_enabled: z.strictObject({}),
+  deletion_requested: z.strictObject({}),
+  deletion_completed: z.strictObject({}),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

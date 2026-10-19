@@ -19,6 +19,7 @@ export interface InMemoryOptions {
   failRiskSignals?: boolean;
   /** Crea los usuarios con el onboarding ya terminado. */
   onboardingCompleted?: boolean;
+  failErase?: boolean;
 }
 
 export interface ConsentRow {
@@ -134,6 +135,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     },
     eraser: {
       eraseUser(userId) {
+        if (options.failErase) return Promise.reject(new Error('mongo caído'));
         for (const [key, user] of users) if (user.id === userId) users.delete(key);
         removeRows(consents, userId);
         removeRows(screenings, userId);

@@ -204,7 +204,7 @@ describe('T-021 · datos de los botones', () => {
   it('rechaza otra versión, otra acción u otro destino', () => {
     for (const data of [
       'v2:nav:today',
-      'v1:del:today',
+      'v1:xyz:today',
       'v1:nav:gym',
       'v1:nav:today:x',
       'v1:ob:paso_falso:yes',

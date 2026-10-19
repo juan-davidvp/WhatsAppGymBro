@@ -14,7 +14,9 @@ import {
 } from '../adapters/mongo/repositories.js';
 import { createEventEmitter } from '../events/emitter.js';
 import { createLogger } from '../logger.js';
-import { TEST_BOT_INFO, TEST_TOKEN, textUpdate } from '../testing/telegram.js';
+import { COLLECTIONS } from '../adapters/mongo/schema.js';
+import { encodeCallbackData } from './callback-data.js';
+import { TEST_BOT_INFO, TEST_TOKEN, callbackUpdate, textUpdate } from '../testing/telegram.js';
 import { createBot } from './create-bot.js';
 
 /** T-021 · la cadena completa del bot con los repositorios MongoDB reales. */
@@ -94,5 +96,38 @@ describe('RN-SEG-007 · RN-DAT-005 · T-021 con MongoDB', () => {
       ),
     );
     for (const word of ['lesion', 'hombro', 'press', 'Juan']) expect(stored).not.toContain(word);
+  });
+});
+
+describe('SC-009-2 · T-034 · tras /borrar_datos ninguna colección contiene el id del usuario', () => {
+  it('onboarding con autorización, tamizajes y alerta; luego borrado total', async () => {
+    const { bot } = realBot();
+    const telegramUserId = 42;
+    let id = 900;
+    const tap = (action: Parameters<typeof encodeCallbackData>[0]) =>
+      bot.handleUpdate(callbackUpdate(encodeCallbackData(action), id++));
+    await bot.handleUpdate(textUpdate('/start', id++));
+    const user = await db.collection('users').findOne({ telegramUserId });
+    const userId = user?._id.toHexString() ?? '';
+    expect(userId).not.toBe('');
+    await tap({ action: 'ob', step: 'privacy', value: 'accept' });
+    await tap({ action: 'ob', step: 'age', value: 'yes' });
+    await db
+      .collection('users')
+      .updateOne({ telegramUserId }, { $set: { 'onboarding.step': 'pre_activity_screening' } });
+    await tap({ action: 'ob', step: 'pre_activity_screening', value: 'some_yes' });
+    await bot.handleUpdate(textUpdate('tengo palpitaciones muy fuertes', id++));
+    expect(await db.collection('screenings').countDocuments({ userId })).toBe(1);
+    expect(await db.collection('consents').countDocuments({ userId })).toBeGreaterThan(0);
+
+    await bot.handleUpdate(textUpdate('/borrar_datos', id++));
+    await tap({ action: 'del', value: 'confirm' });
+    await tap({ action: 'del', value: 'erase' });
+
+    for (const name of Object.keys(COLLECTIONS)) {
+      const text = JSON.stringify(await db.collection(name).find().toArray());
+      expect(text, name).not.toContain(userId);
+    }
+    expect(await db.collection('users').countDocuments({ telegramUserId })).toBe(0);
   });
 });

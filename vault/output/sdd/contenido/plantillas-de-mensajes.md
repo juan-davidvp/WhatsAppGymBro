@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.4.0
+version: 0.5.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -138,6 +138,16 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | TZ-09 | 4/5 · ¿Sientes que te sobra peso aunque los demás digan que estás demasiado delgado? [Sí] [No] |
 | TZ-10 | 5/5 · ¿Dirías que la comida domina tu vida? [Sí] [No] |
 | TZ-11 | Gracias por responder. Tu progreso se va a mostrar sin números: sin gramos, peso ni calorías. Si la comida te genera angustia, hablar con un profesional ayuda: {recurso_local} |
+
+### 3.2 Borrar mis datos (`/borrar_datos`, RN-DAT-003)
+
+| ID | Texto |
+|---|---|
+| BD-01 | ¿Borrar todos tus datos de Gym Bro? Se borran tu plan, tus entrenos, tus comidas, tu progreso y tus logros. No se puede deshacer. [Sí, borrar] [Cancelar] |
+| BD-02 | Última confirmación: después de esto empiezas de cero. [Borrar todo] [Cancelar] |
+| BD-03 | Listo: borré todos tus datos de Gym Bro. Este chat sigue en Telegram; para borrarlo, elimínalo desde tu lista de chats. |
+| BD-04 | Cancelado: no borré nada. |
+| BD-05 | Algo falló y no terminé de borrar. Vuelve a intentarlo con /borrar_datos. |
 
 ## 4. Respuestas de cuidado (seguridad) `[VALIDAR-PROFESIONAL]`
 

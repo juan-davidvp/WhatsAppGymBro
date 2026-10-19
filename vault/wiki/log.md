@@ -262,3 +262,9 @@ relacionados: [index, inicio]
   - **Borrado:** el puerto `UserDataEraser` y su adaptador MongoDB borran al usuario de todas las colecciones; la prueba no encuentra rastros (base de T-034).
 - Pendiente para T-032: si el SCOFF es positivo y el objetivo elegido era perder grasa, hay que volver a pedir el objetivo sin esa opción (RN-SEG-003).
 - Pregunta abierta para el profesional: ¿un "sí" a la pregunta 1 (vómito) debería disparar CU-02 por sí solo ([[tamizajes]] §2)?
+
+## [2026-10-19] implementar | T-034 `/borrar_datos` con borrado total
+- `app/apps/server/src/privacy/deletion.ts`: `/borrar_datos` → BD-01 → BD-02 → borrado. El borrado ocurre en el momento, muy por debajo de P-065. Después, BD-03 indica cómo borrar el chat en Telegram. Cancelar en cualquiera de las dos confirmaciones no borra nada (BD-04). Si el borrado falla, se dice (BD-05) y no se anuncia un borrado que no ocurrió.
+- [[plantillas-de-mensajes]] v0.5.0, §3.2: textos BD-01 a BD-05, redactados por Claude a pedido del PO. BD-03 no nombra botones de la aplicación de Telegram, que cambian según el cliente.
+- SC-009-2: prueba de integración con MongoDB. Recorre el onboarding con autorización, el tamizaje y una alerta; tras el borrado, ninguna colección contiene el id del usuario.
+- Eventos: `deletion_requested` (queda sin seudónimo al borrar) y `deletion_completed` (sin seudónimo).

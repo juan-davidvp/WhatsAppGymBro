@@ -62,6 +62,8 @@ const BUTTON_VALUES: Readonly<Record<string, Readonly<Record<string, string>>>> 
   'TZ-01': { 'Todo NO': 'all_no', 'Algún SÍ': 'some_yes', 'No lo hice': 'not_done' },
   'TZ-02': { 'Ya tengo autorización': 'authorized' },
   'TZ-03': { 'Todo NO': 'all_no', 'Algún SÍ': 'some_yes' },
+  'BD-01': { 'Sí, borrar': 'confirm', Cancelar: 'cancel' },
+  'BD-02': { 'Borrar todo': 'erase', Cancelar: 'cancel' },
 };
 
 /** Respuesta con la plantilla y sus botones; cada botón lleva su valor. */

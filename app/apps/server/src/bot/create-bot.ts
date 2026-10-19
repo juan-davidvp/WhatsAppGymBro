@@ -21,6 +21,7 @@ import type {
   UserDataEraser,
   UsersRepository,
 } from '../ports/repositories.js';
+import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { deduplicate, loadUser, riskGuard, type BotContext } from './middleware.js';
 
@@ -104,7 +105,7 @@ export function createBot({
   handlers.use(loadUser(deps.users, clock));
   handlers.use(riskGuard({ ...deps, clock, logger }));
 
-  const useCases = { ...deps, clock };
+  const useCases = { ...deps, clock, logger };
 
   // ── Enrutador ──────────────────────────────────────────────────────────────
   handlers.command('start', async (ctx) => {
@@ -112,6 +113,10 @@ export function createBot({
     if (!user) return;
     if (isOnboardingComplete(user)) return sendOutOfDomain(ctx);
     await sendAll(ctx, await startOnboarding(user, useCases));
+  });
+
+  handlers.command('borrar_datos', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await deleteDataCommand(ctx.user, useCases));
   });
 
   handlers.command('privacidad', async (ctx) => {
@@ -134,6 +139,8 @@ export function createBot({
         return sendAll(ctx, await answerPrivacy(user, action.value, useCases));
       case 'sc':
         return sendAll(ctx, await answerScreening(user, action.value, useCases));
+      case 'del':
+        return sendAll(ctx, await answerDeletion(user, action.value, useCases));
       case 'nav':
         // Las pantallas de Hoy, Comida y Progreso llegan con sus tareas (T-04x…).
         return;

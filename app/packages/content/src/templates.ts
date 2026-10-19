@@ -476,6 +476,36 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: [],
   },
   {
+    id: 'BD-01',
+    kind: 'onboarding',
+    text: '¿Borrar todos tus datos de Gym Bro? Se borran tu plan, tus entrenos, tus comidas, tu progreso y tus logros. No se puede deshacer.',
+    buttons: ['Sí, borrar', 'Cancelar'],
+  },
+  {
+    id: 'BD-02',
+    kind: 'onboarding',
+    text: 'Última confirmación: después de esto empiezas de cero.',
+    buttons: ['Borrar todo', 'Cancelar'],
+  },
+  {
+    id: 'BD-03',
+    kind: 'onboarding',
+    text: 'Listo: borré todos tus datos de Gym Bro. Este chat sigue en Telegram; para borrarlo, elimínalo desde tu lista de chats.',
+    buttons: [],
+  },
+  {
+    id: 'BD-04',
+    kind: 'onboarding',
+    text: 'Cancelado: no borré nada.',
+    buttons: [],
+  },
+  {
+    id: 'BD-05',
+    kind: 'onboarding',
+    text: 'Algo falló y no terminé de borrar. Vuelve a intentarlo con /borrar_datos.',
+    buttons: [],
+  },
+  {
     id: 'CU-01',
     kind: 'care',
     when: 'Restricción extrema',

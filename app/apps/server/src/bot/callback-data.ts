@@ -22,7 +22,9 @@ export type CallbackAction =
   /** Decisión sobre la política desde /privacidad (fuera del onboarding). */
   | { action: 'pv'; value: string }
   /** Tamizaje previo a la actividad fuera de su paso: autorización o resultado tardío. */
-  | { action: 'sc'; value: string };
+  | { action: 'sc'; value: string }
+  /** Confirmaciones de /borrar_datos. */
+  | { action: 'del'; value: string };
 
 function checkSize(data: string): string {
   const bytes = new TextEncoder().encode(data).length;
@@ -45,6 +47,7 @@ export function encodeCallbackData(action: CallbackAction): string {
       return checkSize(`${VERSION}:ob:${action.step}:${checkValue(action.value)}`);
     case 'pv':
     case 'sc':
+    case 'del':
       return checkSize(`${VERSION}:${action.action}:${checkValue(action.value)}`);
   }
 }
@@ -65,7 +68,7 @@ export function parseCallbackData(data: string): CallbackAction | null {
     return { action: 'ob', step: arg as OnboardingStep, value };
   }
   if (
-    (action === 'pv' || action === 'sc') &&
+    (action === 'pv' || action === 'sc' || action === 'del') &&
     arg !== undefined &&
     value === undefined &&
     VALUE.test(arg)
