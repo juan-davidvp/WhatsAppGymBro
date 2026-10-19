@@ -3,9 +3,9 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.1.0
+version: 0.2.0
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
 fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71]
 relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
@@ -58,7 +58,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | RN-PLAN-007 | Una sesión no realizada **no genera deuda**: no se duplica ni se suma a la siguiente; la rotación continúa. Puede reprogramarse dentro de la misma semana. | — | FB-001-17, `F46` |
 | RN-PLAN-008 | Al menos P-017 día de descanso por semana; los novatos no tienen más de P-018 días seguidos de fuerza. `[VALIDAR-PROFESIONAL]` | P-017, P-018 | Seguridad |
 | RN-PLAN-009 | El plan de la semana se publica con el resumen semanal (RN-MSJ-017) y la sesión del día está lista antes de la hora habitual. | — | FB-001-22 |
-| RN-PLAN-010 | Cada ejercicio de la versión A tiene equivalentes B y C del mismo patrón de movimiento según el catálogo de ejercicios. | — | FB-001-13 |
+| RN-PLAN-010 | Cada ejercicio de la versión A tiene equivalentes B y C del mismo patrón de movimiento según el catálogo de ejercicios, **salvo las excepciones exprés del catálogo**: los patrones que el catálogo deja sin versión C se compensan con el patrón que indica o se omiten en la sesión exprés. | — | FB-001-13 · decisión del PO 2026-10-19 |
 
 ## RN-ENT · Entrenamiento
 

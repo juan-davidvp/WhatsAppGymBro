@@ -3,9 +3,9 @@ titulo: Catálogo base de ejercicios y equivalencias gym / casa / exprés
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [constancia-en-cualquier-lugar, fundamentos-de-entrenamiento]
 fuentes: [F53]
 relacionados: [spec-002-plan-y-sesion-del-dia, parametros, reglas-de-negocio]
@@ -14,7 +14,7 @@ relacionados: [spec-002-plan-y-sesion-del-dia, parametros, reglas-de-negocio]
 # Catálogo base de ejercicios
 
 > [!warning] `[VALIDAR-PROFESIONAL]`
-> Catálogo inicial para la Fase 0 (uso propio). Un entrenador certificado debe revisar ejercicios, progresiones y notas de seguridad antes de la alfa (Q4). Cada ejercicio de la versión A tiene equivalentes B y C del mismo patrón (RN-PLAN-010).
+> Catálogo inicial para la Fase 0 (uso propio). Un entrenador certificado debe revisar ejercicios, progresiones y notas de seguridad antes de la alfa (Q4). Cada ejercicio de la versión A tiene equivalentes B y C del mismo patrón, salvo las excepciones exprés de §3 (RN-PLAN-010).
 
 ## 1. Patrones de movimiento
 

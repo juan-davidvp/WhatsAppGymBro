@@ -85,7 +85,7 @@ describe('RN-MSJ-010 · plantillas únicas y rotables', () => {
   });
 });
 
-describe('RN-PLAN-010 · cada ejercicio A tiene equivalentes B y C del mismo patrón', () => {
+describe('RN-PLAN-010 · cada ejercicio A tiene equivalentes B y C del mismo patrón, salvo las excepciones exprés del catálogo', () => {
   const has = (pattern: MovementPattern, variant: SessionVariant) =>
     EXERCISES.some((e) => e.pattern === pattern && e.variants.includes(variant));
   const exception = (pattern: MovementPattern) =>

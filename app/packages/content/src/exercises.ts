@@ -275,8 +275,8 @@ export const EXERCISES = z.array(exerciseSchema).parse([
 /**
  * Patrones sin ejercicio en la versión C según §3 del catálogo:
  * PULL_V "— (se compensa con PULL_H)" y ARMS "—".
- * `[NEEDS CLARIFICATION]` RN-PLAN-010 pide B y C para todo ejercicio A; estas
- * excepciones están pendientes de confirmar con el PO (ver spec-002 §10).
+ * RN-PLAN-010 (decisión del PO, 2026-10-19): todo ejercicio A tiene equivalentes
+ * B y C del mismo patrón, salvo estas excepciones exprés del catálogo.
  */
 export const EXPRESS_EXCEPTIONS = z.array(expressExceptionSchema).parse([
   { pattern: 'PULL_V', compensatedBy: 'PULL_H' },

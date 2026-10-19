@@ -120,3 +120,9 @@ relacionados: [index, inicio]
 - Pregunta Q8 (¿MongoDB o PostgreSQL?) respondida por el PO: **MongoDB**. Antes: supuesto pendiente de confirmar. Motivo: afinidad del fundador y stack ya derivado (ADR-015).
 - [[registro-de-decisiones]]: ADR-015 pasa de `propuesto` a `aceptado`. Se retira `[NEEDS CLARIFICATION: Q8]` de [[plan-tecnico]] (§1 y §13), [[spec-000-vision-fase-0]] y [[modelo-de-datos]]; Q8 marcada como respondida en [[propuesta-de-valor]] e [[inicio]]; `CLAUDE.md` (Estado) y `app/infra/docker-compose.yml` actualizados.
 - Sin cambios de código: T-005 ya usaba MongoDB.
+
+## [2026-10-19] decision | RN-PLAN-010: excepciones exprés del catálogo
+- Antes: "Cada ejercicio de la versión A tiene equivalentes B y C del mismo patrón de movimiento según el catálogo de ejercicios."
+- Ahora: se añade "salvo las excepciones exprés del catálogo": los patrones sin versión C (`PULL_V`, que se compensa con `PULL_H`, y `ARMS`) se compensan o se omiten en la sesión exprés.
+- Motivo (PO): en casa y en exprés hay poca variedad de ejercicios; el catálogo ya documentaba esas excepciones y la regla no las reconocía.
+- Cambios: [[reglas-de-negocio]] v0.2.0, [[spec-002-plan-y-sesion-del-dia]] §10 (duda resuelta), [[catalogo-de-ejercicios-base]] y [[estrategia-de-pruebas]] §4 (redacción), `content.test.ts` (nombre de la prueba RN-PLAN-010) y comentario de `EXPRESS_EXCEPTIONS`. La lógica de la prueba no cambia: ya aceptaba solo las excepciones del catálogo. Sin ADR nuevo: es una aclaración de alcance del catálogo, no una decisión de producto nueva.

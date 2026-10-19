@@ -3,9 +3,9 @@ titulo: Estrategia de pruebas — reglas, propiedades, simulación y red-team
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, seguridad-y-cumplimiento, proactividad-sin-spam]
 fuentes: []
 relacionados: [plan-tecnico, plan-de-medicion, constitucion, tareas-fase-0]
@@ -58,7 +58,7 @@ El script `herramientas/lint_trazabilidad.py --codigo app/` busca cada `RN-XXX-#
 - Ninguna plantilla contiene expresiones de la lista prohibida (RN-MSJ-011).
 - Toda plantilla proactiva tiene al menos un botón (RN-MSJ-012) y un propósito válido (RN-MSJ-001).
 - Los `template_id` son únicos; cada propósito tiene al menos 3 variantes para permitir la rotación (RN-MSJ-010).
-- Todo ejercicio A tiene equivalentes B y C del mismo patrón (RN-PLAN-010).
+- Todo ejercicio A tiene equivalentes B y C del mismo patrón, salvo las excepciones exprés del catálogo (RN-PLAN-010).
 - Todo alimento tiene porción de referencia y proteína aproximada (RN-NUT-008).
 - Ninguna respuesta de cuidado contiene números de calorías, recomendaciones de suplementos ni texto generado.
 
