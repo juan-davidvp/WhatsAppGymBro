@@ -203,6 +203,12 @@ export function riskSignalsRepository(db: Db): RiskSignalsRepository {
     async record(userId, category, at) {
       await collection.insertOne({ userId, category, at });
     },
+    async instantsBetween(userId, from, to) {
+      const docs = await collection
+        .find({ userId, at: { $gte: from, $lt: to } }, { projection: { _id: 0, at: 1 } })
+        .toArray();
+      return docs.map((doc) => doc['at'] as Date);
+    },
   };
 }
 

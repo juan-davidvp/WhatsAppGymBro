@@ -7,6 +7,7 @@ import {
   assertUserConfigurable,
   canCreateProfile,
   foodBodyScreeningOutcome,
+  isGameMechanicsPausedOn,
   isScoffPositive,
   HARD_PARAMETER_CODES,
   imagePolicy,
@@ -202,5 +203,19 @@ describe('RN-SEG-010 · la IA solo devuelve estructuras validadas', () => {
     expect(validatePortionEstimate({ ...valid, portions: { PALM: -1 } })).toBeNull();
     expect(validatePortionEstimate({ ...valid, portions: { SPOON: 1 } })).toBeNull();
     expect(validatePortionEstimate('come pollo')).toBeNull();
+  });
+});
+
+describe('RN-SEG-007 · las mecánicas de juego se pausan el día operativo de la señal', () => {
+  const tz = 'America/Bogota';
+  it('una señal a las 23:00 pausa ese día; otra a las 02:00 cuenta para el día anterior (P-029)', () => {
+    const at23 = new Date('2026-10-20T04:00:00Z'); // 2026-10-19 23:00 en Bogotá
+    expect(isGameMechanicsPausedOn('2026-10-19', [at23], tz)).toBe(true);
+    const at02 = new Date('2026-10-20T07:00:00Z'); // 2026-10-20 02:00 en Bogotá
+    expect(isGameMechanicsPausedOn('2026-10-19', [at02], tz)).toBe(true);
+    expect(isGameMechanicsPausedOn('2026-10-20', [at02], tz)).toBe(false);
+  });
+  it('sin señales no hay pausa', () => {
+    expect(isGameMechanicsPausedOn('2026-10-19', [], tz)).toBe(false);
   });
 });

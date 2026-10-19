@@ -1,5 +1,7 @@
 import { PARAMETERS } from '../config/parameters.js';
+import { operationalDate } from '../day/day.js';
 import type { GoalType } from '../goals/goals.js';
+import type { LocalDate } from '../time/zoned.js';
 import { detectRiskSignal, type AlertCatalogEntry } from './risk-signal.js';
 
 /** Seguridad: edad, tamizajes, límites duros, rutas de cuidado, dolor, sobreuso, imágenes e IA (RN-SEG-001 a 010). */
@@ -215,4 +217,17 @@ export function validatePortionEstimate(raw: unknown): PortionEstimate | null {
   const confidenceOk = typeof confidence === 'number' && confidence >= 0 && confidence <= 1;
   if (!componentsOk || !portionsOk || !confidenceOk) return null;
   return raw as PortionEstimate;
+}
+
+/**
+ * RN-SEG-007: las mecánicas de juego (rachas, XP, logros, retos) se pausan el día
+ * operativo en que hubo una señal de riesgo. El día se calcula con la zona del
+ * usuario y el corte P-029 (RN-DQC-001), igual que el día que cuenta.
+ */
+export function isGameMechanicsPausedOn(
+  date: LocalDate,
+  riskSignalInstants: readonly Date[],
+  timeZone: string,
+): boolean {
+  return riskSignalInstants.some((at) => operationalDate(at, timeZone) === date);
 }

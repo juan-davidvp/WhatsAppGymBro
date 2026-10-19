@@ -150,6 +150,13 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         riskSignals.push({ userId, category, at });
         return Promise.resolve();
       },
+      instantsBetween(userId, from, to) {
+        return Promise.resolve(
+          riskSignals
+            .filter((r) => r.userId === userId && r.at >= from && r.at < to)
+            .map((r) => r.at),
+        );
+      },
     },
     events: emitter,
   };

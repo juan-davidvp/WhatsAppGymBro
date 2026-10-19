@@ -288,3 +288,16 @@ describe('RN-DAT-003 · RN-SEG-001 · borrar a un usuario no deja rastros', () =
     expect(await db.collection('users').countDocuments({ telegramUserId: 502 })).toBe(1);
   });
 });
+
+describe('RN-SEG-007 · señales de riesgo por intervalo (pausa del juego)', () => {
+  it('devuelve solo los instantes del usuario dentro de [from, to)', async () => {
+    const signals = riskSignalsRepository(db);
+    const at = (iso: string) => new Date(iso);
+    await signals.record('u5', 'pain', at('2026-10-19T12:00:00Z'));
+    await signals.record('u5', 'pain', at('2026-10-20T08:00:00Z'));
+    await signals.record('u6', 'pain', at('2026-10-19T12:00:00Z'));
+    expect(
+      await signals.instantsBetween('u5', at('2026-10-19T08:00:00Z'), at('2026-10-20T08:00:00Z')),
+    ).toEqual([at('2026-10-19T12:00:00Z')]);
+  });
+});

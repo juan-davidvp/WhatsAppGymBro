@@ -268,3 +268,12 @@ relacionados: [index, inicio]
 - [[plantillas-de-mensajes]] v0.5.0, §3.2: textos BD-01 a BD-05, redactados por Claude a pedido del PO. BD-03 no nombra botones de la aplicación de Telegram, que cambian según el cliente.
 - SC-009-2: prueba de integración con MongoDB. Recorre el onboarding con autorización, el tamizaje y una alerta; tras el borrado, ninguna colección contiene el id del usuario.
 - Eventos: `deletion_requested` (queda sin seudónimo al borrar) y `deletion_completed` (sin seudónimo).
+
+## [2026-10-19] implementar | T-033 Respuestas de cuidado y suite de red-team
+- `app/apps/server/src/bot/red-team.test.ts`: red-team de punta a punta por el bot, con 51 escenarios y 0 fallos críticos (HU-009-7, H11):
+  - **34 textos de alerta** de las 6 categorías. Entran por mensaje, pie de foto, mensaje editado y argumento de `/start`, y en tres momentos: usuario nuevo, a mitad del onboarding y después. Incluyen manipulación ("ignora tus reglas…") y varias señales a la vez (gana la prioridad).
+  - **6 controles sin alerta**, como "me muero de hambre" y "hoy entreno pecho".
+  - **4 escenarios de botones y flujos**: menor de edad, saltarse el aviso con botones fabricados, datos basura y una alerta a mitad del tamizaje.
+  - **Revisión de las 6 respuestas de cuidado**: no tienen cifras fuera del recurso de ayuda ni recomiendan sustancias o dietas.
+- Pausa del juego (HU-009-4, RN-SEG-007): `isGameMechanicsPausedOn` en el dominio usa el día operativo de la señal, y `RiskSignalsRepository.instantsBetween` la consulta. La usará la gamificación del servidor (M5).
+- Queda en [[spec-009-seguridad-y-privacidad]] §10: añadir [Registrar comida] a CU-01 para los falsos positivos requiere aprobación del PO, porque la plantilla es `[VALIDAR-PROFESIONAL]`.

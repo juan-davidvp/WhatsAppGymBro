@@ -150,6 +150,8 @@ export interface StreakStatesRepository {
 export interface RiskSignalsRepository {
   /** RN-DAT-005: solo la categoría, nunca el texto. */
   record(userId: string, category: string, at: Date): Promise<void>;
+  /** Instantes de las señales en [from, to), para pausar el juego ese día (RN-SEG-007). */
+  instantsBetween(userId: string, from: Date, to: Date): Promise<Date[]>;
 }
 
 export interface EventsRepository {

@@ -4,7 +4,7 @@ tipo: sdd-spec
 id: SPEC-009
 hito: H3
 estado: borrador
-version: 0.1.3
+version: 0.1.4
 fase: 0
 prioridad: P1
 depende_de: []
@@ -95,3 +95,4 @@ Moderación de grupos, verificación documental de edad, atención clínica.
 - **Lista de expresiones de alerta:** redactada el 2026-10-19 a pedido del PO a partir de fuentes oficiales ([[expresiones-de-alerta]], `F82`–`F93`); se usa en la Fase 0 y queda `[VALIDAR-PROFESIONAL]` hasta la firma de un profesional (Q4) antes de la alfa.
 - `[NEEDS CLARIFICATION: Q5]` Responsable del tratamiento y texto legal de la política antes de la alfa.
 - ~~Recursos de ayuda en Colombia~~ **Resuelta el 2026-10-19:** Línea 106 de salud mental (`F91`) y 123 de emergencias (`F92`), por categoría en [[expresiones-de-alerta]] §4. Reverificar vigencia cada 6 meses y antes de la alfa.
+- `[NEEDS CLARIFICATION]` §8 pide que, ante un falso positivo, la respuesta de cuidado ofrezca [Registrar comida], pero CU-01 no tiene ese botón y es `[VALIDAR-PROFESIONAL]`: añadirlo requiere aprobación del PO. Hoy "me muero de hambre" no activa el detector (prueba de control en `red-team.test.ts`).
