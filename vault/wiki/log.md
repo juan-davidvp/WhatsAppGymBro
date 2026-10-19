@@ -115,3 +115,8 @@ relacionados: [index, inicio]
 - Archivos: `app/infra/docker-compose.yml` (`mongo:8.0`, puerto publicado solo en 127.0.0.1, volumen con nombre, verificación de salud), `app/infra/mongo-init/01-app-user.js` (usuario de la aplicación con `readWrite` solo sobre su base, por las reglas de datos y seguridad), `app/infra/.env.example` (variables de [[plan-tecnico]] §10, más las de Mongo local y `LOG_LEVEL`). `app/infra/.env` lo ignora `.gitignore`.
 - Verificado con Docker: sin `.env`, Compose se niega a arrancar y nombra la variable que falta (las contraseñas vacías también se rechazan); con `.env`, la base queda `healthy`; el usuario de la aplicación escribe en `gymbro` y recibe `Unauthorized` al leer `admin` o escribir en otra base.
 - `CLAUDE.md` (Comandos): paso `cp app/infra/.env.example app/infra/.env`.
+
+## [2026-10-19] decision | Q8: MongoDB como base de datos
+- Pregunta Q8 (¿MongoDB o PostgreSQL?) respondida por el PO: **MongoDB**. Antes: supuesto pendiente de confirmar. Motivo: afinidad del fundador y stack ya derivado (ADR-015).
+- [[registro-de-decisiones]]: ADR-015 pasa de `propuesto` a `aceptado`. Se retira `[NEEDS CLARIFICATION: Q8]` de [[plan-tecnico]] (§1 y §13), [[spec-000-vision-fase-0]] y [[modelo-de-datos]]; Q8 marcada como respondida en [[propuesta-de-valor]] e [[inicio]]; `CLAUDE.md` (Estado) y `app/infra/docker-compose.yml` actualizados.
+- Sin cambios de código: T-005 ya usaba MongoDB.

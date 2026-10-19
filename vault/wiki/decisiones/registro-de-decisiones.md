@@ -4,7 +4,7 @@ tipo: decision
 hito: H3
 estado: en-revision
 creado: 2026-10-05
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 fuentes: [F01, F14, F16, F23, F41, F42, F45, F46, F47, F50, F51, F52, F56, F57, F62, F63, F64, F69, F70, F71, F72, F75, F76, F77]
 relacionados: [propuesta-de-valor, reglas-de-negocio, plan-tecnico, seguridad-y-cumplimiento]
 ---
@@ -29,7 +29,7 @@ relacionados: [propuesta-de-valor, reglas-de-negocio, plan-tecnico, seguridad-y-
 | ADR-012 | Nutrición mínima viable: proteína y porciones; calorías apagadas | propuesto | 2026-10-18 |
 | ADR-013 | Más allá del chat dentro de Telegram: imágenes y Mini App | propuesto | 2026-10-18 |
 | ADR-014 | Integraciones nube a nube y puente de ingesta; app nativa diferida | propuesto | 2026-10-18 |
-| ADR-015 | Stack: Node.js + TypeScript + grammY, dominio puro, MongoDB | propuesto (Q8) | 2026-10-18 |
+| ADR-015 | Stack: Node.js + TypeScript + grammY, dominio puro, MongoDB | aceptado (Q8 respondida) | 2026-10-19 |
 | ADR-016 | Colombia como mercado cabeza de playa | propuesto (supuesto, Q1) | 2026-10-18 |
 | ADR-017 | Un solo repositorio: bóveda + código | propuesto | 2026-10-18 |
 | ADR-018 | Modo mantenimiento como objetivo de primera clase | propuesto | 2026-10-18 |
@@ -102,9 +102,9 @@ relacionados: [propuesta-de-valor, reglas-de-negocio, plan-tecnico, seguridad-y-
 - **Consecuencias:** (+) integraciones viables sin app; (−) los pasos requieren que el usuario configure una automatización.
 
 ## ADR-015 · Stack de la Fase 0
-- **Decisión (propuesta):** Node.js + TypeScript; grammY como framework del bot (TypeScript, plugins de conversaciones, menús, sesiones, reintentos y límites de tasa, `F72`); monorepo con un **paquete de dominio puro** sin E/S; MongoDB (afín a las habilidades del fundador) detrás de repositorios; planificador de mensajes con bandeja de salida en la base de datos; Mini App con React + Vite + Tailwind.
+- **Decisión (aceptada el 2026-10-19; el PO confirma MongoDB en Q8):** Node.js + TypeScript; grammY como framework del bot (TypeScript, plugins de conversaciones, menús, sesiones, reintentos y límites de tasa, `F72`); monorepo con un **paquete de dominio puro** sin E/S; MongoDB (afín a las habilidades del fundador) detrás de repositorios; planificador de mensajes con bandeja de salida en la base de datos; Mini App con React + Vite + Tailwind.
 - **Alternativas:** Telegraf; PostgreSQL; Python (aiogram).
-- **Consecuencias:** (+) un solo lenguaje en todo el sistema; (+) dominio testeable al 100 %; (−) MongoDB exige validar esquemas en la frontera (zod). **Pendiente:** confirmación del PO (Q8).
+- **Consecuencias:** (+) un solo lenguaje en todo el sistema; (+) dominio testeable al 100 %; (−) MongoDB exige validar esquemas en la frontera (zod). **Q8 respondida (2026-10-19):** MongoDB.
 
 ## ADR-016 · Colombia como mercado cabeza de playa
 - **Decisión (propuesta, supuesto):** Colombia para la Fase 01: ley 1581, alimentos colombianos, zona horaria America/Bogota, precios locales.

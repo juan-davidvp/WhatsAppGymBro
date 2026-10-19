@@ -3,9 +3,9 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [plan-tecnico, plan-de-medicion, glosario]
@@ -13,7 +13,7 @@ relacionados: [plan-tecnico, plan-de-medicion, glosario]
 
 # Modelo de datos · Fase 0
 
-> Propuesto para MongoDB (ADR-015, pendiente de Q8). Nombres de colecciones y campos en inglés según el [[glosario]]. Todas las fechas y horas se guardan en UTC; el **día operativo** (`date`, formato `AAAA-MM-DD`) se calcula en el dominio con la zona del usuario (RN-DQC-001).
+> Para MongoDB (ADR-015; Q8 respondida el 2026-10-19). Nombres de colecciones y campos en inglés según el [[glosario]]. Todas las fechas y horas se guardan en UTC; el **día operativo** (`date`, formato `AAAA-MM-DD`) se calcula en el dominio con la zona del usuario (RN-DQC-001).
 
 ## 1. Diagrama
 

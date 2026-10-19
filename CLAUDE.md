@@ -67,7 +67,8 @@ Disponibles desde T-001; los comandos `pnpm` se ejecutan **dentro de `app/`** (a
 ## Estado (2026-10-18)
 
 - Documentación H0–H3 en borrador o en revisión; H4 (construcción) empieza con T-001.
-- Supuestos vigentes mientras el PO no responda: MongoDB (Q8), Mini App como *Should* que pasa a Fase 1 si no cabe (Q9), nombre "Gym Bro" y usuario del bot provisionales (Q7). Q8 conviene cerrarla antes de T-005 y T-020 (base de datos); las demás no bloquean M0–M2.
+- Decidido: **MongoDB** (Q8, 2026-10-19; ADR-015 aceptado).
+- Supuestos vigentes mientras el PO no responda: Mini App como *Should* que pasa a Fase 1 si no cabe (Q9), nombre "Gym Bro" y usuario del bot provisionales (Q7). No bloquean M0–M2.
 - Antes de la alfa con otras personas: firma de nutricionista y entrenador certificado sobre todo lo `[VALIDAR-PROFESIONAL]` (Q4) y política de datos con responsable designado (Q5, RN-DAT-007).
 
 ## Git

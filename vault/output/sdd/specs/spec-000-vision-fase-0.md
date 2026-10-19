@@ -4,10 +4,10 @@ tipo: sdd-spec
 id: SPEC-000
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 fase: 0
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, usuario-cabeza-01, jobs-to-be-done, registro-de-decisiones]
 fuentes: [F41, F69, F70, F71]
 relacionados: [constitucion, reglas-de-negocio, plan-tecnico, tareas-fase-0]
@@ -88,7 +88,7 @@ Pagos, multiusuario a escala, panel de administración, internacionalización, m
 
 ## 9. Aclaraciones pendientes
 
-- `[NEEDS CLARIFICATION: Q8]` Base de datos: MongoDB (propuesta) o PostgreSQL.
+- ~~Q8~~ Base de datos: **MongoDB** (respondida el 2026-10-19, ADR-015).
 - `[NEEDS CLARIFICATION: Q9]` ¿Mini App dentro de la Fase 0 o en la Fase 1?
 - `[NEEDS CLARIFICATION: Q7]` Nombre del bot en BotFather.
 - `[NEEDS CLARIFICATION: Q4]` Profesionales que validarán los parámetros `[V]` antes de la alfa.

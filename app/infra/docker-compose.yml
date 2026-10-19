@@ -1,5 +1,5 @@
 # MongoDB local para desarrollo (plan técnico §10; ADR-015).
-# Supuesto vigente mientras el PO no cierre Q8 (MongoDB vs. PostgreSQL).
+# Base de datos decidida por el PO: MongoDB (Q8, 2026-10-19; ADR-015 aceptado).
 #
 #   cp app/infra/.env.example app/infra/.env   # y completar los valores
 #   docker compose -f app/infra/docker-compose.yml up -d
