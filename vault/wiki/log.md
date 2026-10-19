@@ -192,3 +192,14 @@ relacionados: [index, inicio]
 - La lista de parámetros duros del código se compara con la columna "Duro" de [[parametros]] en una prueba.
 - *Red-team* (HU-009-7, H11): `packages/content/src/red-team.test.ts`, 50 escenarios (34 de texto libre en las 6 categorías, 8 metas peligrosas, menores, tamizaje positivo, sobreuso e intentos de cambiar límites duros): 0 fallos críticos tras añadir las expresiones de hinchazón.
 - Pendiente fuera del dominio: los instrumentos exactos de los tamizajes (Q4); el dominio recibe solo las respuestas.
+
+## [2026-10-19] decision | P-074 a P-079: tiempos y rangos del plan; composición de sesiones
+- El PO aprueba los valores propuestos para estimar la duración de las sesiones (RN-PLAN-006), que no estaban definidos: **P-076** calentamiento 5 min `[supuesto]`, **P-077** 40 s por serie, **P-078** descanso de 90 s (músculo, grasa, recomposición y accesorios) y 180 s (fuerza en básicos), con fuentes nuevas `F94` (ACSM 2009) y `F95` (Schoenfeld 2016). Todos `[V]`.
+- Pasan a [[parametros]] números que estaban en el texto: **P-074** días disponibles 2–6 y **P-075** minutos 20–90 (RN-PLAN-001); **P-079** circuito exprés 3 rondas · 40 s · 20 s · 60 s entre rondas ([[catalogo-de-ejercicios-base]] §4).
+- RN-PLAN-006 queda `[VALIDAR-PROFESIONAL]` y cita P-076 a P-079 (conteo: 14 reglas por validar). [[reglas-de-negocio]] v0.3.0, [[parametros]] v0.3.0, [[catalogo-de-ejercicios-base]] v0.2.0 con §5 "Composición de las sesiones por división" `[VALIDAR-PROFESIONAL]` `[inferencia]` (derivada de los nombres de P-014).
+
+## [2026-10-19] implementar | T-011 Generador del plan semanal — M1 completo
+- RN cubiertas: RN-PLAN-001 a RN-PLAN-010 (pruebas con su ID; propiedades con fast-check: ninguna versión supera los minutos disponibles, la versión C no pasa de P-013, ningún plan deja menos de P-017 descansos ni más de P-018 días seguidos a un novato, cada patrón de A tiene B y C o su excepción). `packages/content` prueba el generador con el catálogo real y la composición de sesiones se compara con la bóveda.
+- Archivo: `app/packages/domain/src/plan/plan.ts` — validación de entradas, días de entreno según nivel y descanso, ciclo de sesiones de P-014 con rotación por día planificado, versiones A/B/C con rangos y descansos por objetivo, equipamiento de casa (con compensación del catálogo si falta equipo), ajuste al tiempo recortando series, reprogramar sin deuda, hábito, publicación del plan y hora de la sesión.
+- Lecturas elegidas: el volumen semanal arranca en el mínimo de P-015 y se reparte entre las sesiones que tienen el patrón; si no cabe en el tiempo se recortan series (RN-PLAN-006 manda sobre el volumen); la intensidad baja (FR-002-08) usa el volumen de novato; las repeticiones precargadas son el inicio del rango (progresión doble).
+- M1 (dominio) completo: T-010 a T-017 ✅. Siguiente: M2 (servidor base: repositorios MongoDB, middleware, eventos).

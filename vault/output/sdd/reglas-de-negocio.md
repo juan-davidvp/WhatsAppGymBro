@@ -3,7 +3,7 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.2.3
+version: 0.3.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
@@ -49,12 +49,12 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 
 | ID | Regla | Parámetros | Origen |
 |---|---|---|---|
-| RN-PLAN-001 | El plan semanal se genera a partir de nivel, días disponibles (2–6), minutos por sesión (20–90), objetivo y perfil de equipamiento. | — | FB-001-15 |
+| RN-PLAN-001 | El plan semanal se genera a partir de nivel, días disponibles (P-074), minutos por sesión (P-075), objetivo y perfil de equipamiento. | P-074, P-075 | FB-001-15 |
 | RN-PLAN-002 | El hábito de entreno (días, hora habitual, lugar) se declara en el onboarding y se actualiza con los datos reales (RN-MSJ-006). | — | FB-001-22 |
 | RN-PLAN-003 | Cada sesión planificada se genera con tres versiones equivalentes: **A** (gym), **B** (casa con el equipamiento del usuario) y **C** (exprés de P-013 minutos con peso corporal). Las tres cuentan para el día. | P-013 | FB-001-13 |
 | RN-PLAN-004 | La división se elige según los días disponibles (tabla P-014); 5–6 días solo para nivel intermedio. `[VALIDAR-PROFESIONAL]` | P-014 | [[fundamentos-de-entrenamiento]] |
 | RN-PLAN-005 | El volumen semanal por grupo muscular y los rangos de repeticiones dependen del nivel y del objetivo (tablas P-015 y P-016). `[VALIDAR-PROFESIONAL]` | P-015, P-016 | `F55` |
-| RN-PLAN-006 | La duración estimada de cada versión (calentamiento + Σ series × (tiempo de serie + descanso)) no supera los minutos disponibles. | — | FB-001-15 |
+| RN-PLAN-006 | La duración estimada de cada versión (calentamiento P-076 + Σ series × (tiempo de serie P-077 + descanso P-078); en la versión C, el circuito P-079) no supera los minutos disponibles. `[VALIDAR-PROFESIONAL]` | P-076–P-079 | FB-001-15 |
 | RN-PLAN-007 | Una sesión no realizada **no genera deuda**: no se duplica ni se suma a la siguiente; la rotación continúa. Puede reprogramarse dentro de la misma semana. | — | FB-001-17, `F46` |
 | RN-PLAN-008 | Al menos P-017 día de descanso por semana; los novatos no tienen más de P-018 días seguidos de fuerza. `[VALIDAR-PROFESIONAL]` | P-017, P-018 | Seguridad |
 | RN-PLAN-009 | El plan de la semana se publica con el resumen semanal (RN-MSJ-017) y la sesión del día está lista antes de la hora habitual. | — | FB-001-22 |
@@ -177,4 +177,4 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 
 ---
 
-**Conteo:** 103 reglas · 13 con `[VALIDAR-PROFESIONAL]` (lo verifica `herramientas/lint_trazabilidad.py`).
+**Conteo:** 103 reglas · 14 con `[VALIDAR-PROFESIONAL]` (lo verifica `herramientas/lint_trazabilidad.py`).

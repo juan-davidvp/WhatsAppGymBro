@@ -75,6 +75,18 @@ export const PARAMETERS = {
     minRestDaysPerWeek: 1,
     /** P-018 · RN-PLAN-008 · duro · [V] · días */
     noviceMaxConsecutiveDays: 3,
+    /** P-074 · RN-PLAN-001 · días disponibles por semana */
+    availableDaysRange: { min: 2, max: 6 },
+    /** P-075 · RN-PLAN-001 · minutos por sesión */
+    sessionMinutesRange: { min: 20, max: 90 },
+    /** P-076 · RN-PLAN-006 · [V] [supuesto] · minutos */
+    warmupMinutes: 5,
+    /** P-077 · RN-PLAN-006 · [V] · segundos por serie */
+    setSeconds: 40,
+    /** P-078 · RN-PLAN-006 · [V] (F94, F95) · segundos de descanso entre series */
+    restSecondsByGoal: { hypertrophyAndAccessory: 90, strengthCompound: 180 },
+    /** P-079 · RN-PLAN-003, RN-PLAN-006 · [V] · circuito de la versión C */
+    expressCircuit: { rounds: 3, workSeconds: 40, restSeconds: 20, restBetweenRoundsSeconds: 60 },
   },
   training: {
     /** P-019 · RN-ENT-002 · [V] · sesiones */

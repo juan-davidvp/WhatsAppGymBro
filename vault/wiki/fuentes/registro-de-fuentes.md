@@ -11,7 +11,7 @@ relacionados: [index, propuesta-de-valor]
 
 # Registro de fuentes
 
-> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81) y **2026-10-19** (F82–F93). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
+> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81) y **2026-10-19** (F82–F95). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
 >
 > Para conservar el original de una fuente pública, guardarlo en `raw/` con el nombre `F##_titulo-corto.ext`.
 
@@ -124,6 +124,8 @@ relacionados: [index, propuesta-de-valor]
 | F58 | Helms, Aragon y Fitschen — recomendaciones para la preparación de culturismo natural, JISSN 11:20 | 2014 | A | https://jissn.biomedcentral.com/track/pdf/10.1186/1550-2783-11-20 |
 | F59 | Iraki, Fitschen, Espinar y Helms — *Nutrition Recommendations for Bodybuilders in the Off-Season*, Sports 7(7):154 | 2019 | A | https://www.mdpi.com/2075-4663/7/7/154 |
 | F60 | Tod, Edwards y Cranswick — *Muscle dysmorphia: current insights*, Psychology Research and Behavior Management 9:179–188 | 2016 | A | https://www.dovepress.com/muscle-dysmorphia-current-insights-peer-reviewed-fulltext-article-PRBM |
+| F94 | ACSM — *Progression Models in Resistance Training for Healthy Adults* (Position Stand, Med Sci Sports Exerc 41(3):687–708): descansos de 1–2 min (hipertrofia, novatos e intermedios) y 3–5 min con cargas altas en ejercicios multiarticulares | 2009 | A | https://www.sportgeneeskunde.com/wp-content/uploads/ACSM-Position-Stand-Progression-Models-in-Resistance-Training-for-Healthy-Adults.pdf |
+| F95 | Schoenfeld et al. — *Longer Interset Rest Periods Enhance Muscle Strength and Hypertrophy in Resistance-Trained Men* (J Strength Cond Res 30(7):1805–12): 3 min de descanso superaron a 1 min en fuerza y grosor muscular | 2016 | A | https://pubmed.ncbi.nlm.nih.gov/26605807/ |
 | F61 | *Accuracy of hands v. household measures as portion size estimation aids*, Journal of Nutritional Science | 2016 | A | https://doaj.org/article/11f7e8aecf7b445f89425be58b650349 |
 
 ## Integraciones y plataforma (2026-10-18)
@@ -186,4 +188,5 @@ relacionados: [index, propuesta-de-valor]
 - **F76:** desactualizada (2017); reemplazar con un dato reciente de uso de Telegram en Colombia (H10).
 - **F73, F79, F80:** fuentes de terceros; confirmar en documentación oficial antes de implementar.
 - **F90, F92:** el texto se leyó a través del buscador (la página bloquea la descarga directa); confirmar en el sitio.
+- **F94:** se leyó una copia alojada del *Position Stand* y un resumen secundario; confirmar las cifras de descanso en el artículo original.
 - **F91, F92:** recursos de ayuda; reverificar vigencia cada 6 meses y antes de la alfa (dato volátil).

@@ -3,11 +3,11 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.2.2
+version: 0.3.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
-fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93]
+fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93, F94, F95]
 relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 ---
 
@@ -43,6 +43,12 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-016 | `plan.repRangesByGoal` | Músculo/grasa/recomposición 6–15 · fuerza 3–6 en básicos + 8–12 accesorios · casa: 8–20 cerca del fallo (1–3 en reserva) | — | RN-PLAN-005 | No | [V] |
 | P-017 | `plan.minRestDaysPerWeek` | 1 | — | RN-PLAN-008 | Sí | [V] |
 | P-018 | `plan.noviceMaxConsecutiveDays` | 3 | — | RN-PLAN-008 | Sí | [V] |
+| P-074 | `plan.availableDaysRange` | 2–6 días | — | RN-PLAN-001 | No | — |
+| P-075 | `plan.sessionMinutesRange` | 20–90 min | — | RN-PLAN-001 | No | — |
+| P-076 | `plan.warmupMinutes` | 5 min | — | RN-PLAN-006 | No | [V] `[supuesto]` |
+| P-077 | `plan.setSeconds` | 40 s | — | RN-PLAN-006 | No | [V] (igual al trabajo de P-079) |
+| P-078 | `plan.restSecondsByGoal` | Músculo/grasa/recomposición y accesorios 90 s · fuerza en básicos 180 s | — | RN-PLAN-006 | No | [V] (`F94`, `F95`) |
+| P-079 | `plan.expressCircuit` | 3 rondas · 40 s de trabajo · 20 s de pausa · 60 s entre rondas | — | RN-PLAN-003, RN-PLAN-006 | No | [V] ([[catalogo-de-ejercicios-base]] §4) |
 | P-019 | `training.sessionsAtTopToProgress` | 2 sesiones | 1–3 | RN-ENT-002 | No | [V] |
 | P-020 | `training.upperBodyIncrementKg` | 2,5 kg | — | RN-ENT-002 | No | [V] |
 | P-021 | `training.lowerBodyIncrementKg` | 5 kg | 2,5–5 | RN-ENT-002 | No | [V] |
