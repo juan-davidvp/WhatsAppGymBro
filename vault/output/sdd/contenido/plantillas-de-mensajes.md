@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.2.0
+version: 0.3.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -108,12 +108,18 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | ID | Texto |
 |---|---|
 | ON-01 | Soy Gym Bro. Te armo el plan, te aviso cuándo toca y llevo la cuenta de cada día que entrenas. Funciono con botones. |
-| ON-02 | Antes de empezar: los datos que te pida son opcionales y sirven para tu plan. Este chat se guarda en Telegram (no es cifrado de extremo a extremo) y, si usas fotos de comida, se envían a un servicio de IA para estimar porciones. [Acepto] [Ver política] |
+| ON-02 | Antes de empezar: los datos que te pida son opcionales y sirven para tu plan. Este chat se guarda en Telegram (no es cifrado de extremo a extremo) y, si registras comida con foto o texto, se envía a un servicio de IA para estimar porciones. [Acepto] [Ver política] [No acepto] |
 | ON-03 | ¿Tienes 18 años o más? [Sí] [No] |
 | ON-04 | Por ahora Gym Bro es solo para mayores de 18. Gracias por escribir. |
 | ON-05 | ¿Qué quieres lograr? [Ganar músculo] [Perder grasa] [Ganar fuerza] [Recomposición] [Ser constante] [Mantener] |
 | ON-06 | Te propongo **{meta}** en **{semanas} semanas**. [Me sirve] [Más conservadora] [Más ambiciosa] |
 | ON-07 | Esa meta va más rápido de lo que tu cuerpo puede sostener sin riesgo. Te propongo {meta_segura} en {semanas} semanas, o la misma meta en {semanas_largas}. [Opción 1] [Opción 2] |
+| ON-08 | Listo, sin datos sensibles: no te pido peso ni tamizaje de comida, y tu objetivo es ser constante. Puedes cambiarlo en /privacidad. |
+| PV-01 | Política de datos (provisional, Fase 0). Responsable: el fundador de Gym Bro. Guardo tus respuestas con botones, tus entrenos, tus comidas y, si lo das, tu peso; de los tamizajes, solo el resultado. Lo uso para tu plan y para medir si el bot ayuda, sin lo que escribes. Las fotos de comida no se guardan. Descargas todo con /exportar y lo borras con /borrar_datos en máximo {horas_borrado} horas. [Acepto] [No acepto] |
+| PV-02 | Hecho: guardé tu autorización. Puedes cambiarla cuando quieras en /privacidad. |
+| PV-03 | Hecho: dejo de pedirte datos sensibles. Si quieres borrar lo que ya está guardado, usa /borrar_datos. |
+
+> PV-01 es la política provisional de la Fase 0, que puede operar sin política pública (RN-DAT-007); se muestra con [Ver política] y con /privacidad. Antes de la alfa la reemplaza el texto legal con su responsable designado (Q5). `{horas_borrado}` = P-065.
 
 ## 4. Respuestas de cuidado (seguridad) `[VALIDAR-PROFESIONAL]`
 

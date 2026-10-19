@@ -71,7 +71,7 @@ describe('T-004 · el bot responde /start', () => {
   it('responde con la plantilla ON-01 al mismo chat', async () => {
     const { bot, calls } = setup();
     await bot.handleUpdate(textUpdate('/start'));
-    expect(calls).toHaveLength(1);
+    expect(calls).toHaveLength(2);
     expect(calls[0]?.method).toBe('sendMessage');
     expect(calls[0]?.payload).toMatchObject({ chat_id: 42, text: templateById('ON-01').text });
   });

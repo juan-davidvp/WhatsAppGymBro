@@ -350,8 +350,8 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
   {
     id: 'ON-02',
     kind: 'onboarding',
-    text: 'Antes de empezar: los datos que te pida son opcionales y sirven para tu plan. Este chat se guarda en Telegram (no es cifrado de extremo a extremo) y, si usas fotos de comida, se envían a un servicio de IA para estimar porciones.',
-    buttons: ['Acepto', 'Ver política'],
+    text: 'Antes de empezar: los datos que te pida son opcionales y sirven para tu plan. Este chat se guarda en Telegram (no es cifrado de extremo a extremo) y, si registras comida con foto o texto, se envía a un servicio de IA para estimar porciones.',
+    buttons: ['Acepto', 'Ver política', 'No acepto'],
   },
   { id: 'ON-03', kind: 'onboarding', text: '¿Tienes 18 años o más?', buttons: ['Sí', 'No'] },
   {
@@ -384,6 +384,30 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     kind: 'onboarding',
     text: 'Esa meta va más rápido de lo que tu cuerpo puede sostener sin riesgo. Te propongo {meta_segura} en {semanas} semanas, o la misma meta en {semanas_largas}.',
     buttons: ['Opción 1', 'Opción 2'],
+  },
+  {
+    id: 'ON-08',
+    kind: 'onboarding',
+    text: 'Listo, sin datos sensibles: no te pido peso ni tamizaje de comida, y tu objetivo es ser constante. Puedes cambiarlo en /privacidad.',
+    buttons: [],
+  },
+  {
+    id: 'PV-01',
+    kind: 'onboarding',
+    text: 'Política de datos (provisional, Fase 0). Responsable: el fundador de Gym Bro. Guardo tus respuestas con botones, tus entrenos, tus comidas y, si lo das, tu peso; de los tamizajes, solo el resultado. Lo uso para tu plan y para medir si el bot ayuda, sin lo que escribes. Las fotos de comida no se guardan. Descargas todo con /exportar y lo borras con /borrar_datos en máximo {horas_borrado} horas.',
+    buttons: ['Acepto', 'No acepto'],
+  },
+  {
+    id: 'PV-02',
+    kind: 'onboarding',
+    text: 'Hecho: guardé tu autorización. Puedes cambiarla cuando quieras en /privacidad.',
+    buttons: [],
+  },
+  {
+    id: 'PV-03',
+    kind: 'onboarding',
+    text: 'Hecho: dejo de pedirte datos sensibles. Si quieres borrar lo que ya está guardado, usa /borrar_datos.',
+    buttons: [],
   },
   {
     id: 'CU-01',

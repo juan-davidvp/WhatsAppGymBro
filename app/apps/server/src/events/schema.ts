@@ -1,4 +1,5 @@
 import { alertCategorySchema } from '@gymbro/content';
+import { CONSENT_CATEGORIES, ONBOARDING_STEPS } from '@gymbro/domain';
 import { z } from 'zod';
 import { EVENT_NAMES, STUDY_PHASES, type EventName } from './catalog.js';
 
@@ -38,6 +39,10 @@ export const EVENT_PROPS_SCHEMAS = {
     category: alertCategorySchema,
     templateId: z.string().regex(/^CU-\d{2}$/),
   }),
+  onboarding_started: z.strictObject({}),
+  onboarding_step_completed: z.strictObject({ step: z.enum(ONBOARDING_STEPS) }),
+  consent_given: z.strictObject({ categories: z.array(z.enum(CONSENT_CATEGORIES)).min(1) }),
+  consent_declined: z.strictObject({ categories: z.array(z.enum(CONSENT_CATEGORIES)).min(1) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

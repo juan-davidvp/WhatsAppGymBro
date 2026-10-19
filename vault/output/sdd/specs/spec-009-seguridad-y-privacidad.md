@@ -4,7 +4,7 @@ tipo: sdd-spec
 id: SPEC-009
 hito: H3
 estado: borrador
-version: 0.1.1
+version: 0.1.2
 fase: 0
 prioridad: P1
 depende_de: []
@@ -24,8 +24,9 @@ Que ningún usuario reciba un consejo dañino, que los datos sensibles se traten
 ## 2. Historias de usuario
 
 ### HU-009-1 · Consentimiento y aviso de privacidad (P1)
-1. **Dado** `/start`, **cuando** llega al paso de privacidad, **entonces** lee en ≤ 5 líneas: qué datos se piden (todos opcionales), para qué, que el chat se guarda en Telegram sin cifrado de extremo a extremo y que las fotos o textos de comida se envían a un proveedor de IA; con [Acepto] [Ver política] (RN-DAT-001, RN-DAT-002; `F71`).
+1. **Dado** `/start`, **cuando** llega al paso de privacidad, **entonces** lee en ≤ 5 líneas: qué datos se piden (todos opcionales), para qué, que el chat se guarda en Telegram sin cifrado de extremo a extremo y que las fotos o textos de comida se envían a un proveedor de IA; con [Acepto] [Ver política] [No acepto] (RN-DAT-001, RN-DAT-002; `F71`). [Ver política] y `/privacidad` muestran la política provisional PV-01 de la Fase 0 (RN-DAT-007), que se reemplaza por el texto legal antes de la alfa (Q5).
 2. **Dado** que no acepta, **cuando** toca [No acepto], **entonces** puede usar el bot sin datos sensibles (sin peso ni tamizaje de comida): objetivo `ser_constante`, sin metas de peso.
+3. **Dado** que ya decidió, **cuando** usa `/privacidad`, **entonces** puede dar o retirar la autorización; queda el historial y vale la decisión más reciente (PV-02, PV-03).
 
 ### HU-009-2 · Mayoría de edad y tamizaje previo a la actividad (P1)
 1. **Dado** la pregunta de edad, **cuando** responde que es menor de 18, **entonces** recibe un cierre amable y no se crea el perfil (RN-SEG-001).

@@ -1,5 +1,13 @@
 import type { AnalyticsEvent } from '../events/schema.js';
-import type { DayStatus, DayType, Intensity, LocalDate, LocalTime } from '@gymbro/domain';
+import type {
+  ConsentCategory,
+  DayStatus,
+  DayType,
+  Intensity,
+  LocalDate,
+  LocalTime,
+  OnboardingStep,
+} from '@gymbro/domain';
 
 /**
  * Puertos de persistencia (arquitectura hexagonal, plan técnico §2): los casos de
@@ -21,13 +29,33 @@ export interface UserRecord {
     readonly gamificationEnabled: boolean;
     readonly numberFreeMode: boolean;
   };
-  readonly onboarding: { readonly step: string; readonly completedAt: Date | null };
+  readonly onboarding: { readonly step: OnboardingStep; readonly completedAt: Date | null };
   readonly createdAt: Date;
 }
 
 export interface UsersRepository {
   /** Busca por `telegramUserId` o crea el usuario con los valores por defecto. */
   findOrCreate(input: { telegramUserId: number; chatId: number; now: Date }): Promise<UserRecord>;
+  /** Guarda el paso del onboarding en el que quedó (FR-001-01: reanudar). */
+  setOnboardingStep(userId: string, step: OnboardingStep): Promise<void>;
+}
+
+export interface ConsentsRepository {
+  /**
+   * RN-DAT-001: registra una decisión por categoría. Solo inserciones: el
+   * historial de autorizaciones queda (RN-DAT-007); vale la más reciente.
+   */
+  record(input: {
+    userId: string;
+    granted: readonly ConsentCategory[];
+    declined: readonly ConsentCategory[];
+    at: Date;
+    policyVersion: string;
+  }): Promise<void>;
+  /** Categorías cuya decisión más reciente es "autorizada". */
+  grantedCategories(userId: string): Promise<ConsentCategory[]>;
+  /** Si alguna vez decidió (aceptó o no) sobre el aviso. */
+  hasDecided(userId: string): Promise<boolean>;
 }
 
 export interface ProcessedUpdatesRepository {

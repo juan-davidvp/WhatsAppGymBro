@@ -1,7 +1,7 @@
 import type { Update, UserFromGetMe } from 'grammy/types';
 import { createBot } from '../bot/create-bot.js';
 import { createLogger } from '../logger.js';
-import { inMemoryDependencies } from './in-memory.js';
+import { inMemoryDependencies, type InMemoryOptions } from './in-memory.js';
 
 /** Bot sin red para pruebas: `botInfo` evita getMe y un transformador responde cada llamada. */
 
@@ -28,7 +28,7 @@ export interface ApiCall {
   payload: Record<string, unknown>;
 }
 
-export function setupTestBot(options: { failRiskSignals?: boolean } = {}) {
+export function setupTestBot(options: InMemoryOptions = {}) {
   const lines: string[] = [];
   const logger = createLogger({
     level: 'debug',

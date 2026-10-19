@@ -1,6 +1,14 @@
-import { PARAMETERS, closeDay, type DayStatus, type DayType, type LocalDate } from '@gymbro/domain';
+import {
+  PARAMETERS,
+  closeDay,
+  type ConsentCategory,
+  type DayStatus,
+  type DayType,
+  type LocalDate,
+} from '@gymbro/domain';
 import { MongoServerError, ObjectId, type Db } from 'mongodb';
 import type {
+  ConsentsRepository,
   DaysRepository,
   EventsRepository,
   MealRecord,
@@ -60,7 +68,7 @@ export function usersRepository(db: Db): UsersRepository {
           gamificationEnabled: true,
           numberFreeMode: false,
         },
-        onboarding: { step: 'start', completedAt: null },
+        onboarding: { step: 'privacy', completedAt: null },
         createdAt: now,
       };
       const run = () =>
@@ -77,6 +85,12 @@ export function usersRepository(db: Db): UsersRepository {
       if (!document) throw new Error('No se pudo crear el usuario');
       const { _id, ...rest } = document;
       return { id: _id.toHexString(), ...rest };
+    },
+    async setOnboardingStep(userId, step) {
+      await collection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { 'onboarding.step': step } },
+      );
     },
   };
 }
@@ -178,6 +192,40 @@ export function eventsRepository(db: Db): EventsRepository {
   return {
     async insert(event) {
       await collection.insertOne({ ...event });
+    },
+  };
+}
+
+interface ConsentDocument {
+  userId: string;
+  category: ConsentCategory;
+  granted: boolean;
+  at: Date;
+  policyVersion: string;
+}
+
+export function consentsRepository(db: Db): ConsentsRepository {
+  const collection = db.collection<ConsentDocument>('consents');
+  return {
+    async record({ userId, granted, declined, at, policyVersion }) {
+      const documents: ConsentDocument[] = [
+        ...granted.map((category) => ({ userId, category, granted: true, at, policyVersion })),
+        ...declined.map((category) => ({ userId, category, granted: false, at, policyVersion })),
+      ];
+      if (documents.length > 0) await collection.insertMany(documents);
+    },
+    async grantedCategories(userId) {
+      const latest = await collection
+        .aggregate<{ _id: ConsentCategory; granted: boolean }>([
+          { $match: { userId } },
+          { $sort: { at: -1, _id: -1 } },
+          { $group: { _id: '$category', granted: { $first: '$granted' } } },
+        ])
+        .toArray();
+      return latest.filter((c) => c.granted).map((c) => c._id);
+    },
+    async hasDecided(userId) {
+      return (await collection.countDocuments({ userId }, { limit: 1 })) > 0;
     },
   };
 }

@@ -53,7 +53,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-030 | Consentimiento y aviso de privacidad | HU-009-1, RN-DAT-001/002 | T-021 | Escenarios de HU-009-1 pasan |
+| T-030 ✅ | Consentimiento y aviso de privacidad | HU-009-1, RN-DAT-001/002 | T-021 | Escenarios de HU-009-1 pasan |
 | T-031 | Edad, tamizajes y modo sin números | HU-009-2/3, RN-SEG-001 a 003 | T-030 | Escenarios pasan; sin respuestas de tamizaje guardadas |
 | T-032 | Onboarding completo con reanudación | HU-001-1 a 5 | T-031, T-010, T-011 | SC-001-1 medido en local |
 | T-033 | Respuestas de cuidado y suite de *red-team* | HU-009-4/7 | T-017, T-021 | 0 fallos críticos en ≥ 50 casos |

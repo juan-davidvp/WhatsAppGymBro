@@ -1,4 +1,4 @@
-import { PARAMETERS } from '@gymbro/domain';
+import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
@@ -15,11 +15,24 @@ export interface EmittedEvent {
   props: EventProps;
 }
 
-export function inMemoryDependencies(options: { failRiskSignals?: boolean } = {}) {
+export interface InMemoryOptions {
+  failRiskSignals?: boolean;
+  /** Crea los usuarios con el onboarding ya terminado. */
+  onboardingCompleted?: boolean;
+}
+
+export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const processed = new Set<number>();
   const users = new Map<number, UserRecord>();
   const riskSignals: { userId: string; category: string; at: Date }[] = [];
   const events: EmittedEvent[] = [];
+  const consents: {
+    userId: string;
+    category: ConsentCategory;
+    granted: boolean;
+    at: Date;
+    policyVersion: string;
+  }[] = [];
 
   const emitter: EventEmitter = {
     emit(name, subject, props = {}) {
@@ -52,11 +65,38 @@ export function inMemoryDependencies(options: { failRiskSignals?: boolean } = {}
             gamificationEnabled: true,
             numberFreeMode: false,
           },
-          onboarding: { step: 'start', completedAt: null },
+          onboarding: { step: 'privacy', completedAt: options.onboardingCompleted ? now : null },
           createdAt: now,
         };
         users.set(telegramUserId, user);
         return Promise.resolve(user);
+      },
+      setOnboardingStep(userId, step) {
+        for (const [key, user] of users) {
+          if (user.id === userId)
+            users.set(key, { ...user, onboarding: { ...user.onboarding, step } });
+        }
+        return Promise.resolve();
+      },
+    },
+    consents: {
+      record({ userId, granted, declined, at, policyVersion }) {
+        for (const category of granted)
+          consents.push({ userId, category, granted: true, at, policyVersion });
+        for (const category of declined)
+          consents.push({ userId, category, granted: false, at, policyVersion });
+        return Promise.resolve();
+      },
+      grantedCategories(userId) {
+        const latest = new Map<ConsentCategory, boolean>();
+        for (const c of consents.filter((c) => c.userId === userId))
+          latest.set(c.category, c.granted);
+        return Promise.resolve(
+          [...latest].filter(([, granted]) => granted).map(([category]) => category),
+        );
+      },
+      hasDecided(userId) {
+        return Promise.resolve(consents.some((c) => c.userId === userId));
       },
     },
     riskSignals: {
@@ -69,5 +109,5 @@ export function inMemoryDependencies(options: { failRiskSignals?: boolean } = {}
     events: emitter,
   };
 
-  return { deps, users, riskSignals, events };
+  return { deps, users, riskSignals, events, consents };
 }

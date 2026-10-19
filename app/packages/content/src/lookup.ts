@@ -21,3 +21,27 @@ export function renderCareResponse(category: AlertCategory): string {
   const { text } = templateById(entry.careResponseId);
   return entry.helpResource ? text.replaceAll('{recurso_local}', entry.helpResource) : text;
 }
+
+/**
+ * Texto de una plantilla con sus `{variables}` reemplazadas. Falla si falta una
+ * variable o sobra una: un mensaje con `{llaves}` sin rellenar no llega al usuario.
+ */
+export function renderTemplate(
+  id: string,
+  variables: Readonly<Record<string, string | number>> = {},
+): string {
+  const { text } = templateById(id);
+  const used = new Set<string>();
+  const rendered = text.replace(/\{(\w+)\}/g, (_match, name: string) => {
+    const value = variables[name];
+    if (value === undefined) throw new Error(`Falta {${name}} en ${id}`);
+    used.add(name);
+    return String(value);
+  });
+  const extra = Object.keys(variables).filter((name) => !used.has(name));
+  if (extra.length > 0) throw new Error(`Variables que ${id} no usa: ${extra.join(', ')}`);
+  return rendered;
+}
+
+/** Versión de la política que acepta quien toca [Acepto] (se guarda con cada autorización). */
+export const PRIVACY_POLICY_VERSION = 'PV-01@fase0-2026-10-19';

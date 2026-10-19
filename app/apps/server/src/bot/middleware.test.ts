@@ -98,7 +98,7 @@ describe('RN-SEG-007 · T-021 · un texto de alerta nunca llega a otra ruta', ()
   });
 
   it('un texto sin alerta sigue al enrutador', async () => {
-    const { bot, calls, riskSignals } = setupTestBot();
+    const { bot, calls, riskSignals } = setupTestBot({ onboardingCompleted: true });
     await bot.handleUpdate(textUpdate('me siento hinchado después de almorzar'));
     expect(sentTexts(calls)).toEqual([templateById('CU-07').text]);
     expect(riskSignals).toEqual([]);
@@ -115,8 +115,10 @@ describe('NFR-03 · SC-003-2 · deduplicación de updates', () => {
   it('el mismo update_id dos veces produce una sola respuesta', async () => {
     const { bot, calls, lines } = setupTestBot();
     await bot.handleUpdate(textUpdate('/start', 7));
+    const afterFirst = sentTexts(calls).length;
     await bot.handleUpdate(textUpdate('/start', 7));
-    expect(sentTexts(calls)).toHaveLength(1);
+    expect(afterFirst).toBeGreaterThan(0);
+    expect(sentTexts(calls)).toHaveLength(afterFirst);
     expect(lines.join('\n')).toContain('update_duplicate');
   });
 
@@ -147,15 +149,15 @@ describe('T-021 · usuario', () => {
 });
 
 describe('T-021 · enrutador', () => {
-  it('/start → ON-01', async () => {
+  it('/start de alguien nuevo → ON-01 y el aviso de privacidad ON-02', async () => {
     const { bot, calls } = setupTestBot();
     await bot.handleUpdate(textUpdate('/start'));
-    expect(sentTexts(calls)).toEqual([templateById('ON-01').text]);
+    expect(sentTexts(calls)).toEqual([templateById('ON-01').text, templateById('ON-02').text]);
   });
 
   it('texto o foto sin ruta → CU-07 con sus tres botones, nunca conversación', async () => {
     for (const update of [textUpdate('¿qué opinas del clima?', 1), photoUpdate(undefined, 2)]) {
-      const { bot, calls } = setupTestBot();
+      const { bot, calls } = setupTestBot({ onboardingCompleted: true });
       await bot.handleUpdate(update);
       const send = calls.find((c) => c.method === 'sendMessage');
       expect(send?.payload['text']).toBe(templateById('CU-07').text);
@@ -187,8 +189,30 @@ describe('T-021 · datos de los botones', () => {
     }
   });
 
+  it('onboarding y privacidad: ida y vuelta, y el paso más largo cabe', () => {
+    for (const action of [
+      { action: 'ob', step: 'pre_activity_screening', value: 'q7_yes' },
+      { action: 'pv', value: 'decline' },
+    ] as const) {
+      const data = encodeCallbackData(action);
+      expect(new TextEncoder().encode(data).length).toBeLessThanOrEqual(CALLBACK_DATA_MAX_BYTES);
+      expect(parseCallbackData(data)).toEqual(action);
+    }
+    expect(() => encodeCallbackData({ action: 'pv', value: 'Con Espacio' })).toThrow();
+  });
+
   it('rechaza otra versión, otra acción u otro destino', () => {
-    for (const data of ['v2:nav:today', 'v1:del:today', 'v1:nav:gym', '', 'basura']) {
+    for (const data of [
+      'v2:nav:today',
+      'v1:del:today',
+      'v1:nav:gym',
+      'v1:nav:today:x',
+      'v1:ob:paso_falso:yes',
+      'v1:ob:age',
+      'v1:pv:a:b',
+      '',
+      'basura',
+    ]) {
       expect(parseCallbackData(data)).toBeNull();
     }
   });

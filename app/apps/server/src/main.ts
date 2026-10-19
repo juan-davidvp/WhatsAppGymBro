@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { MongoClient } from 'mongodb';
 import { ensureIndexes } from './adapters/mongo/indexes.js';
 import {
+  consentsRepository,
   eventsRepository,
   processedUpdatesRepository,
   riskSignalsRepository,
@@ -52,6 +53,7 @@ async function main(): Promise<void> {
         processedUpdates: processedUpdatesRepository(db),
         users: usersRepository(db),
         riskSignals: riskSignalsRepository(db),
+        consents: consentsRepository(db),
         events: createEventEmitter({
           repository: eventsRepository(db),
           logger,

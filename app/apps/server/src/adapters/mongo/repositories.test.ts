@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { mealIdempotencyKey } from './idempotency.js';
 import { ensureIndexes } from './indexes.js';
 import {
+  consentsRepository,
   daysRepository,
   eventsRepository,
   mealsRepository,
@@ -192,5 +193,30 @@ describe('RN-DAT-005 · los eventos se guardan con su forma validada', () => {
     });
     const doc = await db.collection('events').findOne({}, { projection: { _id: 0 } });
     expect(Object.keys(doc ?? {}).sort()).toEqual(['at', 'common', 'name', 'props', 'userRef']);
+  });
+});
+
+describe('RN-DAT-001 · autorizaciones: historial completo y vale la más reciente', () => {
+  it('aceptar y luego retirar en el mismo instante deja todo sin autorizar', async () => {
+    const consents = consentsRepository(db);
+    expect(await consents.hasDecided('u9')).toBe(false);
+    const base = { userId: 'u9', at: now, policyVersion: 'PV-01@test' };
+    await consents.record({ ...base, granted: ['health_data', 'analytics'], declined: [] });
+    await consents.record({ ...base, granted: [], declined: ['health_data'] });
+    expect(await consents.grantedCategories('u9')).toEqual(['analytics']);
+    expect(await consents.hasDecided('u9')).toBe(true);
+    expect(await db.collection('consents').countDocuments({ userId: 'u9' })).toBe(3);
+  });
+});
+
+describe('FR-001-01 · el paso del onboarding se guarda', () => {
+  it('un usuario nuevo empieza en privacidad y su paso se actualiza', async () => {
+    const users = usersRepository(db);
+    const user = await users.findOrCreate({ telegramUserId: 77, chatId: 77, now });
+    expect(user.onboarding.step).toBe('privacy');
+    await users.setOnboardingStep(user.id, 'age');
+    expect(
+      (await users.findOrCreate({ telegramUserId: 77, chatId: 77, now })).onboarding.step,
+    ).toBe('age');
   });
 });
