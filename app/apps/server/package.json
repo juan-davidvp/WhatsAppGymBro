@@ -1,0 +1,21 @@
+{
+  "name": "@gymbro/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../infra/.env src/main.ts",
+    "start": "tsx --env-file-if-exists=../../infra/.env src/main.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@gymbro/content": "workspace:*",
+    "@gymbro/domain": "workspace:*",
+    "grammy": "^1.46.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3"
+  }
+}
