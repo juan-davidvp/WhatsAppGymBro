@@ -1,0 +1,738 @@
+{
+	"nodes": [
+		{
+			"id": "inicio",
+			"type": "text",
+			"x": 0,
+			"y": -200,
+			"width": 640,
+			"height": 120,
+			"color": "3",
+			"text": "## Mapa de trazabilidad · Gym Bro\nFB / F## → wiki → ADR → RN + P → SPEC → T → prueba con el ID de la RN → evento M##.\nEmpieza en [[inicio]] · Regenerar: `python3 herramientas/generar_mapa_trazabilidad.py`"
+		},
+		{
+			"id": "grupo-Observaciones del PO",
+			"type": "group",
+			"x": 0,
+			"y": 0,
+			"width": 360,
+			"height": 130,
+			"color": "2",
+			"label": "Raw · fuentes inmutables — Observaciones del PO"
+		},
+		{
+			"id": "n-FB-001_2026-10-18_observaciones-po",
+			"type": "file",
+			"file": "raw/feedback/FB-001_2026-10-18_observaciones-po.md",
+			"x": 20,
+			"y": 46,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Producto",
+			"type": "group",
+			"x": 460,
+			"y": 0,
+			"width": 360,
+			"height": 282,
+			"color": "5",
+			"label": "Wiki · el porqué — Producto"
+		},
+		{
+			"id": "n-estrategia-anti-novedad",
+			"type": "file",
+			"file": "wiki/producto/estrategia-anti-novedad.md",
+			"x": 480,
+			"y": 46,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-objetivos-y-progreso",
+			"type": "file",
+			"file": "wiki/producto/objetivos-y-progreso.md",
+			"x": 480,
+			"y": 122,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-propuesta-de-valor",
+			"type": "file",
+			"file": "wiki/producto/propuesta-de-valor.md",
+			"x": 480,
+			"y": 198,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Usuarios",
+			"type": "group",
+			"x": 460,
+			"y": 322,
+			"width": 360,
+			"height": 206,
+			"color": "5",
+			"label": "Wiki · el porqué — Usuarios"
+		},
+		{
+			"id": "n-jobs-to-be-done",
+			"type": "file",
+			"file": "wiki/usuarios/jobs-to-be-done.md",
+			"x": 480,
+			"y": 368,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-usuario-cabeza-01",
+			"type": "file",
+			"file": "wiki/usuarios/usuario-cabeza-01.md",
+			"x": 480,
+			"y": 444,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Experiencia",
+			"type": "group",
+			"x": 460,
+			"y": 568,
+			"width": 360,
+			"height": 662,
+			"color": "5",
+			"label": "Wiki · el porqué — Experiencia"
+		},
+		{
+			"id": "n-cada-dia-cuenta",
+			"type": "file",
+			"file": "wiki/experiencia/cada-dia-cuenta.md",
+			"x": 480,
+			"y": 614,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-constancia-en-cualquier-lugar",
+			"type": "file",
+			"file": "wiki/experiencia/constancia-en-cualquier-lugar.md",
+			"x": 480,
+			"y": 690,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-flujos-de-usuario",
+			"type": "file",
+			"file": "wiki/experiencia/flujos-de-usuario.md",
+			"x": 480,
+			"y": 766,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-proactividad-sin-spam",
+			"type": "file",
+			"file": "wiki/experiencia/proactividad-sin-spam.md",
+			"x": 480,
+			"y": 842,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-registro-sin-friccion",
+			"type": "file",
+			"file": "wiki/experiencia/registro-sin-friccion.md",
+			"x": 480,
+			"y": 918,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-relacion-comida-entreno",
+			"type": "file",
+			"file": "wiki/experiencia/relacion-comida-entreno.md",
+			"x": 480,
+			"y": 994,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-sistema-de-gamificacion",
+			"type": "file",
+			"file": "wiki/experiencia/sistema-de-gamificacion.md",
+			"x": 480,
+			"y": 1070,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-voz-y-marca",
+			"type": "file",
+			"file": "wiki/experiencia/voz-y-marca.md",
+			"x": 480,
+			"y": 1146,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Conceptos",
+			"type": "group",
+			"x": 460,
+			"y": 1270,
+			"width": 360,
+			"height": 434,
+			"color": "5",
+			"label": "Wiki · el porqué — Conceptos"
+		},
+		{
+			"id": "n-fundamentos-de-entrenamiento",
+			"type": "file",
+			"file": "wiki/conceptos/fundamentos-de-entrenamiento.md",
+			"x": 480,
+			"y": 1316,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-gamificacion-y-habitos",
+			"type": "file",
+			"file": "wiki/conceptos/gamificacion-y-habitos.md",
+			"x": 480,
+			"y": 1392,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-integraciones-y-ecosistema",
+			"type": "file",
+			"file": "wiki/conceptos/integraciones-y-ecosistema.md",
+			"x": 480,
+			"y": 1468,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-registro-nutricional-por-imagen",
+			"type": "file",
+			"file": "wiki/conceptos/registro-nutricional-por-imagen.md",
+			"x": 480,
+			"y": 1544,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-seguridad-y-cumplimiento",
+			"type": "file",
+			"file": "wiki/conceptos/seguridad-y-cumplimiento.md",
+			"x": 480,
+			"y": 1620,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Mercado y competencia",
+			"type": "group",
+			"x": 460,
+			"y": 1744,
+			"width": 360,
+			"height": 206,
+			"color": "5",
+			"label": "Wiki · el porqué — Mercado y competencia"
+		},
+		{
+			"id": "n-panorama-de-mercado",
+			"type": "file",
+			"file": "wiki/mercado/panorama-de-mercado.md",
+			"x": 480,
+			"y": 1790,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-benchmark-competitivo",
+			"type": "file",
+			"file": "wiki/competencia/benchmark-competitivo.md",
+			"x": 480,
+			"y": 1866,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Decisiones y fuentes",
+			"type": "group",
+			"x": 460,
+			"y": 1990,
+			"width": 360,
+			"height": 206,
+			"color": "5",
+			"label": "Wiki · el porqué — Decisiones y fuentes"
+		},
+		{
+			"id": "n-registro-de-decisiones",
+			"type": "file",
+			"file": "wiki/decisiones/registro-de-decisiones.md",
+			"x": 480,
+			"y": 2036,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-registro-de-fuentes",
+			"type": "file",
+			"file": "wiki/fuentes/registro-de-fuentes.md",
+			"x": 480,
+			"y": 2112,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Reglas y principios",
+			"type": "group",
+			"x": 920,
+			"y": 0,
+			"width": 360,
+			"height": 358,
+			"color": "4",
+			"label": "Output · núcleo SDD — Reglas y principios"
+		},
+		{
+			"id": "n-constitucion",
+			"type": "file",
+			"file": "output/sdd/constitucion.md",
+			"x": 940,
+			"y": 46,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-reglas-de-negocio",
+			"type": "file",
+			"file": "output/sdd/reglas-de-negocio.md",
+			"x": 940,
+			"y": 122,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-parametros",
+			"type": "file",
+			"file": "output/sdd/parametros.md",
+			"x": 940,
+			"y": 198,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-glosario",
+			"type": "file",
+			"file": "output/sdd/glosario.md",
+			"x": 940,
+			"y": 274,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Specs de la Fase 0",
+			"type": "group",
+			"x": 1380,
+			"y": 0,
+			"width": 360,
+			"height": 814,
+			"color": "6",
+			"label": "Output · specs — Specs de la Fase 0"
+		},
+		{
+			"id": "n-spec-000-vision-fase-0",
+			"type": "file",
+			"file": "output/sdd/specs/spec-000-vision-fase-0.md",
+			"x": 1400,
+			"y": 46,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-001-onboarding-y-objetivo",
+			"type": "file",
+			"file": "output/sdd/specs/spec-001-onboarding-y-objetivo.md",
+			"x": 1400,
+			"y": 122,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-002-plan-y-sesion-del-dia",
+			"type": "file",
+			"file": "output/sdd/specs/spec-002-plan-y-sesion-del-dia.md",
+			"x": 1400,
+			"y": 198,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-003-registro-de-entrenamiento",
+			"type": "file",
+			"file": "output/sdd/specs/spec-003-registro-de-entrenamiento.md",
+			"x": 1400,
+			"y": 274,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-004-registro-de-nutricion",
+			"type": "file",
+			"file": "output/sdd/specs/spec-004-registro-de-nutricion.md",
+			"x": 1400,
+			"y": 350,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-005-dia-que-cuenta-y-gamificacion",
+			"type": "file",
+			"file": "output/sdd/specs/spec-005-dia-que-cuenta-y-gamificacion.md",
+			"x": 1400,
+			"y": 426,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-006-progreso-logros-y-mantenimiento",
+			"type": "file",
+			"file": "output/sdd/specs/spec-006-progreso-logros-y-mantenimiento.md",
+			"x": 1400,
+			"y": 502,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-007-proactividad-y-mensajes",
+			"type": "file",
+			"file": "output/sdd/specs/spec-007-proactividad-y-mensajes.md",
+			"x": 1400,
+			"y": 578,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-008-integraciones",
+			"type": "file",
+			"file": "output/sdd/specs/spec-008-integraciones.md",
+			"x": 1400,
+			"y": 654,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-spec-009-seguridad-y-privacidad",
+			"type": "file",
+			"file": "output/sdd/specs/spec-009-seguridad-y-privacidad.md",
+			"x": 1400,
+			"y": 730,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Plan",
+			"type": "group",
+			"x": 1840,
+			"y": 0,
+			"width": 360,
+			"height": 358,
+			"color": "4",
+			"label": "Output · plan, contenido y tareas — Plan"
+		},
+		{
+			"id": "n-estrategia-de-pruebas",
+			"type": "file",
+			"file": "output/sdd/plan/estrategia-de-pruebas.md",
+			"x": 1860,
+			"y": 46,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-modelo-de-datos",
+			"type": "file",
+			"file": "output/sdd/plan/modelo-de-datos.md",
+			"x": 1860,
+			"y": 122,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-plan-de-medicion",
+			"type": "file",
+			"file": "output/sdd/plan/plan-de-medicion.md",
+			"x": 1860,
+			"y": 198,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-plan-tecnico",
+			"type": "file",
+			"file": "output/sdd/plan/plan-tecnico.md",
+			"x": 1860,
+			"y": 274,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Contenido",
+			"type": "group",
+			"x": 1840,
+			"y": 398,
+			"width": 360,
+			"height": 358,
+			"color": "4",
+			"label": "Output · plan, contenido y tareas — Contenido"
+		},
+		{
+			"id": "n-alimentos-accesibles-base",
+			"type": "file",
+			"file": "output/sdd/contenido/alimentos-accesibles-base.md",
+			"x": 1860,
+			"y": 444,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-catalogo-de-ejercicios-base",
+			"type": "file",
+			"file": "output/sdd/contenido/catalogo-de-ejercicios-base.md",
+			"x": 1860,
+			"y": 520,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-catalogo-de-logros-y-niveles",
+			"type": "file",
+			"file": "output/sdd/contenido/catalogo-de-logros-y-niveles.md",
+			"x": 1860,
+			"y": 596,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-plantillas-de-mensajes",
+			"type": "file",
+			"file": "output/sdd/contenido/plantillas-de-mensajes.md",
+			"x": 1860,
+			"y": 672,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-Tareas",
+			"type": "group",
+			"x": 1840,
+			"y": 796,
+			"width": 360,
+			"height": 130,
+			"color": "4",
+			"label": "Output · plan, contenido y tareas — Tareas"
+		},
+		{
+			"id": "n-tareas-fase-0",
+			"type": "file",
+			"file": "output/sdd/tareas/tareas-fase-0.md",
+			"x": 1860,
+			"y": 842,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "grupo-codigo",
+			"type": "group",
+			"x": 2300,
+			"y": 0,
+			"width": 360,
+			"height": 518,
+			"color": "3",
+			"label": "Código · ../app (Claude Code)"
+		},
+		{
+			"id": "cod-dominio",
+			"type": "text",
+			"text": "**`app/packages/domain`**\nUna prueba por `RN` · valores solo en `parameters.ts`",
+			"x": 2320,
+			"y": 46,
+			"width": 320,
+			"height": 100
+		},
+		{
+			"id": "cod-contenido",
+			"type": "text",
+			"text": "**`app/packages/content`**\nPlantillas, logros, ejercicios y alimentos validados con zod",
+			"x": 2320,
+			"y": 162,
+			"width": 320,
+			"height": 100
+		},
+		{
+			"id": "cod-servidor",
+			"type": "text",
+			"text": "**`app/apps/server`**\nBot (grammY), planificador, casos de uso, adaptadores",
+			"x": 2320,
+			"y": 278,
+			"width": 320,
+			"height": 100
+		},
+		{
+			"id": "cod-eventos",
+			"type": "text",
+			"text": "**Eventos → métricas**\nM00–M08 · G01–G06 validan las hipótesis H01–H14",
+			"x": 2320,
+			"y": 394,
+			"width": 320,
+			"height": 100
+		}
+	],
+	"edges": [
+		{
+			"id": "e01",
+			"fromNode": "n-FB-001_2026-10-18_observaciones-po",
+			"toNode": "n-propuesta-de-valor",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "FB-001-01…22"
+		},
+		{
+			"id": "e02",
+			"fromNode": "n-registro-de-fuentes",
+			"toNode": "grupo-Producto",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "F##"
+		},
+		{
+			"id": "e03",
+			"fromNode": "n-propuesta-de-valor",
+			"toNode": "n-registro-de-decisiones",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "ADR"
+		},
+		{
+			"id": "e04",
+			"fromNode": "grupo-Experiencia",
+			"toNode": "n-reglas-de-negocio",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "porqué → reglas"
+		},
+		{
+			"id": "e05",
+			"fromNode": "n-registro-de-decisiones",
+			"toNode": "n-constitucion",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "principios"
+		},
+		{
+			"id": "e06",
+			"fromNode": "n-registro-de-decisiones",
+			"toNode": "n-reglas-de-negocio",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "ADR → RN"
+		},
+		{
+			"id": "e07",
+			"fromNode": "n-reglas-de-negocio",
+			"toNode": "n-parametros",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "P-###"
+		},
+		{
+			"id": "e08",
+			"fromNode": "n-reglas-de-negocio",
+			"toNode": "grupo-Specs de la Fase 0",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "RN citadas"
+		},
+		{
+			"id": "e09",
+			"fromNode": "grupo-Specs de la Fase 0",
+			"toNode": "n-tareas-fase-0",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "HU → T"
+		},
+		{
+			"id": "e10",
+			"fromNode": "grupo-Plan",
+			"toNode": "n-tareas-fase-0",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e11",
+			"fromNode": "n-tareas-fase-0",
+			"toNode": "cod-servidor",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "T → commits"
+		},
+		{
+			"id": "e12",
+			"fromNode": "n-reglas-de-negocio",
+			"toNode": "cod-dominio",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "prueba por RN"
+		},
+		{
+			"id": "e13",
+			"fromNode": "n-parametros",
+			"toNode": "cod-dominio",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "parameters.ts"
+		},
+		{
+			"id": "e14",
+			"fromNode": "grupo-Contenido",
+			"toNode": "cod-contenido",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e15",
+			"fromNode": "n-plan-de-medicion",
+			"toNode": "cod-eventos",
+			"fromSide": "right",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "eventos"
+		},
+		{
+			"id": "e16",
+			"fromNode": "cod-eventos",
+			"toNode": "n-propuesta-de-valor",
+			"fromSide": "bottom",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "valida H##"
+		}
+	]
+}

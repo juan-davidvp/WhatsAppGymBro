@@ -1,0 +1,38 @@
+# Dependencias y compilados
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Entorno y secretos (RN-DAT-006): solo se versiona el ejemplo
+.env
+.env.*
+!.env.example
+
+# Registros
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Obsidian: estado local de la interfaz (los ajustes compartidos sí se versionan)
+vault/.obsidian/workspace*.json
+vault/.obsidian/cache
+vault/.trash/
+
+# Claude Code: ajustes personales
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Python
+__pycache__/
+
+# Datos personales — descomentar si el repositorio se comparte o se publica (ver vault/raw/leeme-raw.md)
+# vault/raw/entrevistas/*
+# !vault/raw/entrevistas/.gitkeep
+# vault/raw/investigacion/N1-*
