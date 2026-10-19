@@ -2,6 +2,7 @@ import { PARAMETERS, closeDay, type DayStatus, type DayType, type LocalDate } fr
 import { MongoServerError, ObjectId, type Db } from 'mongodb';
 import type {
   DaysRepository,
+  EventsRepository,
   MealRecord,
   MealsRepository,
   ProcessedUpdatesRepository,
@@ -168,6 +169,15 @@ export function riskSignalsRepository(db: Db): RiskSignalsRepository {
   return {
     async record(userId, category, at) {
       await collection.insertOne({ userId, category, at });
+    },
+  };
+}
+
+export function eventsRepository(db: Db): EventsRepository {
+  const collection = db.collection('events');
+  return {
+    async insert(event) {
+      await collection.insertOne({ ...event });
     },
   };
 }

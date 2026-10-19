@@ -3,7 +3,7 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.2
+version: 0.1.3
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
@@ -72,7 +72,7 @@ erDiagram
 | `imported_activities` | `userId`, `source`, `type` (`steps`·`workout`), `start`, `end`, `value`, `receivedAt` | `userId+start` | RN-INT-003, RN-INT-004 |
 | `ingestion_tokens` | `userId`, `tokenHash`, `createdAt`, `revokedAt` | `tokenHash` único | RN-INT-003 |
 | `risk_signals` | `userId`, `category`, `at` | `userId+at` | Solo categoría (RN-DAT-005) |
-| `events` | `userRef` (seudónimo), `name`, `at`, `props` (sin texto libre) | `name+at`; `userRef+at` | [[plan-de-medicion]] |
+| `events` | `userRef` (seudónimo: el id interno del usuario), `name`, `at`, `common` {`localDate`, `appVersion`, `phase`}, `props` (sin texto libre; validadas por esquema antes de guardar) | `name+at`; `userRef+at` | [[plan-de-medicion]] |
 | `processed_updates` | `updateId`, `at` | `updateId` único; caducidad P-080 | Idempotencia de Telegram |
 
 ## 3. Catálogos (paquete `content`, no en la base)

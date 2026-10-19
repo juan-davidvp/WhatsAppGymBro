@@ -6,6 +6,7 @@ import { mealIdempotencyKey } from './idempotency.js';
 import { ensureIndexes } from './indexes.js';
 import {
   daysRepository,
+  eventsRepository,
   mealsRepository,
   processedUpdatesRepository,
   riskSignalsRepository,
@@ -177,5 +178,19 @@ describe('RN-DAT-005 · las señales de riesgo guardan solo la categoría', () =
     await riskSignalsRepository(db).record('u1', 'distress', now);
     const doc = await db.collection('risk_signals').findOne({}, { projection: { _id: 0 } });
     expect(Object.keys(doc ?? {}).sort()).toEqual(['at', 'category', 'userId']);
+  });
+});
+
+describe('RN-DAT-005 · los eventos se guardan con su forma validada', () => {
+  it('guarda seudónimo, nombre, instante, propiedades comunes y propias', async () => {
+    await eventsRepository(db).insert({
+      userRef: '65f0a1b2c3d4e5f6a7b8c9d0',
+      name: 'care_response_sent',
+      at: now,
+      common: { localDate: '2026-10-19', appVersion: '0.0.0', phase: 'n1_B' },
+      props: { category: 'distress', templateId: 'CU-05' },
+    });
+    const doc = await db.collection('events').findOne({}, { projection: { _id: 0 } });
+    expect(Object.keys(doc ?? {}).sort()).toEqual(['at', 'common', 'name', 'props', 'userRef']);
   });
 });

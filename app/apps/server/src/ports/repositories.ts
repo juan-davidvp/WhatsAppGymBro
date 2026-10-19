@@ -1,3 +1,4 @@
+import type { AnalyticsEvent } from '../events/schema.js';
 import type { DayStatus, DayType, Intensity, LocalDate, LocalTime } from '@gymbro/domain';
 
 /**
@@ -90,4 +91,9 @@ export interface StreakStatesRepository {
 export interface RiskSignalsRepository {
   /** RN-DAT-005: solo la categoría, nunca el texto. */
   record(userId: string, category: string, at: Date): Promise<void>;
+}
+
+export interface EventsRepository {
+  /** Guarda un evento ya validado (`validateEvent`). */
+  insert(event: AnalyticsEvent): Promise<void>;
 }

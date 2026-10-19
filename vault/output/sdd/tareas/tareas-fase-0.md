@@ -47,7 +47,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 |---|---|---|---|---|
 | T-020 ✅ | Repositorios MongoDB, índices e idempotencia (`processed_updates`, claves por serie y comida) | [[modelo-de-datos]] | T-005, M1 | Pruebas con base en memoria; SC-003-2 |
 | T-021 | Middleware: deduplicación → usuario → detector de riesgo → enrutador | [[plan-tecnico]] §5, RN-SEG-007 | T-020 | Un texto de alerta nunca llega a otra ruta (prueba) |
-| T-022 [P] | Emisor de eventos sin texto libre | [[plan-de-medicion]], RN-DAT-005 | T-020 | Revisión automática de esquemas de eventos (SC-009-3) |
+| T-022 [P] ✅ | Emisor de eventos sin texto libre | [[plan-de-medicion]], RN-DAT-005 | T-020 | Revisión automática de esquemas de eventos (SC-009-3) |
 
 ## M3 · Seguridad y onboarding (SPEC-009, SPEC-001)
 
