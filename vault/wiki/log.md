@@ -203,3 +203,11 @@ relacionados: [index, inicio]
 - Archivo: `app/packages/domain/src/plan/plan.ts` — validación de entradas, días de entreno según nivel y descanso, ciclo de sesiones de P-014 con rotación por día planificado, versiones A/B/C con rangos y descansos por objetivo, equipamiento de casa (con compensación del catálogo si falta equipo), ajuste al tiempo recortando series, reprogramar sin deuda, hábito, publicación del plan y hora de la sesión.
 - Lecturas elegidas: el volumen semanal arranca en el mínimo de P-015 y se reparte entre las sesiones que tienen el patrón; si no cabe en el tiempo se recortan series (RN-PLAN-006 manda sobre el volumen); la intensidad baja (FR-002-08) usa el volumen de novato; las repeticiones precargadas son el inicio del rango (progresión doble).
 - M1 (dominio) completo: T-010 a T-017 ✅. Siguiente: M2 (servidor base: repositorios MongoDB, middleware, eventos).
+
+## [2026-10-19] decision | P-080 y P-081: caducidad de `processed_updates` y retención de eventos
+- [[modelo-de-datos]] §5 tenía los números dentro del texto ("7 días", "12 meses"); pasan a [[parametros]] como **P-080** `data.processedUpdatesTtlDays` = 7 y **P-081** `data.eventsRetentionMonths` = 12 `[supuesto]`, sin cambio de comportamiento. [[parametros]] v0.3.1, [[modelo-de-datos]] v0.1.2.
+
+## [2026-10-19] implementar | T-020 Repositorios MongoDB, índices e idempotencia
+- Puertos en `app/apps/server/src/ports/repositories.ts`; adaptador en `app/apps/server/src/adapters/mongo/` (`schema.ts` con las 28 colecciones y sus índices, `indexes.ts`, `idempotency.ts`, `repositories.ts`).
+- Idempotencia: cada *update* se marca una vez en `processed_updates` (índice único y caducidad P-080); serie con clave `set:{sessionId}:{exerciseCode}:{setIndex}` y comida con `meal:{chatId}:{messageId}:{callbackData}` (índice único); cerrar un día pasa de abierto a cerrado una sola vez y suma al total de días que cuentan con una actualización condicional que usa `closeDay` del dominio (RN-DQC-007).
+- Pruebas con MongoDB en memoria (`mongodb-memory-server`, binario 8.0.4): repetir un toque no duplica serie, comida ni día que cuenta (SC-003-2); `risk_signals` no guarda texto libre (RN-DAT-005). Una prueba compara los índices del código con la columna de [[modelo-de-datos]] §2.

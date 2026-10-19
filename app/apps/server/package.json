@@ -12,9 +12,11 @@
     "@gymbro/content": "workspace:*",
     "@gymbro/domain": "workspace:*",
     "grammy": "^1.46.0",
+    "mongodb": "^7.7.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   }

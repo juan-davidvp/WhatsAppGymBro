@@ -234,6 +234,10 @@ export const PARAMETERS = {
   data: {
     /** P-065 · RN-DAT-003 · duro · horas */
     deletionMaxHours: 24,
+    /** P-080 · modelo de datos §5 · días que se recuerda un update procesado */
+    processedUpdatesTtlDays: 7,
+    /** P-081 · modelo de datos §5 · [supuesto] · meses de retención de eventos */
+    eventsRetentionMonths: 12,
   },
   ai: {
     /** P-068 · costo (H13) · duro · [supuesto] */

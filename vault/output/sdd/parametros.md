@@ -3,7 +3,7 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.3.0
+version: 0.3.1
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
@@ -120,6 +120,8 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-063 | `safety.maxSessionsPerDay` | 2 | — | RN-SEG-008 | Sí | [V] |
 | P-064 | `safety.weeksTrainingAllRestDays` | 2 | — | RN-SEG-008 | Sí | [V] |
 | P-065 | `data.deletionMaxHours` | 24 h | — | RN-DAT-003 | Sí | — |
+| P-080 | `data.processedUpdatesTtlDays` | 7 días | — | [[modelo-de-datos]] §5 (idempotencia) | No | — |
+| P-081 | `data.eventsRetentionMonths` | 12 meses | — | [[modelo-de-datos]] §5 | No | `[supuesto]` |
 | P-068 | `ai.maxPhotoEstimatesPerDay` | 6 | — | Costo (H13) | Sí | `[supuesto]` |
 | P-069 | `user.defaultTimezone` | America/Bogota | — | RN-DQC-001 | No | ADR-016 |
 | P-071 | `safety.veryLowCalorieDailyMax` | 800 kcal/día | — | RN-SEG-007 | Sí | [V] (`F93`) |

@@ -3,7 +3,7 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.1
+version: 0.1.2
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
@@ -73,7 +73,7 @@ erDiagram
 | `ingestion_tokens` | `userId`, `tokenHash`, `createdAt`, `revokedAt` | `tokenHash` único | RN-INT-003 |
 | `risk_signals` | `userId`, `category`, `at` | `userId+at` | Solo categoría (RN-DAT-005) |
 | `events` | `userRef` (seudónimo), `name`, `at`, `props` (sin texto libre) | `name+at`; `userRef+at` | [[plan-de-medicion]] |
-| `processed_updates` | `updateId`, `at` | `updateId` único; caducidad 7 días | Idempotencia de Telegram |
+| `processed_updates` | `updateId`, `at` | `updateId` único; caducidad P-080 | Idempotencia de Telegram |
 
 ## 3. Catálogos (paquete `content`, no en la base)
 
@@ -87,7 +87,7 @@ erDiagram
 
 | Datos | Retención |
 |---|---|
-| `processed_updates` | 7 días |
-| `events` | 12 meses `[supuesto]` |
+| `processed_updates` | P-080 |
+| `events` | P-081 `[supuesto]` |
 | Fotos de comida | No se almacenan |
 | Resto | Mientras la cuenta esté activa o hasta el borrado |
