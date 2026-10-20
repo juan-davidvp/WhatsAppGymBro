@@ -11,7 +11,7 @@ relacionados: [index, propuesta-de-valor]
 
 # Registro de fuentes
 
-> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81) y **2026-10-19** (F82–F93). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
+> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81) y **2026-10-19** (F82–F102). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
 >
 > Para conservar el original de una fuente pública, guardarlo en `raw/` con el nombre `F##_titulo-corto.ext`.
 
@@ -124,6 +124,8 @@ relacionados: [index, propuesta-de-valor]
 | F58 | Helms, Aragon y Fitschen — recomendaciones para la preparación de culturismo natural, JISSN 11:20 | 2014 | A | https://jissn.biomedcentral.com/track/pdf/10.1186/1550-2783-11-20 |
 | F59 | Iraki, Fitschen, Espinar y Helms — *Nutrition Recommendations for Bodybuilders in the Off-Season*, Sports 7(7):154 | 2019 | A | https://www.mdpi.com/2075-4663/7/7/154 |
 | F60 | Tod, Edwards y Cranswick — *Muscle dysmorphia: current insights*, Psychology Research and Behavior Management 9:179–188 | 2016 | A | https://www.dovepress.com/muscle-dysmorphia-current-insights-peer-reviewed-fulltext-article-PRBM |
+| F94 | ACSM — *Progression Models in Resistance Training for Healthy Adults* (Position Stand, Med Sci Sports Exerc 41(3):687–708): descansos de 1–2 min (hipertrofia, novatos e intermedios) y 3–5 min con cargas altas en ejercicios multiarticulares | 2009 | A | https://www.sportgeneeskunde.com/wp-content/uploads/ACSM-Position-Stand-Progression-Models-in-Resistance-Training-for-Healthy-Adults.pdf |
+| F95 | Schoenfeld et al. — *Longer Interset Rest Periods Enhance Muscle Strength and Hypertrophy in Resistance-Trained Men* (J Strength Cond Res 30(7):1805–12): 3 min de descanso superaron a 1 min en fuerza y grosor muscular | 2016 | A | https://pubmed.ncbi.nlm.nih.gov/26605807/ |
 | F61 | *Accuracy of hands v. household measures as portion size estimation aids*, Journal of Nutritional Science | 2016 | A | https://doaj.org/article/11f7e8aecf7b445f89425be58b650349 |
 
 ## Integraciones y plataforma (2026-10-18)
@@ -173,6 +175,18 @@ relacionados: [index, propuesta-de-valor]
 | F92 | Policía Nacional de Colombia — líneas de emergencia 123 y 155 | consultada 2026-10-19 | A | https://www.policia.gov.co/noticia/policia-nacional-sensibiliza-comunidad-sobre-uso-las-lineas-emergencia-123-155 |
 | F93 | NIDDK (NIH) — Diccionario: dieta muy baja en calorías (≈ 800 kcal/día o menos, con supervisión profesional) | consultada 2026-10-19 | A | https://www.niddk.nih.gov/Dictionary/V/very-low-calorie-diet |
 
+## Seguridad: tamizajes del onboarding (2026-10-19)
+
+| ID | Fuente | Fecha | Nivel | URL |
+|---|---|---|---|---|
+| F96 | PAR-Q+ Collaboration — *PAR-Q+ en español* (traducido y adaptado por M. Rubio, J. y L. Schwartz): 7 preguntas generales; con algún SÍ, completar las páginas 2 y 3 o consultar a un profesional | consultada 2026-10-19 | A | https://eparmedx.com/wp-content/uploads/2023/12/Spanish.pdf |
+| F97 | PAR-Q+ Collaboration — condiciones de uso y versiones impresas: no se permiten cambios; no se puede incorporar en encuestas electrónicas ni productos sin consentimiento escrito | consultada 2026-10-19 | A | https://eparmedx.com/print-versions-of-par-q/ · https://eparmedx.com/about/terms-and-conditions/ |
+| F98 | Schwartz et al. — *Cross-cultural translation, adaptation, and reliability of the Spanish version of the PAR-Q+*, Health & Fitness Journal of Canada 12(4):3–14 | 2019 | A | https://doi.org/10.14288/hfjc.v12i4.291 |
+| F99 | Morgan, Reid y Lacey — *The SCOFF questionnaire: assessment of a new screening tool for eating disorders*, BMJ 319:1467–8 (≥ 2 "sí" = caso probable; muestra solo de mujeres; tamizaje, no diagnóstico) | 1999 | A | https://doi.org/10.1136/bmj.319.7223.1467 |
+| F100 | Rueda et al. — *Validación de la encuesta SCOFF para tamizaje de trastornos de la conducta alimentaria en mujeres universitarias*, Biomédica 25(2):196–202 (traducción colombiana, CC BY; sensibilidad 78,4 %, especificidad 75,8 %) | 2005 | A | https://doi.org/10.7705/biomedica.v25i2.1342 |
+| F101 | Coop, Clark, Morgan, Reid y Lacey — *The use and misuse of the SCOFF screening measure over two decades*, Eat Weight Disord 29:29 (usar solo como tamizaje; no cambiar el punto de corte sin validación) | 2024 | A | https://doi.org/10.1007/s40519-024-01656-6 |
+| F102 | Kutz et al. — *Eating Disorder Screening: a Systematic Review and Meta-analysis of the SCOFF*, J Gen Intern Med 35(3):885–93 (menor sensibilidad en estudios con más hombres) | 2020 | A | https://doi.org/10.1007/s11606-019-05478-6 |
+
 ## Pendientes de contraste
 
 - **F19:** obtener el artículo original de *Nutrients* 2025 y confirmar las cifras.
@@ -186,4 +200,7 @@ relacionados: [index, propuesta-de-valor]
 - **F76:** desactualizada (2017); reemplazar con un dato reciente de uso de Telegram en Colombia (H10).
 - **F73, F79, F80:** fuentes de terceros; confirmar en documentación oficial antes de implementar.
 - **F90, F92:** el texto se leyó a través del buscador (la página bloquea la descarga directa); confirmar en el sitio.
+- **F94:** se leyó una copia alojada del *Position Stand* y un resumen secundario; confirmar las cifras de descanso en el artículo original.
 - **F91, F92:** recursos de ayuda; reverificar vigencia cada 6 meses y antes de la alfa (dato volátil).
+- **F96, F97:** confirmar por escrito con la PAR-Q+ Collaboration (eparmedx@gmail.com) si el uso en la Fase 0 cuenta como no comercial y si enlazar al formulario desde el bot requiere licencia; pedir permiso antes de la alfa.
+- **F99, F100:** no hay licencia formal publicada del SCOFF; pedir permiso a los autores antes de la alfa. Ninguna validación encontrada en hombres jóvenes de Colombia.

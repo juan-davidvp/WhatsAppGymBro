@@ -72,6 +72,22 @@ describe('RN-OBJ-002 · todo objetivo tiene métrica, inicial, meta, inicio y ho
 });
 
 describe('RN-OBJ-003 · horizonte entre P-002 y P-003 semanas, P-001 por defecto', () => {
+  it('la propuesta usa el ritmo por defecto P-088 al ganar y P-089 al perder', () => {
+    const gain = proposeWeightGoal({ type: 'gain_muscle', weightKg: 68, heightM: 1.75 });
+    expect(gain.targetKg).toBeCloseTo(
+      68 * (1 + (G.defaultWeeklyGainPct / 100) * G.horizonWeeksDefault),
+    );
+    const loss = proposeWeightGoal({ type: 'lose_fat', weightKg: 90, heightM: 1.8 });
+    expect(loss.targetKg).toBeCloseTo(
+      90 * (1 - (G.defaultWeeklyLossPct / 100) * G.horizonWeeksDefault),
+    );
+  });
+
+  it('los ritmos por defecto no superan los límites de RN-OBJ-004', () => {
+    expect(G.defaultWeeklyGainPct).toBeLessThanOrEqual(G.maxWeeklyGainPct);
+    expect(G.defaultWeeklyLossPct).toBeLessThanOrEqual(G.maxWeeklyLossPct);
+  });
+
   it('la propuesta usa el horizonte por defecto', () => {
     expect(
       proposeWeightGoal({ type: 'gain_muscle', weightKg: 68, heightM: 1.75 }).horizonWeeks,

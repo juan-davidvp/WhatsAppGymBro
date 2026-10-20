@@ -4,12 +4,12 @@ tipo: sdd-spec
 id: SPEC-001
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.2.0
 fase: 0
 prioridad: P1
 depende_de: [SPEC-009]
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-20
 deriva_de: [objetivos-y-progreso, flujos-de-usuario, usuario-cabeza-01, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-009-seguridad-y-privacidad, spec-002-plan-y-sesion-del-dia, spec-007-proactividad-y-mensajes, reglas-de-negocio]
@@ -35,7 +35,7 @@ Como usuario nuevo, quiero completar el inicio con botones en pocos minutos para
 Como usuario, quiero elegir mi objetivo y recibir una meta realista para saber hacia dónde voy.
 
 1. **Dado** que elige `ganar_musculo` y declara 68 kg, **cuando** el sistema calcula la meta, **entonces** propone un ritmo dentro de P-005 y un horizonte de P-001 semanas (RN-OBJ-003, RN-OBJ-004).
-2. **Dado** que pide una meta más ambiciosa que el límite, **cuando** toca [Más ambiciosa], **entonces** el sistema no la acepta tal cual y le ofrece un horizonte mayor o la meta máxima segura (RN-OBJ-004).
+2. **Dado** que pide una meta más ambiciosa que el límite, **cuando** toca [Más ambiciosa], **entonces** el sistema no la acepta tal cual y le ofrece un horizonte mayor o la meta máxima segura (RN-OBJ-004). "Más conservadora" es la misma meta en P-003 semanas; "más ambiciosa", la misma meta en P-002 semanas, que se valida (RN-OBJ-003).
 3. **Dado** que elige `perder_grasa`, **cuando** la meta implicaría un IMC menor que P-006, **entonces** no se guarda y se propone la meta mínima segura (RN-OBJ-005).
 4. **Dado** que no quiere dar su peso, **cuando** elige [Prefiero no decirlo], **entonces** el objetivo se fija como `ser_constante` o el elegido sin metas de peso, y puede añadir el peso después.
 
@@ -64,7 +64,7 @@ Ver [[spec-009-seguridad-y-privacidad]] (HU-009-2 y HU-009-3). Este flujo los in
 | FR-001-04 | El sistema DEBE ofrecer los 6 tipos de objetivo del catálogo (RN-OBJ-001). |
 | FR-001-05 | El sistema DEBE calcular una meta propuesta con horizonte por defecto y validarla contra los límites (RN-OBJ-002 a RN-OBJ-005). |
 | FR-001-06 | El sistema DEBE permitir ajustar la meta con botones sin superar los límites. |
-| FR-001-07 | El sistema DEBE capturar nivel, días disponibles, franja horaria por día, minutos por sesión, lugar y equipamiento (RN-PLAN-001, RN-PLAN-002). |
+| FR-001-07 | El sistema DEBE capturar nivel, días disponibles, una franja horaria para los días elegidos (P-083; se ajusta después con la hora real, RN-MSJ-006), minutos por sesión (P-084), lugar y equipamiento (RN-PLAN-001, RN-PLAN-002). |
 | FR-001-08 | El sistema DEBE ejecutar los tamizajes de SPEC-009 y aplicar sus consecuencias al plan y a la nutrición (RN-SEG-002, RN-SEG-003). |
 | FR-001-09 | El sistema DEBE capturar intensidad de mensajes y horas de silencio, con valores por defecto (RN-MSJ-002, RN-MSJ-004). |
 | FR-001-10 | El sistema DEBE generar el primer plan al terminar (SPEC-002) y ofrecer la sesión de hoy si es día de entreno. |
@@ -104,4 +104,10 @@ Registro con correo o teléfono, cuentas fuera de Telegram, importación de hist
 ## 10. Aclaraciones pendientes
 
 - `[NEEDS CLARIFICATION: Q4]` Instrumento exacto de los tamizajes (ver SPEC-009).
-- `[NEEDS CLARIFICATION]` ¿Preguntar la cintura en el onboarding o solo después en `/progreso`? Propuesta: después, para no alargar el inicio.
+- `[NEEDS CLARIFICATION]` ¿Preguntar la cintura en el onboarding o solo después en `/progreso`? Propuesta: después, para no alargar el inicio. **T-032 no la pregunta** (supuesto vigente).
+- **Decidido por el PO (2026-10-20):**
+  - una sola franja horaria para todos los días;
+  - botones de minutos de P-084;
+  - la estatura se pide junto al peso solo si hay meta de peso, porque RN-OBJ-005 la necesita (rangos plausibles P-085 y P-087);
+  - horas de silencio: confirmar P-047 o elegir una de P-086.
+- **FR-001-11 pendiente:** el teclado persistente y la lista de comandos llegan con T-040/T-041. Al terminar, el resumen ON-24 lleva botones en línea a Hoy y al plan.

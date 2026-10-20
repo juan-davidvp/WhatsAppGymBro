@@ -3,7 +3,7 @@ titulo: Catálogo base de ejercicios y equivalencias gym / casa / exprés
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.1.1
+version: 0.3.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [constancia-en-cualquier-lugar, fundamentos-de-entrenamiento]
@@ -70,4 +70,33 @@ relacionados: [spec-002-plan-y-sesion-del-dia, parametros, reglas-de-negocio]
 
 ## 4. Versión C (exprés de 15 minutos) — estructura propuesta
 
-Circuito de 5 ejercicios (`SQ_BW`, `PUSHUP`, `REVERSE_LUNGE`, `ROW_INVERTED` o `SUPERMAN`, `PLANK`), 3 rondas, 40 s de trabajo y 20 s de pausa, con 1 minuto entre rondas `[VALIDAR-PROFESIONAL]`. Para el usuario no entrenado, las cargas bajas producen ganancias sustanciales (`F53`); en casa, las series se acercan al fallo dejando 1–3 repeticiones en reserva (P-016).
+Circuito con el equivalente exprés de cada patrón de la sesión (por ejemplo `SQ_BW`, `PUSHUP`, `REVERSE_LUNGE`, `ROW_INVERTED` o `SUPERMAN`, `PLANK`); rondas, trabajo, pausa y descanso entre rondas en P-079 `[VALIDAR-PROFESIONAL]`. Para el usuario no entrenado, las cargas bajas producen ganancias sustanciales (`F53`); en casa, las series se acercan al fallo dejando 1–3 repeticiones en reserva (P-016).
+
+## 5. Composición de las sesiones por división `[VALIDAR-PROFESIONAL]` `[inferencia]`
+
+Derivada de los nombres de las divisiones de P-014 (torso, pierna, empuje, tirón, cuerpo completo); la usa el generador de planes (T-011). Cada patrón aporta un ejercicio a cada versión (A, B y C) según §3.
+
+| Sesión | Código | Patrones |
+|---|---|---|
+| Cuerpo completo A | `FULL_A` | `SQUAT` · `PUSH_H` · `PULL_V` · `CORE` |
+| Cuerpo completo B | `FULL_B` | `HINGE` · `PUSH_V` · `PULL_H` · `SINGLE_LEG` |
+| Cuerpo completo C | `FULL_C` | `SQUAT` · `PUSH_H` · `PULL_H` · `ARMS` |
+| Torso | `UPPER` | `PUSH_H` · `PULL_H` · `PUSH_V` · `PULL_V` · `ARMS` |
+| Pierna | `LOWER` | `SQUAT` · `HINGE` · `SINGLE_LEG` · `CORE` |
+| Empuje | `PUSH` | `PUSH_H` · `PUSH_V` · `ARMS` |
+| Tirón | `PULL` | `PULL_H` · `PULL_V` · `ARMS` |
+| Pierna (PPL) | `LEGS` | `SQUAT` · `HINGE` · `SINGLE_LEG` · `CORE` |
+
+## 6. Equipamiento de casa que se pregunta en el onboarding
+
+Opciones que el usuario marca en el paso de equipamiento ([[spec-001-onboarding-y-objetivo]] HU-001-3). Cada una coincide con el equipo de al menos un ejercicio de casa de §2, que el generador compara por la raíz de la palabra. Sin nada marcado, la versión B usa los ejercicios con peso corporal y las compensaciones de §3.
+
+| Opción |
+|---|
+| Mancuernas |
+| Kettlebell |
+| Mochila |
+| Banda elástica |
+| Banco |
+| Silla firme |
+| Mesa estable |

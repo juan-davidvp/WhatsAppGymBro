@@ -4,7 +4,7 @@ tipo: diseno
 hito: H2
 estado: borrador
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-20
 fuentes: [F69]
 relacionados: [registro-sin-friccion, proactividad-sin-spam, constancia-en-cualquier-lugar, cada-dia-cuenta, objetivos-y-progreso, seguridad-y-cumplimiento, spec-000-vision-fase-0]
 ---
@@ -53,7 +53,8 @@ flowchart TD
     H --> I[Tamizaje previo a la actividad]
     I --> J[Relación con la comida: tamizaje breve]
     J --> K[Peso actual opcional]
-    K --> L[Meta propuesta dentro de límites<br/>Aceptar / Más conservadora / Más ambiciosa]
+    K --> K2[Estatura opcional,<br/>solo si hay meta de peso]
+    K2 --> L[Meta propuesta dentro de límites<br/>Aceptar / Más conservadora / Más ambiciosa]
     L --> M[Intensidad de mensajes + horas de silencio]
     M --> N[Resumen + primera sesión: ¿hoy?]
 ```

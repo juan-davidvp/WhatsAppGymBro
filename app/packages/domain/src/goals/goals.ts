@@ -122,9 +122,10 @@ export function validateWeightGoal(request: WeightGoalRequest): WeightGoalCheck 
 }
 
 /**
- * RN-OBJ-003 y RN-OBJ-004: meta de peso propuesta para ganar músculo o perder grasa,
- * en el horizonte por defecto P-001 y al ritmo máximo seguro (el usuario puede
- * pedir una más conservadora). Para perder, nunca por debajo del IMC P-006.
+ * RN-OBJ-003: meta de peso propuesta para ganar músculo o perder grasa, en el
+ * horizonte por defecto P-001 y al ritmo por defecto P-088 o P-089. Para perder,
+ * nunca por debajo del IMC P-006 (RN-OBJ-005). El ritmo por defecto está dentro de
+ * P-004 y P-005, así que la propuesta siempre es segura (RN-OBJ-004).
  */
 export function proposeWeightGoal(input: {
   readonly type: 'gain_muscle' | 'lose_fat';
@@ -133,7 +134,8 @@ export function proposeWeightGoal(input: {
 }): { targetKg: number; horizonWeeks: number } {
   const horizonWeeks = PARAMETERS.goal.horizonWeeksDefault;
   const losing = input.type === 'lose_fat';
-  const change = input.weightKg * maxWeeklyFraction(losing) * horizonWeeks;
+  const pct = losing ? PARAMETERS.goal.defaultWeeklyLossPct : PARAMETERS.goal.defaultWeeklyGainPct;
+  const change = input.weightKg * (pct / 100) * horizonWeeks;
   const targetKg = losing
     ? Math.max(input.weightKg - change, Math.min(input.weightKg, minSafeWeightKg(input.heightM)))
     : input.weightKg + change;

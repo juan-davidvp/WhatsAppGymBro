@@ -192,3 +192,134 @@ relacionados: [index, inicio]
 - La lista de parámetros duros del código se compara con la columna "Duro" de [[parametros]] en una prueba.
 - *Red-team* (HU-009-7, H11): `packages/content/src/red-team.test.ts`, 50 escenarios (34 de texto libre en las 6 categorías, 8 metas peligrosas, menores, tamizaje positivo, sobreuso e intentos de cambiar límites duros): 0 fallos críticos tras añadir las expresiones de hinchazón.
 - Pendiente fuera del dominio: los instrumentos exactos de los tamizajes (Q4); el dominio recibe solo las respuestas.
+
+## [2026-10-19] decision | P-074 a P-079: tiempos y rangos del plan; composición de sesiones
+- El PO aprueba los valores propuestos para estimar la duración de las sesiones (RN-PLAN-006), que no estaban definidos: **P-076** calentamiento 5 min `[supuesto]`, **P-077** 40 s por serie, **P-078** descanso de 90 s (músculo, grasa, recomposición y accesorios) y 180 s (fuerza en básicos), con fuentes nuevas `F94` (ACSM 2009) y `F95` (Schoenfeld 2016). Todos `[V]`.
+- Pasan a [[parametros]] números que estaban en el texto: **P-074** días disponibles 2–6 y **P-075** minutos 20–90 (RN-PLAN-001); **P-079** circuito exprés 3 rondas · 40 s · 20 s · 60 s entre rondas ([[catalogo-de-ejercicios-base]] §4).
+- RN-PLAN-006 queda `[VALIDAR-PROFESIONAL]` y cita P-076 a P-079 (conteo: 14 reglas por validar). [[reglas-de-negocio]] v0.3.0, [[parametros]] v0.3.0, [[catalogo-de-ejercicios-base]] v0.2.0 con §5 "Composición de las sesiones por división" `[VALIDAR-PROFESIONAL]` `[inferencia]` (derivada de los nombres de P-014).
+
+## [2026-10-19] implementar | T-011 Generador del plan semanal — M1 completo
+- RN cubiertas: RN-PLAN-001 a RN-PLAN-010 (pruebas con su ID; propiedades con fast-check: ninguna versión supera los minutos disponibles, la versión C no pasa de P-013, ningún plan deja menos de P-017 descansos ni más de P-018 días seguidos a un novato, cada patrón de A tiene B y C o su excepción). `packages/content` prueba el generador con el catálogo real y la composición de sesiones se compara con la bóveda.
+- Archivo: `app/packages/domain/src/plan/plan.ts` — validación de entradas, días de entreno según nivel y descanso, ciclo de sesiones de P-014 con rotación por día planificado, versiones A/B/C con rangos y descansos por objetivo, equipamiento de casa (con compensación del catálogo si falta equipo), ajuste al tiempo recortando series, reprogramar sin deuda, hábito, publicación del plan y hora de la sesión.
+- Lecturas elegidas: el volumen semanal arranca en el mínimo de P-015 y se reparte entre las sesiones que tienen el patrón; si no cabe en el tiempo se recortan series (RN-PLAN-006 manda sobre el volumen); la intensidad baja (FR-002-08) usa el volumen de novato; las repeticiones precargadas son el inicio del rango (progresión doble).
+- M1 (dominio) completo: T-010 a T-017 ✅. Siguiente: M2 (servidor base: repositorios MongoDB, middleware, eventos).
+
+## [2026-10-19] decision | P-080 y P-081: caducidad de `processed_updates` y retención de eventos
+- [[modelo-de-datos]] §5 tenía los números dentro del texto ("7 días", "12 meses"); pasan a [[parametros]] como **P-080** `data.processedUpdatesTtlDays` = 7 y **P-081** `data.eventsRetentionMonths` = 12 `[supuesto]`, sin cambio de comportamiento. [[parametros]] v0.3.1, [[modelo-de-datos]] v0.1.2.
+
+## [2026-10-19] implementar | T-020 Repositorios MongoDB, índices e idempotencia
+- Puertos en `app/apps/server/src/ports/repositories.ts`; adaptador en `app/apps/server/src/adapters/mongo/` (`schema.ts` con las 28 colecciones y sus índices, `indexes.ts`, `idempotency.ts`, `repositories.ts`).
+- Idempotencia: cada *update* se marca una vez en `processed_updates` (índice único y caducidad P-080); serie con clave `set:{sessionId}:{exerciseCode}:{setIndex}` y comida con `meal:{chatId}:{messageId}:{callbackData}` (índice único); cerrar un día pasa de abierto a cerrado una sola vez y suma al total de días que cuentan con una actualización condicional que usa `closeDay` del dominio (RN-DQC-007).
+- Pruebas con MongoDB en memoria (`mongodb-memory-server`, binario 8.0.4): repetir un toque no duplica serie, comida ni día que cuenta (SC-003-2); `risk_signals` no guarda texto libre (RN-DAT-005). Una prueba compara los índices del código con la columna de [[modelo-de-datos]] §2.
+
+## [2026-10-19] implementar | T-022 Emisor de eventos sin texto libre
+- Archivos: `app/apps/server/src/events/` — `catalog.ts` (los 80 eventos de [[plan-de-medicion]] §2, con prueba de sincronía), `schema.ts` (esquema de cada evento) y `emitter.ts` (añade `localDate` con el día operativo del dominio, `appVersion` y `phase`; valida y guarda). Puerto `EventsRepository` y adaptador MongoDB.
+- SC-009-3 (revisión automática de esquemas): todo valor de texto es una ficha ASCII sin espacios de ≤ 64 caracteres; las claves no pueden llamarse como texto libre (`text`, `name`, `message`, `answer`, `note`…); no hay objetos anidados; los eventos que ya se emiten (`risk_signal_detected`, `care_response_sent`) tienen esquema propio estricto. Propiedad con fast-check: ningún texto con espacios, saltos de línea o caracteres no ASCII se guarda. Un evento que no cumple no se guarda y se registra `event_rejected` sin los valores; si la base falla, medir no rompe la respuesta.
+- Lecturas elegidas: `userRef` es el id interno del usuario (seudónimo sin relación con el id de Telegram; `/borrar_datos` lo reemplaza, [[modelo-de-datos]] §4), sin un secreto nuevo para *hash* (principio XI). Las propiedades comunes van en `common` ([[modelo-de-datos]] v0.1.3). Cada tarea que emita eventos nuevos añade su esquema propio.
+- Pendiente: la retención P-081 en meses no se aplica aún (falta decidir cómo convertir meses en una caducidad; se hará con la rutina de borrado).
+
+## [2026-10-19] implementar | T-021 Middleware del bot — M2 completo
+- Cadena de cada update ([[plan-tecnico]] §5): deduplicación (`processed_updates`) → usuario (crea o carga; ignora grupos, canales y otros bots) → detector de riesgo → enrutador. Archivos: `app/apps/server/src/bot/middleware.ts`, `create-bot.ts`, `callback-data.ts`; `main.ts` conecta MongoDB, crea los índices y el emisor de eventos.
+- RN-SEG-007: todo texto libre (mensaje, mensaje editado, argumento de un comando, pie de foto) pasa por el detector antes de cualquier ruta; si coincide, se responde la plantilla de cuidado de su categoría y nada más se procesa. La respuesta va antes de guardar: si la base falla, la persona igual recibe el cuidado. Se guarda solo la categoría en `risk_signals` y se emiten `risk_signal_detected` y `care_response_sent`.
+- Prueba de "un texto de alerta nunca llega a otra ruta": cada expresión del catálogo por las 4 vías, más una propiedad con fast-check (texto alrededor, mayúsculas, vía al azar; 200 casos), más una integración con MongoDB en memoria (sin duplicados al reintentar y sin texto del usuario en la base). Comprobado que las pruebas fallan si el detector se pone después del enrutador.
+- Enrutador: `/start` → ON-01; botón → se confirma el toque; texto o foto sin ruta → CU-07 con [Hoy] [Comida] [Progreso]. `callback_data` en formato `v1:nav:<destino>`; límite de 1–64 bytes verificado en la referencia de la Bot API ([[plan-tecnico]] v0.1.2).
+- Configuración nueva: `MONGODB_URI` (obligatoria; se redacta en los registros, también la contraseña sola), `MONGO_DATABASE` y `STUDY_PHASE` ([[plan-tecnico]] §10, `.env.example`).
+- Lecturas elegidas y pendientes: un update se marca como procesado antes de atenderlo (como mucho una vez: si falla a mitad, no se reintenta; preferible a duplicar series o días). Las respuestas de cuidado desde texto libre van sin botones por ahora (el [Ver variante] de CU-04 necesita saber el ejercicio; llega con T-04x). Las pantallas de Hoy, Comida y Progreso llegan con sus tareas. Reiniciar el contador de mensajes ignorados al interactuar (§5 paso 8) llega con T-070. La pausa de mecánicas de juego del día se leerá de `risk_signals` cuando exista la gamificación en el servidor.
+- M2 (servidor base) completo: T-020 a T-022 ✅. Siguiente: M3 (seguridad y onboarding).
+
+## [2026-10-19] decision | M3: tamizajes, textos y política provisional
+- El PO decide (2026-10-19): (1) los tamizajes se redactan a partir de instrumentos validados y públicos (PAR-Q+ y SCOFF en español), `[VALIDAR-PROFESIONAL]`, igual que las expresiones de alerta (Q4 sigue abierta para la firma); (2) Claude redacta en la bóveda los textos que faltan del onboarding, del tamizaje y de `/borrar_datos`, y el PO los revisa en el pull request; (3) [Ver política] muestra una política provisional fiel al [[modelo-de-datos]] con el fundador como responsable en la Fase 0 (RN-DAT-007), y ON-02 gana [No acepto] como pide HU-009-1.
+- [[plantillas-de-mensajes]] v0.3.0: ON-02 dice "si registras comida con foto o texto" (antes solo fotos; RN-DAT-002 nombra ambos) y gana [No acepto]; nuevas ON-08 (sin datos sensibles), PV-01 (política provisional, `{horas_borrado}` = P-065), PV-02 y PV-03 (dar o retirar la autorización desde `/privacidad`).
+
+## [2026-10-19] implementar | T-030 Consentimiento y aviso de privacidad
+- Dominio: `app/packages/domain/src/onboarding/onboarding.ts` — orden de los pasos de F1 ([[flujos-de-usuario]]), cuáles se saltan (sin autorización: sin objetivo —queda ser constante—, sin tamizaje de comida, sin peso ni meta; equipamiento solo si entrena en casa) y la decisión de autorización por categoría (RN-DAT-001). Propiedad con fast-check: el flujo solo avanza y termina en el resumen.
+- Servidor: `app/apps/server/src/onboarding/onboarding.ts` (casos de uso que devuelven respuestas; el bot solo las envía), `/start`, `/privacidad`, botones `v1:ob:<paso>:<valor>` y `v1:pv:<valor>`. `consents` guarda solo inserciones (historial; vale la más reciente) con la versión de la política. Eventos `onboarding_started`, `consent_given`, `consent_declined` y `onboarding_step_completed`, cada uno con esquema propio.
+- Escenarios de HU-009-1 en `onboarding.test.ts` (aceptar, ver la política, no aceptar, no saltarse el aviso, botón viejo, texto en lugar de botón, retomar con `/start`, dar y retirar desde `/privacidad`) y repositorio contra MongoDB en memoria.
+- Lecturas elegidas: aceptar el aviso autoriza las 5 categorías que nombra (el aviso las describe juntas); el tamizaje previo a la actividad se mantiene sin autorización porque es una medida de seguridad (RN-SEG-002), pero sin autorización no se guarda su resultado (se decide en T-031). Retirar la autorización no borra lo ya guardado: PV-03 remite a `/borrar_datos`.
+
+## [2026-10-19] decision | Tamizajes: PAR-Q+ por enlace y SCOFF colombiano adaptado (P-082)
+- La investigación (fuentes `F96`–`F102`) mostró tres cosas:
+  - las condiciones del PAR-Q+ prohíben incorporarlo en encuestas electrónicas o productos sin permiso escrito, y prohíben cambiar su texto (`F97`);
+  - el SCOFF no tiene una licencia formal publicada;
+  - el SCOFF se validó en mujeres, y su sensibilidad es menor cuando hay más hombres (`F102`).
+- El PO decide (2026-10-19):
+  - **PAR-Q+ por enlace:** el bot enlaza al formulario oficial en español y pregunta solo el resultado ([Todo NO] [Algún SÍ] [No lo hice]). "No lo hice" arranca con intensidad baja, como "Algún SÍ".
+  - **SCOFF:** traducción colombiana de Rueda et al. (`F100`, CC BY), pasada a masculino y tuteo `[adaptación propia]`.
+  - Antes de la alfa: firma profesional y permisos de uso (Q4).
+- Nueva página [[tamizajes]]. Nuevo **P-082** `safety.scoffPositiveMinYes` = 2 (duro, `[V]`). RN-SEG-002 y RN-SEG-003 citan [[tamizajes]] ([[reglas-de-negocio]] v0.4.0, [[parametros]] v0.4.0).
+- [[plantillas-de-mensajes]] v0.4.0: §3.1 con TZ-01 a TZ-11.
+- **Conflicto resuelto a favor de la regla:** la pregunta 4 del SCOFF usaba "gordo", que RN-MSJ-011 prohíbe en las plantillas. Se reformuló como "¿Sientes que te sobra peso…?" y queda anotado para la revisión profesional.
+- [[modelo-de-datos]] v0.1.4 añade `users.settings.lowIntensityStart`.
+
+## [2026-10-19] implementar | T-031 Edad, tamizajes y modo sin números
+- Dominio: `preActivityScreeningOutcome` ahora recibe el resultado del PAR-Q+ que cuenta el usuario, e `isScoffPositive` aplica P-082 (pruebas RN-SEG-002 y RN-SEG-003).
+- Contenido: `packages/content/src/screenings.ts` (enlace al PAR-Q+ y preguntas del SCOFF), con una prueba de sincronía con [[tamizajes]].
+- Servidor:
+  - **Edad (RN-SEG-001):** con "No" se borra todo lo guardado y el evento `age_gate_failed` queda sin seudónimo. Con "Sí" se guarda solo la confirmación.
+  - **PAR-Q+:** guarda la consecuencia (`lowIntensityStart`) y, con autorización `screening`, el resultado. [Ya tengo autorización] y el resultado tardío funcionan también después del onboarding (botones `v1:sc:…`).
+  - **SCOFF:** 5 preguntas de 1 toque. La cuenta de "sí" viaja en el botón y las respuestas no se guardan. Si es positivo: modo sin números, recurso de ayuda y `number_free_mode_enabled`.
+  - **Eventos:** `screening_completed` lleva solo tipo y resultado.
+  - **Borrado:** el puerto `UserDataEraser` y su adaptador MongoDB borran al usuario de todas las colecciones; la prueba no encuentra rastros (base de T-034).
+- Pendiente para T-032: si el SCOFF es positivo y el objetivo elegido era perder grasa, hay que volver a pedir el objetivo sin esa opción (RN-SEG-003).
+- Pregunta abierta para el profesional: ¿un "sí" a la pregunta 1 (vómito) debería disparar CU-02 por sí solo ([[tamizajes]] §2)?
+
+## [2026-10-19] implementar | T-034 `/borrar_datos` con borrado total
+- `app/apps/server/src/privacy/deletion.ts`: `/borrar_datos` → BD-01 → BD-02 → borrado. El borrado ocurre en el momento, muy por debajo de P-065. Después, BD-03 indica cómo borrar el chat en Telegram. Cancelar en cualquiera de las dos confirmaciones no borra nada (BD-04). Si el borrado falla, se dice (BD-05) y no se anuncia un borrado que no ocurrió.
+- [[plantillas-de-mensajes]] v0.5.0, §3.2: textos BD-01 a BD-05, redactados por Claude a pedido del PO. BD-03 no nombra botones de la aplicación de Telegram, que cambian según el cliente.
+- SC-009-2: prueba de integración con MongoDB. Recorre el onboarding con autorización, el tamizaje y una alerta; tras el borrado, ninguna colección contiene el id del usuario.
+- Eventos: `deletion_requested` (queda sin seudónimo al borrar) y `deletion_completed` (sin seudónimo).
+
+## [2026-10-19] implementar | T-033 Respuestas de cuidado y suite de red-team
+- `app/apps/server/src/bot/red-team.test.ts`: red-team de punta a punta por el bot, con 51 escenarios y 0 fallos críticos (HU-009-7, H11):
+  - **34 textos de alerta** de las 6 categorías. Entran por mensaje, pie de foto, mensaje editado y argumento de `/start`, y en tres momentos: usuario nuevo, a mitad del onboarding y después. Incluyen manipulación ("ignora tus reglas…") y varias señales a la vez (gana la prioridad).
+  - **6 controles sin alerta**, como "me muero de hambre" y "hoy entreno pecho".
+  - **4 escenarios de botones y flujos**: menor de edad, saltarse el aviso con botones fabricados, datos basura y una alerta a mitad del tamizaje.
+  - **Revisión de las 6 respuestas de cuidado**: no tienen cifras fuera del recurso de ayuda ni recomiendan sustancias o dietas.
+- Pausa del juego (HU-009-4, RN-SEG-007): `isGameMechanicsPausedOn` en el dominio usa el día operativo de la señal, y `RiskSignalsRepository.instantsBetween` la consulta. La usará la gamificación del servidor (M5).
+- Queda en [[spec-009-seguridad-y-privacidad]] §10: añadir [Registrar comida] a CU-01 para los falsos positivos requiere aprobación del PO, porque la plantilla es `[VALIDAR-PROFESIONAL]`.
+
+## [2026-10-20] decision | Onboarding: franja, minutos, estatura, silencio y ritmo de la meta propuesta (P-083 a P-089)
+- El PO decide (2026-10-20):
+  - **P-083** `habit.timeSlotStarts` `[supuesto]`: una sola franja horaria para todos los días elegidos (mañana 06:00, mediodía 12:00, tarde 17:00, noche 19:30), que después se ajusta con la hora real (RN-MSJ-006). FR-001-07 decía "franja por día"; se cambia para no alargar el inicio (SC-001-1).
+  - **P-084** `plan.sessionMinutesOptions` `[supuesto]`: botones de 20, 30, 45, 60 y 90 minutos.
+  - **Estatura junto al peso**, solo si hay meta de peso, porque RN-OBJ-005 la necesita. Rangos plausibles para pedir confirmación: **P-085** 140–220 cm `[supuesto]` y **P-087** 35–250 kg (el número estaba en el texto de [[spec-001-onboarding-y-objetivo]] §8). Nuevo paso `height` en el flujo F1 ([[flujos-de-usuario]]).
+  - **P-086** `messages.quietHoursOptions` `[supuesto]`: alternativas 22:30–07:00 y 23:30–08:00 a P-047.
+- **Corrección hacia la bóveda.** [[objetivos-y-progreso]] §2 fija la meta propuesta por defecto en +0,25 %/semana al ganar y −0,5 %/semana al perder, pero `proposeWeightGoal` (T-010) proponía al ritmo máximo (P-004/P-005). Esos ritmos pasan a **P-088** y **P-089** (`[V]`) y RN-OBJ-003 los cita ([[reglas-de-negocio]] v0.4.1, [[parametros]] v0.5.0).
+  - "Más conservadora" es la misma meta en P-003 semanas.
+  - "Más ambiciosa" es la misma meta en P-002 semanas, que se valida; si no es segura, ON-07 ofrece la meta segura o más semanas.
+- [[plantillas-de-mensajes]] v0.6.0: ON-09 a ON-25, redactadas por Claude a pedido del PO, con una nota de los botones generados.
+- [[catalogo-de-ejercicios-base]] v0.3.0 §6: equipamiento de casa que se pregunta.
+- [[modelo-de-datos]] v0.1.5: `users.profile` y los contadores del onboarding.
+
+## [2026-10-20] implementar | T-032 Onboarding completo con reanudación
+- **Dominio** (`onboarding/onboarding.ts`):
+  - paso `height` y modo sin números en el flujo;
+  - nivel por tiempo entrenando;
+  - peso y estatura plausibles;
+  - `weightGoalOffers` e `isSafeWeightGoal`, con una propiedad de fast-check: toda meta ofrecida es segura incluso después de redondearla a una cifra decimal hacia el peso actual.
+- **Servidor** (`apps/server/src/onboarding/`):
+  - `profile-steps.ts`: objetivo, nivel, días y equipamiento (selección múltiple que edita el mismo mensaje; la selección viaja en el botón), franja, lugar, minutos, peso y estatura escritos (con coma decimal, confirmación fuera de rango y "Prefiero no decirlo"), meta, intensidad y silencio;
+  - `summary.ts`: guarda el hábito y el objetivo, genera el plan de esta semana y la siguiente para mostrar la primera sesión (T-040 lo guardará), cierra el onboarding y emite `onboarding_completed` con duración e interacciones;
+  - `/start` a mitad del onboarding ofrece ON-25 [Continuar] [Empezar de nuevo];
+  - si el SCOFF es positivo y el objetivo era perder grasa, ON-21 pide otro objetivo (RN-SEG-003);
+  - las negritas de ON-06 se envían como HTML de Telegram.
+- **Repositorios MongoDB nuevos:** `body_measurements`, `training_habits` y `goals` (un solo objetivo activo; el anterior queda `changed`). Los usuarios guardados antes de este cambio se leen con valores por defecto.
+- **Pruebas** (`full-flow.test.ts`, 18 escenarios):
+  - **SC-001-1:** el camino completo llega al resumen en ≤ 25 interacciones.
+  - **Sin autorización:** el objetivo queda en ser constante.
+  - **Días:** fuera de P-074 no se aceptan; un novato que marca 6 recibe ON-12.
+  - **Equipamiento de casa** se guarda.
+  - **Peso:**
+    - texto ilegible → ON-20;
+    - fuera de rango → ON-19;
+    - una alerta escrita en el paso del peso recibe cuidado y no se toma como peso;
+    - sin estatura no se propone meta.
+  - **Meta:**
+    - "más conservadora" y "más ambiciosa" funcionan;
+    - una meta insegura fabricada en el botón no se guarda.
+  - **SCOFF positivo** con objetivo de perder grasa.
+  - **Retomar:** "empezar de nuevo" funciona.
+  - **Horas de silencio:** cambiarlas funciona.
+- **Pendientes:**
+  - FR-001-11 (teclado persistente y comandos) pasa a T-040/T-041.
+  - Los objetivos sin meta de peso (fuerza, recomposición, constancia, mantener) se guardan sin valores hasta tener datos.

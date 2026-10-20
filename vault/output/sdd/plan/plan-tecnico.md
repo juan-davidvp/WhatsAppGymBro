@@ -3,7 +3,7 @@ titulo: Plan técnico de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.1
+version: 0.1.2
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [registro-de-decisiones, integraciones-y-ecosistema, proactividad-sin-spam, seguridad-y-cumplimiento]
@@ -126,7 +126,7 @@ gym-bro/                         ← raíz del repositorio y de Claude Code
 7. **Eventos** de medición sin texto libre (RN-DAT-005).
 8. Interacción → reinicia el contador de mensajes ignorados (RN-MSJ-007).
 
-**Botones:** los datos que viajan en cada botón tienen un límite pequeño de tamaño (64 bytes según la referencia de la Bot API `[verificar al implementar]`); usar un formato compacto (`acción:entidad:id-corto[:arg]`) e identificadores cortos. Toda acción debe ser idempotente (NFR-03).
+**Botones:** los datos que viajan en cada botón tienen un límite pequeño de tamaño (1–64 bytes según la referencia de la Bot API, `InlineKeyboardButton`; verificado el 2026-10-19 en T-021); usar un formato compacto (`acción:entidad:id-corto[:arg]`) e identificadores cortos. Toda acción debe ser idempotente (NFR-03).
 
 ## 6. Planificador (motor de mensajes y cierres)
 
@@ -181,6 +181,8 @@ Plantillas SVG parametrizadas (muro de constancia, tarjeta de logro) renderizada
 | `TELEGRAM_BOT_TOKEN` | Token de BotFather |
 | `TELEGRAM_WEBHOOK_SECRET` | Secreto del *webhook* (producción) |
 | `MONGODB_URI` | Conexión a la base |
+| `MONGO_DATABASE` | Nombre de la base (por defecto `gymbro`) |
+| `STUDY_PHASE` | Fase de medición que llevan los eventos: `n1_A1`·`n1_B`·`n1_A2`·`alpha` (por defecto `n1_B`; [[plan-de-medicion]] §1) |
 | `AI_API_KEY` · `AI_MODEL` | Proveedor de IA (Should) |
 | `INGESTION_TOKEN_PEPPER` | *Pepper* para el *hash* de tokens de ingesta |
 | `APP_BASE_URL` | URL pública (ingesta, Mini App) |

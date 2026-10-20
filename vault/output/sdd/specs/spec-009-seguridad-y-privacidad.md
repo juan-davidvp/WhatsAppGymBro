@@ -4,14 +4,14 @@ tipo: sdd-spec
 id: SPEC-009
 hito: H3
 estado: borrador
-version: 0.1.1
+version: 0.1.4
 fase: 0
 prioridad: P1
 depende_de: []
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [seguridad-y-cumplimiento, voz-y-marca, relacion-comida-entreno]
-fuentes: [F40, F42, F60, F71, F82, F91, F92, F93]
+fuentes: [F40, F42, F60, F71, F82, F91, F92, F93, F96, F97, F99, F100]
 relacionados: [spec-001-onboarding-y-objetivo, plantillas-de-mensajes, estrategia-de-pruebas, reglas-de-negocio]
 ---
 
@@ -24,15 +24,16 @@ Que ningún usuario reciba un consejo dañino, que los datos sensibles se traten
 ## 2. Historias de usuario
 
 ### HU-009-1 · Consentimiento y aviso de privacidad (P1)
-1. **Dado** `/start`, **cuando** llega al paso de privacidad, **entonces** lee en ≤ 5 líneas: qué datos se piden (todos opcionales), para qué, que el chat se guarda en Telegram sin cifrado de extremo a extremo y que las fotos o textos de comida se envían a un proveedor de IA; con [Acepto] [Ver política] (RN-DAT-001, RN-DAT-002; `F71`).
+1. **Dado** `/start`, **cuando** llega al paso de privacidad, **entonces** lee en ≤ 5 líneas: qué datos se piden (todos opcionales), para qué, que el chat se guarda en Telegram sin cifrado de extremo a extremo y que las fotos o textos de comida se envían a un proveedor de IA; con [Acepto] [Ver política] [No acepto] (RN-DAT-001, RN-DAT-002; `F71`). [Ver política] y `/privacidad` muestran la política provisional PV-01 de la Fase 0 (RN-DAT-007), que se reemplaza por el texto legal antes de la alfa (Q5).
 2. **Dado** que no acepta, **cuando** toca [No acepto], **entonces** puede usar el bot sin datos sensibles (sin peso ni tamizaje de comida): objetivo `ser_constante`, sin metas de peso.
+3. **Dado** que ya decidió, **cuando** usa `/privacidad`, **entonces** puede dar o retirar la autorización; queda el historial y vale la decisión más reciente (PV-02, PV-03).
 
 ### HU-009-2 · Mayoría de edad y tamizaje previo a la actividad (P1)
 1. **Dado** la pregunta de edad, **cuando** responde que es menor de 18, **entonces** recibe un cierre amable y no se crea el perfil (RN-SEG-001).
-2. **Dado** el tamizaje previo a la actividad, **cuando** alguna respuesta es positiva, **entonces** se le recomienda consultar a un médico antes de empezar y el plan inicia con intensidad baja hasta que confirme [Ya tengo autorización] (RN-SEG-002).
+2. **Dado** el tamizaje previo a la actividad (PAR-Q+ oficial por enlace; el bot pregunta solo el resultado, [[tamizajes]] §1), **cuando** alguna respuesta es positiva o no lo hizo, **entonces** se le recomienda consultar a un médico antes de empezar y el plan inicia con intensidad baja hasta que confirme [Ya tengo autorización] (RN-SEG-002).
 
 ### HU-009-3 · Tamizaje de relación con la comida y el cuerpo (P1)
-1. **Dado** el tamizaje breve, **cuando** es positivo, **entonces** se activa el **modo sin números**, se ocultan gramos, peso y calorías, se desactivan objetivos de pérdida de peso y se muestran recursos de ayuda profesional (RN-SEG-003).
+1. **Dado** el tamizaje breve (SCOFF, 5 preguntas de sí o no con 1 toque cada una, [[tamizajes]] §2), **cuando** es positivo (P-082), **entonces** se activa el **modo sin números**, se ocultan gramos, peso y calorías, se desactivan objetivos de pérdida de peso y se muestran recursos de ayuda profesional (RN-SEG-003).
 
 ### HU-009-4 · Respuesta de cuidado ante señales de riesgo (P1)
 1. **Dado** un texto libre con una expresión de alerta (p. ej., sobre dejar de comer, purgarse, esteroides o dolor fuerte), **cuando** llega, **entonces** antes de cualquier otra ruta se responde con la **respuesta de cuidado predefinida** de su categoría y se pausan las mecánicas de juego ese día (RN-SEG-007).
@@ -90,7 +91,8 @@ Moderación de grupos, verificación documental de edad, atención clínica.
 
 ## 10. Aclaraciones pendientes
 
-- `[NEEDS CLARIFICATION: Q4]` Instrumentos de tamizaje (previo a la actividad; relación con la comida y el cuerpo), validados por profesionales.
+- ~~Instrumentos de tamizaje~~ **Resuelta en parte el 2026-10-19:** PAR-Q+ por enlace y SCOFF (versión colombiana adaptada), por decisión del PO ([[tamizajes]]). Sigue `[NEEDS CLARIFICATION: Q4]` para la firma profesional y los permisos de uso antes de la alfa.
 - **Lista de expresiones de alerta:** redactada el 2026-10-19 a pedido del PO a partir de fuentes oficiales ([[expresiones-de-alerta]], `F82`–`F93`); se usa en la Fase 0 y queda `[VALIDAR-PROFESIONAL]` hasta la firma de un profesional (Q4) antes de la alfa.
 - `[NEEDS CLARIFICATION: Q5]` Responsable del tratamiento y texto legal de la política antes de la alfa.
 - ~~Recursos de ayuda en Colombia~~ **Resuelta el 2026-10-19:** Línea 106 de salud mental (`F91`) y 123 de emergencias (`F92`), por categoría en [[expresiones-de-alerta]] §4. Reverificar vigencia cada 6 meses y antes de la alfa.
+- `[NEEDS CLARIFICATION]` §8 pide que, ante un falso positivo, la respuesta de cuidado ofrezca [Registrar comida], pero CU-01 no tiene ese botón y es `[VALIDAR-PROFESIONAL]`: añadirlo requiere aprobación del PO. Hoy "me muero de hambre" no activa el detector (prueba de control en `red-team.test.ts`).

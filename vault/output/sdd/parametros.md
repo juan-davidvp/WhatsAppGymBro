@@ -3,11 +3,11 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.2.2
+version: 0.5.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
-fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93]
+fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93, F94, F95, F99]
 relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 ---
 
@@ -20,6 +20,10 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | ID | Código | Valor | Rango | Reglas | Duro | Validación |
 |---|---|---|---|---|---|---|
 | P-001 | `goal.horizonWeeksDefault` | 12 semanas | 4–24 | RN-OBJ-003 | No | — |
+| P-088 | `goal.defaultWeeklyGainPct` | 0,25 % del peso por semana | ≤ P-005 | RN-OBJ-003 (meta propuesta al ganar músculo, [[objetivos-y-progreso]] §2) | No | [V] |
+| P-089 | `goal.defaultWeeklyLossPct` | 0,5 % del peso por semana | ≤ P-004 | RN-OBJ-003 (meta propuesta al perder grasa, [[objetivos-y-progreso]] §2) | No | [V] |
+| P-085 | `goal.plausibleHeightCm` | 140–220 cm | — | RN-OBJ-005 (fuera del rango se pide confirmar) | No | `[supuesto]` |
+| P-087 | `goal.plausibleWeightKg` | 35–250 kg | — | RN-OBJ-012 ([[spec-001-onboarding-y-objetivo]] §8: fuera del rango se pide confirmar) | No | — |
 | P-002 | `goal.horizonWeeksMin` | 4 semanas | — | RN-OBJ-003 | Sí | — |
 | P-003 | `goal.horizonWeeksMax` | 24 semanas | — | RN-OBJ-003 | Sí | — |
 | P-004 | `goal.maxWeeklyLossPct` | 1,0 % del peso | 0,5–1,0 | RN-OBJ-004 | Sí | [V] (`F58`) |
@@ -43,6 +47,14 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-016 | `plan.repRangesByGoal` | Músculo/grasa/recomposición 6–15 · fuerza 3–6 en básicos + 8–12 accesorios · casa: 8–20 cerca del fallo (1–3 en reserva) | — | RN-PLAN-005 | No | [V] |
 | P-017 | `plan.minRestDaysPerWeek` | 1 | — | RN-PLAN-008 | Sí | [V] |
 | P-018 | `plan.noviceMaxConsecutiveDays` | 3 | — | RN-PLAN-008 | Sí | [V] |
+| P-074 | `plan.availableDaysRange` | 2–6 días | — | RN-PLAN-001 | No | — |
+| P-075 | `plan.sessionMinutesRange` | 20–90 min | — | RN-PLAN-001 | No | — |
+| P-084 | `plan.sessionMinutesOptions` | 20 · 30 · 45 · 60 · 90 min | Dentro de P-075 | RN-PLAN-001 (botones del onboarding) | No | `[supuesto]` |
+| P-083 | `habit.timeSlotStarts` | Mañana 06:00 · Mediodía 12:00 · Tarde 17:00 · Noche 19:30 | — | RN-PLAN-002 (franja del onboarding = hora habitual declarada) | No | `[supuesto]` |
+| P-076 | `plan.warmupMinutes` | 5 min | — | RN-PLAN-006 | No | [V] `[supuesto]` |
+| P-077 | `plan.setSeconds` | 40 s | — | RN-PLAN-006 | No | [V] (igual al trabajo de P-079) |
+| P-078 | `plan.restSecondsByGoal` | Músculo/grasa/recomposición y accesorios 90 s · fuerza en básicos 180 s | — | RN-PLAN-006 | No | [V] (`F94`, `F95`) |
+| P-079 | `plan.expressCircuit` | 3 rondas · 40 s de trabajo · 20 s de pausa · 60 s entre rondas | — | RN-PLAN-003, RN-PLAN-006 | No | [V] ([[catalogo-de-ejercicios-base]] §4) |
 | P-019 | `training.sessionsAtTopToProgress` | 2 sesiones | 1–3 | RN-ENT-002 | No | [V] |
 | P-020 | `training.upperBodyIncrementKg` | 2,5 kg | — | RN-ENT-002 | No | [V] |
 | P-021 | `training.lowerBodyIncrementKg` | 5 kg | 2,5–5 | RN-ENT-002 | No | [V] |
@@ -89,6 +101,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-045 | `messages.budget` | Normal: 2/día de entreno · 1/día de descanso · 8/semana · Baja: 1/día · 4/semana · Alta: 2/día · 12/semana | — | RN-MSJ-002 | Sí (el usuario elige la intensidad, no los números) | — |
 | P-046 | `messages.minGapHours` | 3 h | — | RN-MSJ-003 | Sí | — |
 | P-047 | `messages.quietHours` | 21:30–07:00 | Configurable | RN-MSJ-004 | No | — |
+| P-086 | `messages.quietHoursOptions` | 22:30–07:00 · 23:30–08:00 | — | RN-MSJ-004 (alternativas del onboarding a P-047) | No | `[supuesto]` |
 | P-048 | `messages.planReadyLeadMinutes` | 60 min | 30–120 | RN-MSJ-005 | No | — |
 | P-049 | `messages.usualTimeSessions` | 6 sesiones | — | RN-MSJ-006 | No | — |
 | P-050 | `messages.backoffIgnoredCount` | 3 | — | RN-MSJ-007 | Sí | — |
@@ -114,6 +127,9 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-063 | `safety.maxSessionsPerDay` | 2 | — | RN-SEG-008 | Sí | [V] |
 | P-064 | `safety.weeksTrainingAllRestDays` | 2 | — | RN-SEG-008 | Sí | [V] |
 | P-065 | `data.deletionMaxHours` | 24 h | — | RN-DAT-003 | Sí | — |
+| P-080 | `data.processedUpdatesTtlDays` | 7 días | — | [[modelo-de-datos]] §5 (idempotencia) | No | — |
+| P-081 | `data.eventsRetentionMonths` | 12 meses | — | [[modelo-de-datos]] §5 | No | `[supuesto]` |
 | P-068 | `ai.maxPhotoEstimatesPerDay` | 6 | — | Costo (H13) | Sí | `[supuesto]` |
 | P-069 | `user.defaultTimezone` | America/Bogota | — | RN-DQC-001 | No | ADR-016 |
 | P-071 | `safety.veryLowCalorieDailyMax` | 800 kcal/día | — | RN-SEG-007 | Sí | [V] (`F93`) |
+| P-082 | `safety.scoffPositiveMinYes` | 2 respuestas "sí" | — | RN-SEG-003 | Sí | [V] (`F99`, `F101`) |

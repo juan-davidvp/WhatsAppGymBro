@@ -1,5 +1,7 @@
 import { PARAMETERS } from '../config/parameters.js';
+import { operationalDate } from '../day/day.js';
 import type { GoalType } from '../goals/goals.js';
+import type { LocalDate } from '../time/zoned.js';
 import { detectRiskSignal, type AlertCatalogEntry } from './risk-signal.js';
 
 /** Seguridad: edad, tamizajes, límites duros, rutas de cuidado, dolor, sobreuso, imágenes e IA (RN-SEG-001 a 010). */
@@ -9,21 +11,38 @@ export function canCreateProfile(answer: { readonly declaredAdult: boolean | nul
   return answer.declaredAdult === true;
 }
 
+/** Resultado del PAR-Q+ que cuenta el usuario (el formulario se responde fuera del bot). */
+export type PreActivityReport = 'all_no' | 'some_yes' | 'not_done';
+
 /**
- * RN-SEG-002 (`[VALIDAR-PROFESIONAL]`): con alguna respuesta positiva del tamizaje
- * previo a la actividad, se recomienda consulta médica y el plan arranca con
- * intensidad baja hasta que el usuario confirme que tiene autorización.
- * Instrumento pendiente (Q4): se reciben solo las respuestas.
+ * RN-SEG-002 (`[VALIDAR-PROFESIONAL]`, tamizajes §1): con algún SÍ en el PAR-Q+,
+ * o sin haberlo hecho, se recomienda consulta médica (solo con algún SÍ) y el plan
+ * arranca con intensidad baja hasta que el usuario confirme que tiene autorización.
+ * `result` es lo que se guarda: `clear`, `flag` o nada si no lo hizo.
  */
 export function preActivityScreeningOutcome(input: {
-  readonly answers: readonly boolean[];
+  readonly report: PreActivityReport;
   readonly authorizationConfirmed: boolean;
-}): { recommendMedicalConsult: boolean; planIntensity: 'low' | 'normal' } {
-  const positive = input.answers.some(Boolean);
+}): {
+  result: 'clear' | 'flag' | null;
+  recommendMedicalConsult: boolean;
+  planIntensity: 'low' | 'normal';
+} {
+  const { report, authorizationConfirmed } = input;
+  const result = report === 'all_no' ? 'clear' : report === 'some_yes' ? 'flag' : null;
   return {
-    recommendMedicalConsult: positive,
-    planIntensity: positive && !input.authorizationConfirmed ? 'low' : 'normal',
+    result,
+    recommendMedicalConsult: report === 'some_yes',
+    planIntensity: report !== 'all_no' && !authorizationConfirmed ? 'low' : 'normal',
   };
+}
+
+/** RN-SEG-003 (`[VALIDAR-PROFESIONAL]`, tamizajes §2): SCOFF positivo con P-082 o más "sí". */
+export function isScoffPositive(yesAnswers: number): boolean {
+  if (!Number.isInteger(yesAnswers) || yesAnswers < 0) {
+    throw new Error('RN-SEG-003: número de respuestas "sí" inválido');
+  }
+  return yesAnswers >= PARAMETERS.safety.scoffPositiveMinYes;
 }
 
 const ALL_GOAL_TYPES: readonly GoalType[] = [
@@ -92,6 +111,7 @@ export const HARD_PARAMETER_CODES: readonly string[] = [
   'data.deletionMaxHours',
   'ai.maxPhotoEstimatesPerDay',
   'safety.veryLowCalorieDailyMax',
+  'safety.scoffPositiveMinYes',
 ];
 
 /** RN-SEG-004: falla si se intenta que el usuario configure un parámetro duro. */
@@ -197,4 +217,17 @@ export function validatePortionEstimate(raw: unknown): PortionEstimate | null {
   const confidenceOk = typeof confidence === 'number' && confidence >= 0 && confidence <= 1;
   if (!componentsOk || !portionsOk || !confidenceOk) return null;
   return raw as PortionEstimate;
+}
+
+/**
+ * RN-SEG-007: las mecánicas de juego (rachas, XP, logros, retos) se pausan el día
+ * operativo en que hubo una señal de riesgo. El día se calcula con la zona del
+ * usuario y el corte P-029 (RN-DQC-001), igual que el día que cuenta.
+ */
+export function isGameMechanicsPausedOn(
+  date: LocalDate,
+  riskSignalInstants: readonly Date[],
+  timeZone: string,
+): boolean {
+  return riskSignalInstants.some((at) => operationalDate(at, timeZone) === date);
 }

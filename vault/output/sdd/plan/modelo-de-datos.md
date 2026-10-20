@@ -3,9 +3,9 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.1
+version: 0.1.5
 creado: 2026-10-18
-actualizado: 2026-10-19
+actualizado: 2026-10-20
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [plan-tecnico, plan-de-medicion, glosario]
@@ -46,10 +46,10 @@ erDiagram
 
 | Colección | Campos principales | Índices | Reglas / invariantes |
 |---|---|---|---|
-| `users` | `telegramUserId` (único), `chatId`, `status` (`active`·`paused`·`blocked`·`deleted`), `timezone`, `isAdultConfirmedAt`, `sex` (opcional, declarado), `level`, `equipmentProfile`, `settings` {`intensity`, `quietHours`, `purposesEnabled`, `gamificationEnabled`, `numberFreeMode`}, `onboarding` {`step`, `completedAt`} | `telegramUserId` único | No se guarda la fecha de nacimiento: solo la confirmación de mayoría de edad (minimización, RN-SEG-001) |
+| `users` | `telegramUserId` (único), `chatId`, `status` (`active`·`paused`·`blocked`·`deleted`), `timezone`, `isAdultConfirmedAt`, `sex` (opcional, declarado), `level`, `equipmentProfile`, `settings` {`intensity`, `quietHours`, `purposesEnabled`, `gamificationEnabled`, `numberFreeMode`, `lowIntensityStart`}, `profile` {`goalType`, `level`, `availableDays`, `timeSlot`, `place`, `sessionMinutes`, `homeEquipment`, `heightCm`}, `onboarding` {`step`, `startedAt`, `interactions`, `completedAt`} | `telegramUserId` único | No se guarda la fecha de nacimiento: solo la confirmación de mayoría de edad (minimización, RN-SEG-001) |
 | `consents` | `userId`, `category` (`health_data`·`body_measurements`·`screening`·`ai_processing`·`analytics`), `granted`, `at`, `policyVersion` | `userId+category` | RN-DAT-001 |
-| `screenings` | `userId`, `type` (`pre_activity`·`food_body`), `result` (`clear`·`flag`), `at` | `userId` | **No se guardan las respuestas**, solo el resultado (minimización) |
-| `goals` | `userId`, `type`, `metric`, `startValue`, `targetValue`, `startDate`, `horizonWeeks`, `status` (`active`·`completed`·`partially_completed`·`changed`·`paused`), `closedAt`, `progressPct` | `userId+status` | Un solo `active` por usuario (RN-OBJ-001) |
+| `screenings` | `userId`, `type` (`pre_activity`·`food_body`), `result` (`clear`·`flag`), `at` | `userId` | **No se guardan las respuestas**, solo el resultado (minimización); solo con autorización `screening`. Las consecuencias (`lowIntensityStart`, `numberFreeMode`) van en `users.settings` siempre ([[tamizajes]] §3) |
+| `goals` | `userId`, `type`, `metric`, `startValue`, `targetValue`, `startDate`, `horizonWeeks`, `status` (`active`·`completed`·`partially_completed`·`changed`·`paused`), `closedAt`, `progressPct` | `userId+status` | Un solo `active` por usuario (RN-OBJ-001). `startValue` y `targetValue` quedan en null en un objetivo sin meta de peso del onboarding, hasta tener datos |
 | `training_habits` | `userId`, `days[]` {`weekday`, `declaredStart`, `learnedStart`, `location`} | `userId` único | RN-PLAN-002, RN-MSJ-006 |
 | `weekly_plans` | `userId`, `weekStart`, `split`, `days[]` {`date`, `dayType`, `plannedSessionId`} | `userId+weekStart` único | RN-PLAN-001 a 009 |
 | `planned_sessions` | `userId`, `date`, `name`, `variants` {`GYM`, `HOME`, `EXPRESS`: `[{exerciseCode, sets, repsMin, repsMax, loadKg}]`}, `estimatedMinutes` | `userId+date` | RN-PLAN-003, RN-PLAN-006 |
@@ -72,8 +72,8 @@ erDiagram
 | `imported_activities` | `userId`, `source`, `type` (`steps`·`workout`), `start`, `end`, `value`, `receivedAt` | `userId+start` | RN-INT-003, RN-INT-004 |
 | `ingestion_tokens` | `userId`, `tokenHash`, `createdAt`, `revokedAt` | `tokenHash` único | RN-INT-003 |
 | `risk_signals` | `userId`, `category`, `at` | `userId+at` | Solo categoría (RN-DAT-005) |
-| `events` | `userRef` (seudónimo), `name`, `at`, `props` (sin texto libre) | `name+at`; `userRef+at` | [[plan-de-medicion]] |
-| `processed_updates` | `updateId`, `at` | `updateId` único; caducidad 7 días | Idempotencia de Telegram |
+| `events` | `userRef` (seudónimo: el id interno del usuario), `name`, `at`, `common` {`localDate`, `appVersion`, `phase`}, `props` (sin texto libre; validadas por esquema antes de guardar) | `name+at`; `userRef+at` | [[plan-de-medicion]] |
+| `processed_updates` | `updateId`, `at` | `updateId` único; caducidad P-080 | Idempotencia de Telegram |
 
 ## 3. Catálogos (paquete `content`, no en la base)
 
@@ -87,7 +87,7 @@ erDiagram
 
 | Datos | Retención |
 |---|---|
-| `processed_updates` | 7 días |
-| `events` | 12 meses `[supuesto]` |
+| `processed_updates` | P-080 |
+| `events` | P-081 `[supuesto]` |
 | Fotos de comida | No se almacenan |
 | Resto | Mientras la cuenta esté activa o hasta el borrado |

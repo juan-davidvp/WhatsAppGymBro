@@ -3,11 +3,11 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.2.3
+version: 0.4.1
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
-fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71, F82, F93]
+fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71, F82, F93, F96, F97, F99]
 relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 ---
 
@@ -23,7 +23,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 |---|---|---|---|
 | RN-OBJ-001 | Un usuario tiene exactamente **un objetivo activo**, de tipo `ganar_musculo`, `perder_grasa`, `ganar_fuerza`, `recomposicion`, `ser_constante` o `mantener`. | — | FB-001-20 |
 | RN-OBJ-002 | Todo objetivo tiene métrica principal, valor inicial, valor meta, fecha de inicio y horizonte en semanas. | — | FB-001-21 |
-| RN-OBJ-003 | El horizonte de una fase está entre P-002 y P-003 semanas; por defecto P-001. | P-001–P-003 | [[objetivos-y-progreso]] |
+| RN-OBJ-003 | El horizonte de una fase está entre P-002 y P-003 semanas; por defecto P-001. La meta de peso propuesta usa el ritmo por defecto P-088 (ganancia) o P-089 (pérdida) en ese horizonte; el usuario puede pedirla más conservadora o más ambiciosa sin pasar los límites de RN-OBJ-004 y RN-OBJ-005. | P-001–P-003, P-088, P-089 | [[objetivos-y-progreso]] |
 | RN-OBJ-004 | El ritmo semanal implícito de una meta de peso no supera P-004 (pérdida) ni P-005 (ganancia) en % del peso. Si la meta pedida lo supera, el sistema propone un horizonte mayor o una meta menor y **no guarda la meta insegura**. `[VALIDAR-PROFESIONAL]` | P-004, P-005 | `F58`, `F59` |
 | RN-OBJ-005 | Ninguna meta de peso puede implicar un IMC menor que P-006. `[VALIDAR-PROFESIONAL]` | P-006 | Seguridad |
 | RN-OBJ-006 | Un objetivo de peso se cumple cuando la media móvil alcanza la meta y se sostiene P-007 semanas; uno de fuerza, cuando una sesión válida registra el e1RM meta; `ser_constante`, cuando se alcanzan las semanas cumplidas meta. | P-007 | [[objetivos-y-progreso]] |
@@ -49,12 +49,12 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 
 | ID | Regla | Parámetros | Origen |
 |---|---|---|---|
-| RN-PLAN-001 | El plan semanal se genera a partir de nivel, días disponibles (2–6), minutos por sesión (20–90), objetivo y perfil de equipamiento. | — | FB-001-15 |
+| RN-PLAN-001 | El plan semanal se genera a partir de nivel, días disponibles (P-074), minutos por sesión (P-075), objetivo y perfil de equipamiento. | P-074, P-075 | FB-001-15 |
 | RN-PLAN-002 | El hábito de entreno (días, hora habitual, lugar) se declara en el onboarding y se actualiza con los datos reales (RN-MSJ-006). | — | FB-001-22 |
 | RN-PLAN-003 | Cada sesión planificada se genera con tres versiones equivalentes: **A** (gym), **B** (casa con el equipamiento del usuario) y **C** (exprés de P-013 minutos con peso corporal). Las tres cuentan para el día. | P-013 | FB-001-13 |
 | RN-PLAN-004 | La división se elige según los días disponibles (tabla P-014); 5–6 días solo para nivel intermedio. `[VALIDAR-PROFESIONAL]` | P-014 | [[fundamentos-de-entrenamiento]] |
 | RN-PLAN-005 | El volumen semanal por grupo muscular y los rangos de repeticiones dependen del nivel y del objetivo (tablas P-015 y P-016). `[VALIDAR-PROFESIONAL]` | P-015, P-016 | `F55` |
-| RN-PLAN-006 | La duración estimada de cada versión (calentamiento + Σ series × (tiempo de serie + descanso)) no supera los minutos disponibles. | — | FB-001-15 |
+| RN-PLAN-006 | La duración estimada de cada versión (calentamiento P-076 + Σ series × (tiempo de serie P-077 + descanso P-078); en la versión C, el circuito P-079) no supera los minutos disponibles. `[VALIDAR-PROFESIONAL]` | P-076–P-079 | FB-001-15 |
 | RN-PLAN-007 | Una sesión no realizada **no genera deuda**: no se duplica ni se suma a la siguiente; la rotación continúa. Puede reprogramarse dentro de la misma semana. | — | FB-001-17, `F46` |
 | RN-PLAN-008 | Al menos P-017 día de descanso por semana; los novatos no tienen más de P-018 días seguidos de fuerza. `[VALIDAR-PROFESIONAL]` | P-017, P-018 | Seguridad |
 | RN-PLAN-009 | El plan de la semana se publica con el resumen semanal (RN-MSJ-017) y la sesión del día está lista antes de la hora habitual. | — | FB-001-22 |
@@ -153,8 +153,8 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | ID | Regla | Parámetros | Origen |
 |---|---|---|---|
 | RN-SEG-001 | Solo pueden usar el bot mayores de 18 años (edad declarada); si no, no se crea el perfil. | — | ADR-004 |
-| RN-SEG-002 | Tamizaje previo a la actividad en el onboarding; con alguna respuesta positiva se recomienda consulta médica y el plan inicia con intensidad baja hasta que el usuario confirme que tiene autorización. `[VALIDAR-PROFESIONAL]` | — | [[seguridad-y-cumplimiento]] |
-| RN-SEG-003 | Tamizaje breve de relación con la comida y el cuerpo; si es positivo: modo sin números, recursos profesionales y sin objetivos de pérdida de peso. `[VALIDAR-PROFESIONAL]` | — | `F42`, `F60` |
+| RN-SEG-002 | Tamizaje previo a la actividad en el onboarding (PAR-Q+ oficial por enlace; el bot pregunta solo el resultado, [[tamizajes]] §1); con alguna respuesta positiva, o sin el tamizaje hecho, se recomienda consulta médica y el plan inicia con intensidad baja hasta que el usuario confirme que tiene autorización (o cuente que todo fue NO). `[VALIDAR-PROFESIONAL]` | — | [[seguridad-y-cumplimiento]], `F96`, `F97` |
+| RN-SEG-003 | Tamizaje breve de relación con la comida y el cuerpo (SCOFF, [[tamizajes]] §2), positivo con P-082 o más respuestas "sí"; si es positivo: modo sin números, recursos profesionales y sin objetivos de pérdida de peso. `[VALIDAR-PROFESIONAL]` | P-082 | `F42`, `F60`, `F99`–`F102` |
 | RN-SEG-004 | Los límites de seguridad (RN-OBJ-004, RN-OBJ-005 y parámetros marcados como duros) no son configurables por el usuario. | — | Constitución V |
 | RN-SEG-005 | Nunca se recomiendan suplementos, fármacos ni sustancias, incluidos esteroides anabólicos; ante preguntas, respuesta de cuidado y derivación. | — | `F60` |
 | RN-SEG-006 | Si el usuario marca dolor en un ejercicio, se detiene su progresión y se ofrece una variante; si el dolor se repite en P-062 sesiones, se recomienda consulta profesional. | P-062 | [[seguridad-y-cumplimiento]] |
@@ -177,4 +177,4 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 
 ---
 
-**Conteo:** 103 reglas · 13 con `[VALIDAR-PROFESIONAL]` (lo verifica `herramientas/lint_trazabilidad.py`).
+**Conteo:** 103 reglas · 14 con `[VALIDAR-PROFESIONAL]` (lo verifica `herramientas/lint_trazabilidad.py`).

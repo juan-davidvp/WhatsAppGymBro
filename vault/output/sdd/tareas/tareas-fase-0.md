@@ -33,7 +33,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
 | T-010 [P] ✅ | `goals/`: meta propuesta, límites, media móvil, progreso, cumplimiento, cierres | RN-OBJ-001 a 013, RN-MAN-001 a 005 | T-002 | Cada RN con pruebas nombradas por su ID |
-| T-011 [P] | `plan/`: generador A/B/C, divisiones, volumen, duración, descanso, sin deuda | RN-PLAN-001 a 010 | T-002, T-003 | Pruebas por RN + propiedad "ningún plan viola el descanso" |
+| T-011 [P] ✅ | `plan/`: generador A/B/C, divisiones, volumen, duración, descanso, sin deuda | RN-PLAN-001 a 010 | T-002, T-003 | Pruebas por RN + propiedad "ningún plan viola el descanso" |
 | T-012 [P] ✅ | `training/`: completitud, progresión doble, estancamiento, e1RM y récords | RN-ENT-001 a 006 | T-002 | Pruebas por RN |
 | T-013 [P] ✅ | `nutrition/`: meta en palmas, mitad de comida, modo sin números | RN-NUT-001 a 008 | T-002, T-003 | Pruebas por RN |
 | T-014 [P] ✅ | `day/`: día operativo, cuenta, completo, gracia, total | RN-DQC-001 a 007 | T-002 | Pruebas por RN + propiedad "el total nunca baja" |
@@ -45,19 +45,19 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-020 | Repositorios MongoDB, índices e idempotencia (`processed_updates`, claves por serie y comida) | [[modelo-de-datos]] | T-005, M1 | Pruebas con base en memoria; SC-003-2 |
-| T-021 | Middleware: deduplicación → usuario → detector de riesgo → enrutador | [[plan-tecnico]] §5, RN-SEG-007 | T-020 | Un texto de alerta nunca llega a otra ruta (prueba) |
-| T-022 [P] | Emisor de eventos sin texto libre | [[plan-de-medicion]], RN-DAT-005 | T-020 | Revisión automática de esquemas de eventos (SC-009-3) |
+| T-020 ✅ | Repositorios MongoDB, índices e idempotencia (`processed_updates`, claves por serie y comida) | [[modelo-de-datos]] | T-005, M1 | Pruebas con base en memoria; SC-003-2 |
+| T-021 ✅ | Middleware: deduplicación → usuario → detector de riesgo → enrutador | [[plan-tecnico]] §5, RN-SEG-007 | T-020 | Un texto de alerta nunca llega a otra ruta (prueba) |
+| T-022 [P] ✅ | Emisor de eventos sin texto libre | [[plan-de-medicion]], RN-DAT-005 | T-020 | Revisión automática de esquemas de eventos (SC-009-3) |
 
 ## M3 · Seguridad y onboarding (SPEC-009, SPEC-001)
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-030 | Consentimiento y aviso de privacidad | HU-009-1, RN-DAT-001/002 | T-021 | Escenarios de HU-009-1 pasan |
-| T-031 | Edad, tamizajes y modo sin números | HU-009-2/3, RN-SEG-001 a 003 | T-030 | Escenarios pasan; sin respuestas de tamizaje guardadas |
-| T-032 | Onboarding completo con reanudación | HU-001-1 a 5 | T-031, T-010, T-011 | SC-001-1 medido en local |
-| T-033 | Respuestas de cuidado y suite de *red-team* | HU-009-4/7 | T-017, T-021 | 0 fallos críticos en ≥ 50 casos |
-| T-034 | `/borrar_datos` con borrado total | HU-009-6, RN-DAT-003 | T-020 | SC-009-2 |
+| T-030 ✅ | Consentimiento y aviso de privacidad | HU-009-1, RN-DAT-001/002 | T-021 | Escenarios de HU-009-1 pasan |
+| T-031 ✅ | Edad, tamizajes y modo sin números | HU-009-2/3, RN-SEG-001 a 003 | T-030 | Escenarios pasan; sin respuestas de tamizaje guardadas |
+| T-032 ✅ | Onboarding completo con reanudación | HU-001-1 a 5 | T-031, T-010, T-011 | SC-001-1 medido en local |
+| T-033 ✅ | Respuestas de cuidado y suite de *red-team* | HU-009-4/7 | T-017, T-021 | 0 fallos críticos en ≥ 50 casos |
+| T-034 ✅ | `/borrar_datos` con borrado total | HU-009-6, RN-DAT-003 | T-020 | SC-009-2 |
 | T-035 | *Could:* cambiar de objetivo conservando el historial | HU-001-6, RN-OBJ-007 | T-032 | Escenarios pasan; el objetivo anterior queda `cambiado` |
 
 ## M4 · Plan y entrenamiento (SPEC-002, SPEC-003)
