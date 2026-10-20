@@ -5,6 +5,8 @@ import { ensureIndexes } from './adapters/mongo/indexes.js';
 import {
   achievementsRepository,
   exerciseAdjustmentsRepository,
+  favoriteMealsRepository,
+  mealsRepository,
   painFlagsRepository,
   personalRecordsRepository,
   daysRepository,
@@ -81,6 +83,8 @@ async function main(): Promise<void> {
         achievements: achievementsRepository(db),
         painFlags: painFlagsRepository(db),
         adjustments: exerciseAdjustmentsRepository(db),
+        meals: mealsRepository(db),
+        favorites: favoriteMealsRepository(db),
         events: createEventEmitter({
           repository: eventsRepository(db),
           logger,

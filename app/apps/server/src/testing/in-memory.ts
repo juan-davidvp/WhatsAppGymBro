@@ -7,6 +7,8 @@ import {
   EMPTY_PROFILE,
   type WorkoutSessionRecord,
   type SetEntryRecord,
+  type FavoriteMealRecord,
+  type MealRecord,
   type StoredWeeklyPlan,
   type GoalRecord,
   type ScreeningType,
@@ -94,6 +96,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     sessionId: string;
   }[] = [];
   const adjustments: (ExerciseAdjustment & { userId: string })[] = [];
+  const meals: MealRecord[] = [];
+  const favorites: FavoriteMealRecord[] = [];
   let nextId = 1;
   const newId = () => (nextId++).toString(16).padStart(24, '0');
 
@@ -502,6 +506,42 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve();
       },
     },
+    meals: {
+      record(meal) {
+        if (meals.some((m) => m.idempotencyKey === meal.idempotencyKey)) {
+          return Promise.resolve({ inserted: false });
+        }
+        meals.push(meal);
+        return Promise.resolve({ inserted: true });
+      },
+      onDate(userId, date) {
+        return Promise.resolve(meals.filter((m) => m.userId === userId && m.date === date));
+      },
+    },
+    favorites: {
+      create(input) {
+        const favorite = { ...input, id: newId() };
+        favorites.push(favorite);
+        return Promise.resolve(favorite);
+      },
+      list(userId) {
+        return Promise.resolve(favorites.filter((f) => f.userId === userId));
+      },
+      byId(userId, id) {
+        return Promise.resolve(favorites.find((f) => f.userId === userId && f.id === id) ?? null);
+      },
+      updatePortions(userId, id, portions) {
+        const index = favorites.findIndex((f) => f.userId === userId && f.id === id);
+        const current = favorites[index];
+        if (current) favorites[index] = { ...current, portions };
+        return Promise.resolve();
+      },
+      remove(userId, id) {
+        const index = favorites.findIndex((f) => f.userId === userId && f.id === id);
+        if (index >= 0) favorites.splice(index, 1);
+        return Promise.resolve();
+      },
+    },
     eraser: {
       eraseUser(userId) {
         if (options.failErase) return Promise.reject(new Error('mongo caído'));
@@ -520,6 +560,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(achievements, userId);
         removeRows(painFlags, userId);
         removeRows(adjustments, userId);
+        removeRows(meals, userId);
+        removeRows(favorites, userId);
         for (const event of events) if (event.subject?.userId === userId) event.subject = null;
         return Promise.resolve();
       },
@@ -559,5 +601,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     achievements,
     painFlags,
     adjustments,
+    meals,
+    favorites,
   };
 }

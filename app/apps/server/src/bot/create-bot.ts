@@ -21,6 +21,8 @@ import type {
   DaysRepository,
   AchievementsRepository,
   ExerciseAdjustmentsRepository,
+  FavoriteMealsRepository,
+  MealsRepository,
   PainFlagsRepository,
   PersonalRecordsRepository,
   WorkoutSessionsRepository,
@@ -41,6 +43,7 @@ import { finishSession, logAsPlanned } from '../sessions/finish.js';
 import { recordText } from '../sessions/records.js';
 import { PAIN_OPERATIONS } from '../sessions/pain.js';
 import { answerPlateau, plateauPrompt } from '../sessions/plateau.js';
+import { answerMeal, mealMenu } from '../meals/meals.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
@@ -70,6 +73,8 @@ export interface BotDependencies {
   achievements: AchievementsRepository;
   painFlags: PainFlagsRepository;
   adjustments: ExerciseAdjustmentsRepository;
+  meals: MealsRepository;
+  favorites: FavoriteMealsRepository;
   events: EventEmitter;
 }
 
@@ -81,6 +86,9 @@ export interface CreateBotOptions {
   /** Solo en pruebas: evita la llamada a getMe. */
   botInfo?: UserFromGetMe;
 }
+
+/** Telegram da la fecha de los mensajes en segundos Unix. */
+const MS_PER_SECOND = 1000;
 
 /** Botones de CU-07, por su texto en la bóveda. */
 const NAV_TARGET_BY_LABEL: Record<string, NavTarget> = {
@@ -257,7 +265,23 @@ export function createBot({
       case 'rs':
         return answerResume(user, action.value, useCases);
       case 'td':
+        if (action.value === 'food') return mealMenu(user, useCases);
         return answerToday(user, action.value, useCases);
+      case 'ml': {
+        const message = ctx.callbackQuery.message;
+        return answerMeal(
+          user,
+          action.op,
+          action.state,
+          {
+            chatId: ctx.chat?.id ?? user.chatId,
+            messageId: message?.message_id ?? 0,
+            messageDate: new Date((message?.date ?? 0) * MS_PER_SECOND),
+            data: ctx.callbackQuery.data,
+          },
+          useCases,
+        );
+      }
       case 'ss':
         return answerSessionCard(user, action.sessionId, action.value, useCases, {
           finish: async (session, u, deps) => [
@@ -275,6 +299,7 @@ export function createBot({
       case 'nav':
         if (action.target === 'plan') return planView(user, useCases);
         if (action.target === 'today') return todayScreen(user, useCases);
+        if (action.target === 'food') return mealMenu(user, useCases);
         return [plain('KB-02')];
     }
   }
@@ -286,6 +311,7 @@ export function createBot({
     // FR-001-11: botones del teclado persistente.
     const text = ctx.message.text;
     if (user && text === MAIN_KEYBOARD[0]) return sendAll(ctx, await todayScreen(user, useCases));
+    if (user && text === MAIN_KEYBOARD[1]) return sendAll(ctx, await mealMenu(user, useCases));
     if (user && text !== undefined && (MAIN_KEYBOARD as readonly string[]).includes(text)) {
       return sendAll(ctx, [plain('KB-02')]);
     }

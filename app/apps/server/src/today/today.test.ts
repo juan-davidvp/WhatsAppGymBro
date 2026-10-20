@@ -161,10 +161,8 @@ describe('RN-DQC-003 · T-041 · Hoy en un día de descanso', () => {
 });
 
 describe('FR-001-11 · T-041 · teclado persistente', () => {
-  it('Comida y Progreso todavía no están: KB-02', async () => {
-    for (const label of ['🍽️ Comida', '📈 Progreso']) {
-      const flow = await runFlow([...ONBOARDED_GYM_LXV, { text: label }]);
-      expect(flow.last()?.text).toBe(templateById('KB-02').text);
-    }
+  it('Progreso todavía no está: KB-02', async () => {
+    const flow = await runFlow([...ONBOARDED_GYM_LXV, { text: '📈 Progreso' }]);
+    expect(flow.last()?.text).toBe(templateById('KB-02').text);
   });
 });

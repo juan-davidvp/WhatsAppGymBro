@@ -100,7 +100,8 @@ export function photoUpdate(caption: string | undefined, updateId = 1): Update {
   };
 }
 
-export function callbackUpdate(data: string, updateId = 1): Update {
+/** `messageId`: el mensaje del botón (por defecto, siempre el mismo). */
+export function callbackUpdate(data: string, updateId = 1, messageId = 10): Update {
   return {
     update_id: updateId,
     callback_query: {
@@ -108,7 +109,7 @@ export function callbackUpdate(data: string, updateId = 1): Update {
       from: PERSON,
       chat_instance: 'ci',
       data,
-      message: baseMessage({ text: 'x' }) as never,
+      message: baseMessage({ text: 'x', message_id: messageId }) as never,
     },
   };
 }

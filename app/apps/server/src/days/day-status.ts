@@ -11,11 +11,13 @@ import type { DaysRepository, UserRecord } from '../ports/repositories.js';
 /**
  * Registro del día mientras está abierto (lo mínimo de M6 que adelanta M4).
  * Cada actividad se guarda como fuente del día (`session:<id>` completada,
- * `mobility`), el dominio evalúa el día (RN-DQC-002/003) y se calculan el total
+ * `mobility`, `nutrition_half`), el dominio evalúa el día (RN-DQC-002/003) y se calculan el total
  * y la racha en vivo (RN-GAM-001, RN-DQC-007). El cierre programado es de T-060.
  */
 
 export const MOBILITY_SOURCE = 'mobility';
+/** RN-NUT-003: la mitad de comida del día se cumplió (T-050). */
+export const NUTRITION_HALF_SOURCE = 'nutrition_half';
 export const sessionSource = (sessionId: string) => `session:${sessionId}`;
 
 export interface DayResult {
@@ -31,8 +33,7 @@ export function dayInputsFrom(type: DayType, sources: readonly string[]) {
     type,
     sessionsCompleted: sources.filter((s) => s.startsWith('session:')).length,
     importedActivityMinutes: [],
-    // RN-NUT-003 llega con M5.
-    nutritionHalf: false,
+    nutritionHalf: sources.includes(NUTRITION_HALF_SOURCE),
     importedSteps: 0,
     mobilityMinutes: sources.includes(MOBILITY_SOURCE) ? PARAMETERS.day.restMobilityMinutes : 0,
   };

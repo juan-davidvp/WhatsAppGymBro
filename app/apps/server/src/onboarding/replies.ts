@@ -64,7 +64,7 @@ const BUTTON_VALUES: Readonly<Record<string, Readonly<Record<string, string>>>> 
   'TZ-03': { 'Todo NO': 'all_no', 'Algún SÍ': 'some_yes' },
   'PL-01': { Gym: 'gym', Casa: 'home', "Exprés 15'": 'express', 'Hoy no puedo': 'cant' },
   'HN-01': { 'Exprés ahora': 'express', 'Mover a otro día': 'move', 'Hoy descanso': 'rest' },
-  'HY-01': { 'Hice la movilidad': 'mobility' },
+  'HY-01': { 'Hice la movilidad': 'mobility', 'Registrar comida': 'food' },
   'BD-01': { 'Sí, borrar': 'confirm', Cancelar: 'cancel' },
   'BD-02': { 'Borrar todo': 'erase', Cancelar: 'cancel' },
 };

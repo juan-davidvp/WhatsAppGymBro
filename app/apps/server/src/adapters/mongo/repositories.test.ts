@@ -12,6 +12,7 @@ import {
   achievementsRepository,
   painFlagsRepository,
   exerciseAdjustmentsRepository,
+  favoriteMealsRepository,
   bodyMeasurementsRepository,
   goalsRepository,
   trainingHabitsRepository,
@@ -118,6 +119,8 @@ describe('SC-003-2 · un toque repetido no duplica una serie, una comida ni un d
       portions: { palm: 1, cuppedHand: 2, fist: 1, thumb: 1 },
       proteinG: 25,
       favoriteMealId: 'fav-1',
+      durationMs: 1200,
+      taps: 1,
       idempotencyKey: mealIdempotencyKey(42, 100, 'v1:fav:fav-1'),
     };
     await repo.record(meal);
@@ -581,5 +584,56 @@ describe('RN-SEG-006 · T-044 · dolor y ajustes por estancamiento', () => {
     await adjustments.save('u26', adjustment);
     expect(await adjustments.list('u26')).toEqual([adjustment]);
     expect(await adjustments.list('otro')).toEqual([]);
+  });
+});
+
+describe('RN-NUT-004 · T-051 · comidas del día y frecuentes', () => {
+  it('lee las comidas de un día en orden', async () => {
+    const meals = mealsRepository(db);
+    const base = {
+      userId: 'u30',
+      method: 'portions' as const,
+      portions: { palm: 1, cuppedHand: 0, fist: 0, thumb: 0 },
+      proteinG: 25,
+      favoriteMealId: null,
+      durationMs: 0,
+      taps: 1,
+    };
+    await meals.record({ ...base, date: '2026-10-19', loggedAt: now, idempotencyKey: 'b' });
+    await meals.record({
+      ...base,
+      date: '2026-10-19',
+      loggedAt: new Date('2026-10-19T12:00:00Z'),
+      idempotencyKey: 'a',
+    });
+    await meals.record({ ...base, date: '2026-10-18', loggedAt: now, idempotencyKey: 'c' });
+    expect((await meals.onDate('u30', '2026-10-19')).map((m) => m.idempotencyKey)).toEqual([
+      'a',
+      'b',
+    ]);
+  });
+
+  it('crea, lista, ajusta y borra frecuentes solo del usuario', async () => {
+    const favorites = favoriteMealsRepository(db);
+    const created = await favorites.create({
+      userId: 'u31',
+      name: 'Almuerzo',
+      portions: { palm: 1, cuppedHand: 2, fist: 1, thumb: 0 },
+      foodCodes: ['CORRIENTAZO'],
+    });
+    expect(await favorites.list('u31')).toEqual([created]);
+    expect(await favorites.byId('otro', created.id)).toBeNull();
+    expect(await favorites.byId('u31', 'no-es-un-id')).toBeNull();
+    await favorites.updatePortions('u31', created.id, {
+      palm: 2,
+      cuppedHand: 2,
+      fist: 1,
+      thumb: 0,
+    });
+    expect((await favorites.byId('u31', created.id))?.portions.palm).toBe(2);
+    await favorites.remove('otro', created.id);
+    expect(await favorites.list('u31')).toHaveLength(1);
+    await favorites.remove('u31', created.id);
+    expect(await favorites.list('u31')).toEqual([]);
   });
 });

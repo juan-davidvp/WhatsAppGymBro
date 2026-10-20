@@ -75,9 +75,9 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-050 | Teclado de porciones y barra de proteína | HU-004-1/3 | T-032 | SC-004-1 (porciones) |
-| T-051 | Comidas frecuentes, plantillas predefinidas y "repetir ayer" | HU-004-2 | T-050 | SC-004-1 (frecuente) |
-| T-052 [P] | Sugerencias según el tipo de día | HU-004-6 | T-050 | Escenarios pasan |
+| T-050 ✅ | Teclado de porciones y barra de proteína | HU-004-1/3 | T-032 | SC-004-1 (porciones) |
+| T-051 ✅ | Comidas frecuentes, plantillas predefinidas y "repetir ayer" | HU-004-2 | T-050 | SC-004-1 (frecuente) |
+| T-052 [P] ✅ | Sugerencias según el tipo de día | HU-004-6 | T-050 | Escenarios pasan |
 | T-053 | *Should:* foto → propuesta de porciones (adaptador de IA, esquema, límite diario, costo) | HU-004-4 | T-050 | SC-004-3; costo registrado |
 | T-054 | *Could:* texto → propuesta de porciones | HU-004-5 | T-053 | Escenarios pasan |
 

@@ -411,3 +411,47 @@ relacionados: [index, inicio]
 - Pruebas:
   - `sessions/records-plateau-pain.test.ts` (17 escenarios);
   - repositorios de MongoDB de récords, bitácora, dolor, ajustes, historia del ejercicio y descarte de semana.
+
+## [2026-10-20] decision | M5 · nutrición: alcance y lecturas aprobadas por el PO
+- **Foto y texto → porciones (T-053 *Should*, T-054 *Could*):** quedan para después. El proveedor de IA y su política de retención de imágenes siguen como `[NEEDS CLARIFICATION]` en [[spec-004-registro-de-nutricion]] §10. Hasta entonces, una foto recibe la respuesta de siempre y Comida usa porciones.
+- **Proteína de las plantillas:** palmas × P-027 en toda comida (FR-004-04). Con un rango de porciones se usa el valor bajo. La proteína aproximada del catálogo queda como referencia. Nombres cortos para los botones en [[alimentos-accesibles-base]] v0.2.0.
+- **Paso de la palma:** media palma (P-093); las demás manos, de 1 en 1.
+- **Día en vivo:** la mitad de comida se guarda como fuente `nutrition_half` del día y puede hacer contar el descanso (DC-01) o completar el día (DC-02). El cierre programado sigue en T-060.
+- **Parámetros nuevos** ([[parametros]] v0.8.0):
+  - P-092: 4 palmas sin peso declarado `[V]`, de SPEC-004 §8;
+  - P-093: paso de la palma;
+  - P-094: 6 frecuentes como botones `[supuesto]`;
+  - P-095: 3 alimentos en la sugerencia `[supuesto]`.
+- **Textos:** CM-01 a CM-17 redactados por Claude ([[plantillas-de-mensajes]] v0.11.0 §2.5). HY-01 ahora nombra la misión de proteína y trae [Registrar comida]; KB-02 queda solo para Progreso. Pendientes de revisión del PO en el PR.
+
+## [2026-10-20] implementar | T-050 Teclado de porciones y barra de proteína
+- `app/apps/server/src/meals/meals.ts`: `🍽️ Comida` (teclado, CU-07 y [Registrar comida] de Hoy) → CM-01 → [Porciones] → CM-03.
+  - El teclado se edita en el mismo mensaje. El borrador de la comida viaja en los datos del botón (`meals/draft.ts`, ≤ 64 bytes).
+  - 1 palma cuesta 5 toques desde `🍽️ Comida`, dentro del presupuesto de FR-004-02.
+- [Guardar] registra la comida con su clave de toque (un doble toque no duplica) y edita el mensaje con la barra CM-04/CM-05.
+  - La meta sale del peso (RN-NUT-002) o de P-092.
+  - En modo sin números se usan CM-06/CM-07 (HU-004-3).
+- **FR-004-07:** durante la gracia (hasta P-030), [Era de ayer] registra la comida en el día anterior.
+- **FR-004-08:** cada comida guarda duración (desde que se abrió el menú) y toques.
+- **Eventos:** `meal_logged` (método, duración, toques, proteína) y `nutrition_half_completed` (modo).
+- **Dominio nuevo:** `dailyProteinGoal`, `palmsFromProtein`, `adjustPortion` (propiedad: nunca bajo 0), `hasPortions`, `rotatingPick`.
+
+## [2026-10-20] implementar | T-051 Frecuentes, plantillas y "repetir ayer"
+- **Frecuentes:**
+  - [Guardar como frecuente] registra la comida y guarda la frecuente, con el nombre corto de la plantilla o CM-17. Evento `favorite_meal_saved`.
+  - Las frecuentes salen como botones en CM-01, hasta P-094, y se registran con 1 toque.
+  - [Editar frecuentes] permite ✏️ ajustar las porciones o 🗑️ borrar (FR-004-03).
+- **Plantillas:** abren el teclado con el valor bajo de cada rango.
+- **Repetir ayer:**
+  - CM-10 muestra las comidas de ayer; [Registrar] las suma hoy con 1 toque. Evento `meal_repeated`.
+  - [Cancelar] no registra nada.
+- **Repositorios** (MongoDB y dobles en memoria): `meals.onDate` y `favorite_meals`.
+
+## [2026-10-20] implementar | T-052 Sugerencias según el tipo de día
+- **Día de entreno:** antes de la hora habitual (P-083 de su franja), `🍽️ Comida` muestra primero CM-15. Lleva P-095 fuentes de proteína de costo `$` del catálogo, que rotan con el día de la semana (RN-NUT-006).
+- **Día de descanso:** Hoy (HY-01) dice que la misión es la proteína o la recuperación activa (HU-004-6 escenario 2).
+- **Pruebas:** `meals/meals.test.ts` (29 escenarios) y `meals/draft.test.ts` (ida y vuelta con fast-check).
+- **Pendiente:**
+  - T-053 y T-054 (IA), por decisión del PO.
+  - Pedir el peso en `/progreso` (SPEC-004 §8) llega con M8.
+  - SPEC-004 sigue en `borrador` mientras falten HU-004-4/5.

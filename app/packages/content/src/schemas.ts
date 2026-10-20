@@ -139,6 +139,8 @@ export type Food = z.infer<typeof foodSchema>;
 export const frequentMealTemplateSchema = z.object({
   code: z.string().regex(/^[A-Z0-9_]+$/),
   name: z.string().min(1),
+  /** Texto del botón y nombre de la frecuente que se guarda desde la plantilla (T-051). */
+  shortName: z.string().min(1),
   portions: handEquivalenceSchema,
   proteinG: range,
 });

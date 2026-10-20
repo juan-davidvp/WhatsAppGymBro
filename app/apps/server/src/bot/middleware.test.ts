@@ -195,6 +195,7 @@ describe('T-021 · datos de los botones', () => {
       { action: 'pv', value: 'decline' },
       { action: 'ss', sessionId: 'a'.repeat(24), value: 'done_12' },
       { action: 'pt', sessionId: 'b'.repeat(24), value: 'd3' },
+      { action: 'ml', op: 'kb', state: '4_1_0_0_0_3_t1' },
     ] as const) {
       const data = encodeCallbackData(action);
       expect(new TextEncoder().encode(data).length).toBeLessThanOrEqual(CALLBACK_DATA_MAX_BYTES);

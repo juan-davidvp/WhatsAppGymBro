@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.10.0
+version: 0.11.0
 creado: 2026-10-18
-actualizado: 2026-10-19
+actualizado: 2026-10-20
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -126,7 +126,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 
 | ID | Momento | Texto |
 |---|---|---|
-| HY-01 | Hoy en día de descanso | Hoy toca descanso. Para que cuente, haz {minutos} min de movilidad y confírmalo. [Hice la movilidad] |
+| HY-01 | Hoy en día de descanso | Hoy toca descanso: tu misión es la proteína o la recuperación activa. Para que cuente, cumple la mitad de comida o haz {minutos} min de movilidad. [Hice la movilidad] [Registrar comida] |
 | HY-02 | Movilidad confirmada | Movilidad hecha: hoy cuenta. Día que cuenta n.º {n} · 🔥 {racha} |
 | HY-03 | Hoy ya cuenta | Hoy ya cuenta. Mañana seguimos con tu plan. |
 | HY-04 | Ayer sin registrar, dentro de la gracia (RN-DQC-005) | ¿Hiciste ayer {sesion}? Si la hiciste tal cual, regístrala con un toque. [La hice tal cual] |
@@ -136,12 +136,12 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | HN-04 | Ningún día posible | Esta semana no queda un día que respete tu descanso. Seguimos con el plan el próximo día de entreno, sin deuda. |
 | HN-05 | Sesión movida | Listo: {sesion} pasa al {dia}. |
 | KB-01 | Teclado persistente (al terminar el inicio) | Abajo tienes Hoy, Comida y Progreso a un toque. |
-| KB-02 | Sección aún no disponible | Esa sección todavía no está lista. Por ahora tienes Hoy y /plan. |
+| KB-02 | Sección aún no disponible | Esa sección todavía no está lista. Por ahora tienes Hoy, Comida y /plan. |
 
 > - Hoy en día de entreno usa PL-01 (§1.1) con sus botones.
 > - HN-03 lleva un botón por cada día de esta semana al que se puede mover la sesión (RN-PLAN-007, RN-PLAN-008).
 > - Teclado persistente ([[flujos-de-usuario]] §1): `🏋️ Hoy` · `🍽️ Comida` · `📈 Progreso`.
-> - KB-02 responde a Comida y Progreso hasta que lleguen M5 y M8.
+> - KB-02 responde a Progreso hasta que llegue M8.
 
 
 ### 2.4 Tarjeta de sesión (T-041, T-042)
@@ -173,6 +173,39 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | borrar_datos | Borrar todos tus datos |
 
 > Lista que el bot registra en Telegram. Cada comando se añade aquí cuando su tarea lo implementa ([[flujos-de-usuario]] §1 tiene la lista completa prevista).
+
+### 2.5 Comida (T-050 a T-052)
+
+| ID | Momento | Texto |
+|---|---|---|
+| CM-01 | `🍽️ Comida` | ¿Qué comiste? Tus frecuentes se registran con un toque. [Porciones] [Plantillas] [Repetir ayer] [Editar frecuentes] [Era de ayer] |
+| CM-02 | `🍽️ Comida` para ayer (gracia, RN-DQC-005) | Registrando una comida de ayer. ¿Qué comiste? [Porciones] [Plantillas] [Editar frecuentes] [Era de hoy] |
+| CM-03 | Teclado de porciones | Porciones de esta comida: 🖐️ Palma {palma} · 🤲 Mano ahuecada {mano} · ✊ Puño {puno} · 👍 Pulgar {pulgar} [−🖐️] [+🖐️] [−🤲] [+🤲] [−✊] [+✊] [−👍] [+👍] [Guardar] [Guardar como frecuente] |
+| CM-04 | Comida guardada | Comida registrada ✅ {barra} {proteina}/{meta} g ({palmas}/{meta_palmas} palmas) |
+| CM-05 | Comida guardada, mitad cumplida | Comida registrada ✅ {barra} {proteina}/{meta} g ({palmas}/{meta_palmas} palmas) · mitad de comida cumplida |
+| CM-06 | Comida guardada (modo sin números) | Comida registrada ✅ |
+| CM-07 | Igual, mitad cumplida | Comida registrada ✅ Mitad de comida cumplida. |
+| CM-08 | [Guardar como frecuente] | Quedó en tus frecuentes: {nombre}. |
+| CM-09 | [Plantillas] | Comidas típicas para empezar. Elige una y ajusta las porciones si hace falta. |
+| CM-10 | [Repetir ayer] | Ayer registraste: {lista}. ¿Lo registro igual hoy? [Registrar] [Cancelar] |
+| CM-11 | Ayer sin comidas | Ayer no registraste comidas. Elige una frecuente o usa porciones. |
+| CM-12 | [Editar frecuentes] | Tus frecuentes: ✏️ para ajustar las porciones, 🗑️ para borrarla. |
+| CM-13 | Frecuente borrada | Borré {nombre} de tus frecuentes. |
+| CM-14 | [Guardar] sin porciones | Agrega al menos una porción antes de guardar. |
+| CM-15 | Día de entreno, antes de la hora habitual (HU-004-6) | Hoy entrenas: antes de la sesión te sirve algo con proteína, como {alimentos}. |
+| CM-16 | [Cancelar] | Listo, no registré nada. |
+| CM-17 | Nombre de una frecuente sin plantilla | 🖐️{palma} 🤲{mano} ✊{puno} 👍{pulgar} |
+
+> - CM-01 empieza con las frecuentes como botones (hasta P-094), cada una con su nombre. [Repetir ayer] solo aparece si ayer hubo comidas; [Editar frecuentes], si hay frecuentes; [Era de ayer], solo durante la gracia (hasta P-030). CM-02 registra para ayer y [Era de hoy] vuelve a CM-01.
+> - CM-03 se edita en el mismo mensaje con cada toque. La palma cambia de P-093 en P-093; las otras manos, de 1 en 1. [Guardar como frecuente] registra la comida y la guarda con el nombre corto de la plantilla, o con CM-17 si no viene de una.
+> - Presupuesto (FR-004-02): `🍽️ Comida` → [Porciones] → dos toques en [+🖐️] → [Guardar] son 5 toques. Una frecuente es 1 toque desde CM-01 (RN-NUT-004).
+> - `{barra}` tiene 10 celdas (▓ llena, ░ vacía), llenas según la proteína del día sobre la meta. `{palmas}` es la proteína ÷ P-027, redondeada hacia abajo a la media palma. La meta es peso × P-026 (RN-NUT-002) o P-092 palmas sin peso declarado.
+> - En modo sin números se usan CM-06 y CM-07, sin gramos ni palmas (HU-004-3).
+> - Si la comida hace que el día de descanso cuente, sigue DC-01; si lo completa, DC-02 (RN-DQC-003, RN-DQC-004).
+> - CM-12 lleva por cada frecuente dos botones: ✏️ {nombre} y 🗑️ {nombre}. ✏️ abre CM-03 con sus porciones; ahí [Guardar como frecuente] la actualiza.
+> - CM-10: `{lista}` es cada comida de ayer con su nombre (CM-17 si no era frecuente), separadas por " · ". [Registrar] las registra todas con 1 toque.
+> - CM-15 sale antes de CM-01 en un día de entreno, antes de la hora habitual (P-083). `{alimentos}` son P-095 fuentes de proteína de costo `$` del [[alimentos-accesibles-base]], que rotan cada día (RN-NUT-006).
+> - CM-08, CM-14 y CM-16 se muestran como aviso breve sobre el botón.
 
 ## 3. Onboarding (textos base)
 

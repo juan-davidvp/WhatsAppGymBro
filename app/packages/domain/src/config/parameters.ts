@@ -131,6 +131,14 @@ export const PARAMETERS = {
     halfThresholdPct: 80,
     /** P-072 · RN-NUT-003 · comidas con al menos una palma (modo sin números) */
     numberFreeMealsWithProtein: 3,
+    /** P-092 · RN-NUT-002 · [V] · palmas al día sin peso declarado */
+    defaultProteinPalms: 4,
+    /** P-093 · RN-NUT-001 · paso de la palma en el teclado de porciones */
+    palmStep: 0.5,
+    /** P-094 · RN-NUT-004 · [supuesto] · frecuentes mostradas como botones */
+    maxFavoriteButtons: 6,
+    /** P-095 · RN-NUT-006 · [supuesto] · alimentos en la sugerencia antes de entrenar */
+    suggestedFoods: 3,
   },
   day: {
     /** P-029 · RN-DQC-001 · duro · hora local de cierre del día operativo */

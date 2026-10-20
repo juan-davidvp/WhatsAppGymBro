@@ -30,6 +30,8 @@ import {
   type UserDataEraser,
   type DaysRepository,
   type EventsRepository,
+  type FavoriteMealRecord,
+  type FavoriteMealsRepository,
   type MealRecord,
   type MealsRepository,
   type ProcessedUpdatesRepository,
@@ -212,6 +214,47 @@ export function mealsRepository(db: Db): MealsRepository {
   return {
     async record(meal: MealRecord) {
       return insertIfAbsent(() => collection.insertOne({ ...meal }));
+    },
+    async onDate(userId, date) {
+      const docs = await collection
+        .find({ userId, date }, { projection: { _id: 0 }, sort: { loggedAt: 1, _id: 1 } })
+        .toArray();
+      return docs as unknown as MealRecord[];
+    },
+  };
+}
+
+export function favoriteMealsRepository(db: Db): FavoriteMealsRepository {
+  const collection = db.collection('favorite_meals');
+  const toRecord = (doc: Record<string, unknown> & { _id: ObjectId }): FavoriteMealRecord => ({
+    id: doc._id.toHexString(),
+    userId: doc['userId'] as string,
+    name: doc['name'] as string,
+    portions: doc['portions'] as FavoriteMealRecord['portions'],
+    foodCodes: doc['foodCodes'] as string[],
+  });
+  const filter = (userId: string, id: string) =>
+    ObjectId.isValid(id) ? { _id: new ObjectId(id), userId } : null;
+  return {
+    async create(input) {
+      const result = await collection.insertOne({ ...input, foodCodes: [...input.foodCodes] });
+      return { ...input, id: result.insertedId.toHexString() };
+    },
+    async list(userId) {
+      return (await collection.find({ userId }, { sort: { _id: 1 } }).toArray()).map(toRecord);
+    },
+    async byId(userId, id) {
+      const query = filter(userId, id);
+      const doc = query ? await collection.findOne(query) : null;
+      return doc ? toRecord(doc) : null;
+    },
+    async updatePortions(userId, id, portions) {
+      const query = filter(userId, id);
+      if (query) await collection.updateOne(query, { $set: { portions } });
+    },
+    async remove(userId, id) {
+      const query = filter(userId, id);
+      if (query) await collection.deleteOne(query);
     },
   };
 }

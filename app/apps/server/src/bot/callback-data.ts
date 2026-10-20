@@ -12,6 +12,8 @@ const VERSION = 'v1';
 const VALUE = /^[a-z0-9_]{1,24}$/;
 /** Id de una sesión de entreno (ObjectId en hexadecimal). */
 const SESSION_ID = /^[a-f0-9]{24}$/;
+/** Borrador de una comida: porciones, día, toques y referencia (`meals/draft.ts`). */
+const MEAL_STATE = /^[a-z0-9_]{1,48}$/;
 
 /** Destinos de navegación de los botones de CU-07 (Hoy, Comida, Progreso). */
 export const NAV_TARGETS = ['today', 'food', 'progress', 'plan'] as const;
@@ -34,7 +36,9 @@ export type CallbackAction =
   /** Tarjeta de una sesión: `<operación>_<versión del estado>` (T-042). */
   | { action: 'ss'; sessionId: string; value: string }
   /** Estrategia ante un estancamiento: `<r|v|d><índice del ejercicio>` (RN-ENT-003). */
-  | { action: 'pt'; sessionId: string; value: string };
+  | { action: 'pt'; sessionId: string; value: string }
+  /** Comida: `<operación>` y el borrador de la comida en curso (T-050, T-051). */
+  | { action: 'ml'; op: string; state: string };
 
 function checkSize(data: string): string {
   const bytes = new TextEncoder().encode(data).length;
@@ -61,6 +65,9 @@ export function encodeCallbackData(action: CallbackAction): string {
       return checkSize(
         `${VERSION}:${action.action}:${action.sessionId}:${checkValue(action.value)}`,
       );
+    case 'ml':
+      if (!MEAL_STATE.test(action.state)) throw new Error(`Borrador inválido: ${action.state}`);
+      return checkSize(`${VERSION}:ml:${checkValue(action.op)}:${action.state}`);
     case 'pv':
     case 'sc':
     case 'del':
@@ -105,6 +112,15 @@ export function parseCallbackData(data: string): CallbackAction | null {
     VALUE.test(value)
   ) {
     return { action, sessionId: arg, value };
+  }
+  if (
+    action === 'ml' &&
+    arg !== undefined &&
+    VALUE.test(arg) &&
+    value !== undefined &&
+    MEAL_STATE.test(value)
+  ) {
+    return { action, op: arg, state: value };
   }
   return null;
 }

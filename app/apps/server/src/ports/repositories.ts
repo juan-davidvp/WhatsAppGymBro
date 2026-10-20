@@ -214,6 +214,9 @@ export interface MealRecord {
   };
   readonly proteinG: number;
   readonly favoriteMealId: string | null;
+  /** FR-004-08: duración desde que se abrió `🍽️ Comida` y toques del registro. */
+  readonly durationMs: number;
+  readonly taps: number;
   /** Clave estable del toque que originó el registro (`mealIdempotencyKey`). */
   readonly idempotencyKey: string;
 }
@@ -221,6 +224,29 @@ export interface MealRecord {
 export interface MealsRepository {
   /** SC-003-2: el mismo toque repetido no duplica la comida. */
   record(meal: MealRecord): Promise<{ inserted: boolean }>;
+  /** Comidas de un día, en el orden en que se registraron. */
+  onDate(userId: string, date: LocalDate): Promise<MealRecord[]>;
+}
+
+export type MealPortions = MealRecord['portions'];
+
+/** `FavoriteMeal` del glosario (RN-NUT-004). */
+export interface FavoriteMealRecord {
+  readonly id: string;
+  readonly userId: string;
+  readonly name: string;
+  readonly portions: MealPortions;
+  readonly foodCodes: readonly string[];
+}
+
+export interface FavoriteMealsRepository {
+  create(input: Omit<FavoriteMealRecord, 'id'>): Promise<FavoriteMealRecord>;
+  /** En el orden en que se guardaron. */
+  list(userId: string): Promise<FavoriteMealRecord[]>;
+  byId(userId: string, id: string): Promise<FavoriteMealRecord | null>;
+  /** FR-004-03: ajustar las porciones de una frecuente. */
+  updatePortions(userId: string, id: string, portions: MealPortions): Promise<void>;
+  remove(userId: string, id: string): Promise<void>;
 }
 
 export interface DaysRepository {

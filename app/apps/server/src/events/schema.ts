@@ -88,6 +88,15 @@ export const EVENT_PROPS_SCHEMAS = {
   }),
   set_undone: z.strictObject({}),
   plateau_detected: z.strictObject({}),
+  meal_logged: z.strictObject({
+    method: z.enum(['portions', 'favorite', 'repeat', 'photo', 'text']),
+    durationMs: z.number().int().nonnegative(),
+    taps: z.number().int().nonnegative(),
+    proteinG: z.number().nonnegative(),
+  }),
+  favorite_meal_saved: z.strictObject({ fromTemplate: z.boolean() }),
+  meal_repeated: z.strictObject({ meals: z.number().int().positive() }),
+  nutrition_half_completed: z.strictObject({ mode: z.enum(['numbers', 'number_free']) }),
   pain_flagged: z.strictObject({
     zone: z.enum(['shoulder', 'elbow', 'wrist', 'back', 'hip', 'knee', 'ankle', 'other']),
   }),

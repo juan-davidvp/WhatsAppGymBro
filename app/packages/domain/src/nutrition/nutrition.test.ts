@@ -2,7 +2,12 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { PARAMETERS } from '../config/parameters.js';
 import {
+  adjustPortion,
   confirmProposal,
+  dailyProteinGoal,
+  hasPortions,
+  palmsFromProtein,
+  rotatingPick,
   DEFAULT_MEAL_METHOD,
   isCalorieCountingEnabled,
   isNutritionHalfMet,
@@ -12,7 +17,9 @@ import {
   proteinFocus,
   proteinTarget,
   repeatYesterday,
+  type HandPortion,
   type Meal,
+  type Portions,
   type PortionProposal,
 } from './nutrition.js';
 
@@ -172,5 +179,63 @@ describe('RN-NUT-007 · sin conteo de calorías en la Fase 0', () => {
 describe('RN-NUT-008 · equivalencias del catálogo de alimentos', () => {
   it('la proteína de un alimento del catálogo sale de su proteína aproximada por porción', () => {
     expect(proteinFromCatalogFood({ proteinG: 6 }, 3)).toBe(18);
+  });
+});
+
+describe('RN-NUT-002 · SPEC-004 §8 · meta del día con o sin peso', () => {
+  it('con peso usa P-026; sin peso, P-092 palmas de P-027 g', () => {
+    expect(dailyProteinGoal(80)).toEqual(proteinTarget(80));
+    expect(dailyProteinGoal(null)).toEqual({
+      grams: N.defaultProteinPalms * N.proteinGPerPalm,
+      palms: N.defaultProteinPalms,
+    });
+  });
+
+  it('la proteína en palmas se redondea hacia abajo a la media palma', () => {
+    expect(palmsFromProtein(N.proteinGPerPalm * 3.3)).toBe(3);
+    expect(palmsFromProtein(N.proteinGPerPalm * 3.5)).toBe(3.5);
+    expect(palmsFromProtein(0)).toBe(0);
+  });
+});
+
+describe('RN-NUT-001 · teclado de porciones', () => {
+  it('la palma cambia de P-093 en P-093 y las demás de 1 en 1', () => {
+    const once = adjustPortion({}, 'PALM', 1);
+    expect(once.PALM).toBe(N.palmStep);
+    expect(adjustPortion(once, 'FIST', 1).FIST).toBe(1);
+  });
+
+  it('ninguna porción baja de 0', () => {
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.tuple(
+            fc.constantFrom('PALM', 'CUPPED_HAND', 'FIST', 'THUMB') as fc.Arbitrary<HandPortion>,
+            fc.constantFrom(1, -1) as fc.Arbitrary<1 | -1>,
+          ),
+        ),
+        (taps) => {
+          const result = taps.reduce<Portions>((p, [hand, d]) => adjustPortion(p, hand, d), {});
+          return Object.values(result).every((v) => v >= 0);
+        },
+      ),
+    );
+  });
+
+  it('una comida sin porciones no se guarda', () => {
+    expect(hasPortions({})).toBe(false);
+    expect(hasPortions({ PALM: 0, FIST: 0 })).toBe(false);
+    expect(hasPortions({ THUMB: 1 })).toBe(true);
+  });
+});
+
+describe('RN-NUT-006 · sugerencias que rotan cada día', () => {
+  it('P-095 elementos distintos, empezando en un lugar distinto cada día', () => {
+    const items = ['a', 'b', 'c', 'd', 'e'];
+    expect(rotatingPick(items, 0)).toHaveLength(N.suggestedFoods);
+    expect(new Set(rotatingPick(items, 3)).size).toBe(N.suggestedFoods);
+    expect(rotatingPick(items, 1)[0]).toBe('b');
+    expect(rotatingPick(items, 6)).toEqual(rotatingPick(items, 1));
+    expect(rotatingPick([], 2)).toEqual([]);
   });
 });
