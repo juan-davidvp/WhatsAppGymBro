@@ -136,7 +136,7 @@ export interface Sent {
 
 export function sent(calls: ApiCall[]): Sent[] {
   return calls
-    .filter((c) => c.method === 'sendMessage')
+    .filter((c) => c.method === 'sendMessage' || c.method === 'editMessageText')
     .map((c) => ({
       text: String(c.payload['text']),
       buttons: (

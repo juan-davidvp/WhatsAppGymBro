@@ -17,6 +17,7 @@ async function atStep(step: OnboardingStep, privacy: 'Acepto' | 'No acepto' = 'A
   await setup.bot.handleUpdate(textUpdate('/start', setup.nextUpdateId()));
   const tap = (label: string) =>
     setup.bot.handleUpdate(callbackUpdate(tapData(setup.calls, label), setup.nextUpdateId()));
+  await tap('Continuar');
   return { ...setup, user, tap };
 }
 

@@ -27,6 +27,14 @@ export const PARAMETERS = {
     weeksToSustainTarget: 2,
     /** P-008 · RN-OBJ-010 · duro */
     movingAverageDays: { days: 7, minEntries: 3 },
+    /** P-088 · RN-OBJ-003 · [V] · % del peso por semana de la meta propuesta al ganar */
+    defaultWeeklyGainPct: 0.25,
+    /** P-089 · RN-OBJ-003 · [V] · % del peso por semana de la meta propuesta al perder */
+    defaultWeeklyLossPct: 0.5,
+    /** P-085 · RN-OBJ-005 · [supuesto] · cm; fuera del rango se pide confirmar */
+    plausibleHeightCm: { min: 140, max: 220 },
+    /** P-087 · RN-OBJ-012 · kg; fuera del rango se pide confirmar (spec-001 §8) */
+    plausibleWeightKg: { min: 35, max: 250 },
     /** P-057 · RN-OBJ-009, RN-OBJ-013 · semanas */
     phaseReviewWeeks: 4,
   },
@@ -79,6 +87,8 @@ export const PARAMETERS = {
     availableDaysRange: { min: 2, max: 6 },
     /** P-075 · RN-PLAN-001 · minutos por sesión */
     sessionMinutesRange: { min: 20, max: 90 },
+    /** P-084 · RN-PLAN-001 · [supuesto] · botones de minutos del onboarding (dentro de P-075) */
+    sessionMinutesOptions: [20, 30, 45, 60, 90],
     /** P-076 · RN-PLAN-006 · [V] [supuesto] · minutos */
     warmupMinutes: 5,
     /** P-077 · RN-PLAN-006 · [V] · segundos por serie */
@@ -87,6 +97,10 @@ export const PARAMETERS = {
     restSecondsByGoal: { hypertrophyAndAccessory: 90, strengthCompound: 180 },
     /** P-079 · RN-PLAN-003, RN-PLAN-006 · [V] · circuito de la versión C */
     expressCircuit: { rounds: 3, workSeconds: 40, restSeconds: 20, restBetweenRoundsSeconds: 60 },
+  },
+  habit: {
+    /** P-083 · RN-PLAN-002 · [supuesto] · hora habitual declarada según la franja elegida */
+    timeSlotStarts: { morning: '06:00', midday: '12:00', afternoon: '17:00', evening: '19:30' },
   },
   training: {
     /** P-019 · RN-ENT-002 · [V] · sesiones */
@@ -184,6 +198,11 @@ export const PARAMETERS = {
     minGapHours: 3,
     /** P-047 · RN-MSJ-004 · valor por defecto; el usuario lo puede cambiar */
     quietHours: { start: '21:30', end: '07:00' },
+    /** P-086 · RN-MSJ-004 · [supuesto] · alternativas del onboarding a P-047 */
+    quietHoursOptions: [
+      { start: '22:30', end: '07:00' },
+      { start: '23:30', end: '08:00' },
+    ],
     /** P-048 · RN-MSJ-005 · minutos */
     planReadyLeadMinutes: 60,
     /** P-049 · RN-MSJ-006 · sesiones */

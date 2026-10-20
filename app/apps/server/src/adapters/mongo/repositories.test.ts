@@ -5,6 +5,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { mealIdempotencyKey } from './idempotency.js';
 import { ensureIndexes } from './indexes.js';
 import {
+  bodyMeasurementsRepository,
+  goalsRepository,
+  trainingHabitsRepository,
   consentsRepository,
   screeningsRepository,
   userDataEraser,
@@ -299,5 +302,82 @@ describe('RN-SEG-007 · señales de riesgo por intervalo (pausa del juego)', () 
     expect(
       await signals.instantsBetween('u5', at('2026-10-19T08:00:00Z'), at('2026-10-20T08:00:00Z')),
     ).toEqual([at('2026-10-19T12:00:00Z')]);
+  });
+});
+
+describe('T-032 · perfil y onboarding del usuario', () => {
+  it('guarda el perfil, cuenta interacciones, termina y reinicia', async () => {
+    const users = usersRepository(db);
+    const user = await users.findOrCreate({ telegramUserId: 601, chatId: 601, now });
+    expect(user.profile.goalType).toBeNull();
+    await users.updateProfile(user.id, { goalType: 'gain_strength', availableDays: ['monday'] });
+    await users.recordOnboardingInteraction(user.id, now);
+    await users.recordOnboardingInteraction(user.id, new Date(now.getTime() + 60_000));
+    let after = await users.findOrCreate({ telegramUserId: 601, chatId: 601, now });
+    expect(after.profile).toMatchObject({ goalType: 'gain_strength', availableDays: ['monday'] });
+    expect(after.onboarding).toMatchObject({ startedAt: now, interactions: 2 });
+    await users.restartOnboarding(user.id, 'goal');
+    after = await users.findOrCreate({ telegramUserId: 601, chatId: 601, now });
+    expect(after.profile.goalType).toBeNull();
+    expect(after.onboarding.step).toBe('goal');
+    await users.completeOnboarding(user.id, now);
+    after = await users.findOrCreate({ telegramUserId: 601, chatId: 601, now });
+    expect(after.onboarding.completedAt).toEqual(now);
+  });
+
+  it('un usuario guardado antes de T-032 (sin perfil) se lee con valores por defecto', async () => {
+    await db.collection('users').insertOne({
+      telegramUserId: 602,
+      chatId: 602,
+      onboarding: { step: 'age', completedAt: null },
+    });
+    const user = await usersRepository(db).findOrCreate({ telegramUserId: 602, chatId: 602, now });
+    expect(user.profile.availableDays).toEqual([]);
+    expect(user.onboarding).toMatchObject({ step: 'age', interactions: 0, startedAt: null });
+  });
+});
+
+describe('RN-OBJ-012 · peso opcional, uno por día', () => {
+  it('el último registro del día gana y se lee el más reciente', async () => {
+    const weights = bodyMeasurementsRepository(db);
+    expect(await weights.latestWeightKg('u7')).toBeNull();
+    await weights.recordWeight('u7', '2026-10-18', 70);
+    await weights.recordWeight('u7', '2026-10-19', 71);
+    await weights.recordWeight('u7', '2026-10-19', 71.5);
+    expect(await weights.latestWeightKg('u7')).toBe(71.5);
+    expect(await db.collection('body_measurements').countDocuments({ userId: 'u7' })).toBe(2);
+  });
+});
+
+describe('RN-PLAN-002 · RN-OBJ-001 · hábito y objetivo activo', () => {
+  it('un hábito por usuario; un solo objetivo activo y el anterior queda changed (RN-OBJ-007)', async () => {
+    const habits = trainingHabitsRepository(db);
+    const day = {
+      weekday: 'monday' as const,
+      declaredStart: '06:00',
+      learnedStart: null,
+      location: 'gym' as const,
+    };
+    await habits.save({ userId: 'u8', days: [day] });
+    await habits.save({ userId: 'u8', days: [day, { ...day, weekday: 'friday' as const }] });
+    expect(await db.collection('training_habits').countDocuments({ userId: 'u8' })).toBe(1);
+
+    const goals = goalsRepository(db);
+    const base = {
+      userId: 'u8',
+      metric: 'weight_kg' as const,
+      startValue: 70,
+      targetValue: 72,
+      startDate: '2026-10-19',
+      horizonWeeks: 12,
+    };
+    await goals.activate({ ...base, type: 'gain_muscle' });
+    await goals.activate({ ...base, type: 'maintain', targetValue: null });
+    expect((await goals.active('u8'))?.type).toBe('maintain');
+    expect(
+      (await db.collection('goals').find({ userId: 'u8' }).sort({ _id: 1 }).toArray()).map(
+        (g) => g['status'],
+      ),
+    ).toEqual(['changed', 'active']);
   });
 });

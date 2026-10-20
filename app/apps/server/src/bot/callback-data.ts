@@ -12,7 +12,7 @@ const VERSION = 'v1';
 const VALUE = /^[a-z0-9_]{1,24}$/;
 
 /** Destinos de navegación de los botones de CU-07 (Hoy, Comida, Progreso). */
-export const NAV_TARGETS = ['today', 'food', 'progress'] as const;
+export const NAV_TARGETS = ['today', 'food', 'progress', 'plan'] as const;
 export type NavTarget = (typeof NAV_TARGETS)[number];
 
 export type CallbackAction =
@@ -24,7 +24,9 @@ export type CallbackAction =
   /** Tamizaje previo a la actividad fuera de su paso: autorización o resultado tardío. */
   | { action: 'sc'; value: string }
   /** Confirmaciones de /borrar_datos. */
-  | { action: 'del'; value: string };
+  | { action: 'del'; value: string }
+  /** Retomar el onboarding: continuar o empezar de nuevo (SPEC-001 §8). */
+  | { action: 'rs'; value: string };
 
 function checkSize(data: string): string {
   const bytes = new TextEncoder().encode(data).length;
@@ -48,6 +50,7 @@ export function encodeCallbackData(action: CallbackAction): string {
     case 'pv':
     case 'sc':
     case 'del':
+    case 'rs':
       return checkSize(`${VERSION}:${action.action}:${checkValue(action.value)}`);
   }
 }
@@ -68,7 +71,7 @@ export function parseCallbackData(data: string): CallbackAction | null {
     return { action: 'ob', step: arg as OnboardingStep, value };
   }
   if (
-    (action === 'pv' || action === 'sc' || action === 'del') &&
+    (action === 'pv' || action === 'sc' || action === 'del' || action === 'rs') &&
     arg !== undefined &&
     value === undefined &&
     VALUE.test(arg)

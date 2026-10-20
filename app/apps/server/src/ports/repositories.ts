@@ -3,10 +3,15 @@ import type {
   ConsentCategory,
   DayStatus,
   DayType,
+  ExperienceLevel,
+  GoalMetric,
+  GoalType,
   Intensity,
   LocalDate,
   LocalTime,
   OnboardingStep,
+  TrainingPlace,
+  Weekday,
 } from '@gymbro/domain';
 
 /**
@@ -33,9 +38,42 @@ export interface UserRecord {
     /** RN-SEG-002: el plan arranca con intensidad baja hasta que haya autorización. */
     readonly lowIntensityStart: boolean;
   };
-  readonly onboarding: { readonly step: OnboardingStep; readonly completedAt: Date | null };
+  /** Lo que declara en el onboarding (SPEC-001); el hábito y el objetivo se guardan aparte al terminar. */
+  readonly profile: UserProfile;
+  readonly onboarding: {
+    readonly step: OnboardingStep;
+    readonly startedAt: Date | null;
+    /** Toques y respuestas escritas durante el onboarding (SC-001-1). */
+    readonly interactions: number;
+    readonly completedAt: Date | null;
+  };
   readonly createdAt: Date;
 }
+
+export type TimeSlot = 'morning' | 'midday' | 'afternoon' | 'evening';
+
+export interface UserProfile {
+  readonly goalType: GoalType | null;
+  readonly level: ExperienceLevel | null;
+  readonly availableDays: readonly Weekday[];
+  readonly timeSlot: TimeSlot | null;
+  readonly place: TrainingPlace | null;
+  readonly sessionMinutes: number | null;
+  readonly homeEquipment: readonly string[];
+  /** Opcional y solo con autorización `body_measurements` (RN-OBJ-005, RN-DAT-001). */
+  readonly heightCm: number | null;
+}
+
+export const EMPTY_PROFILE: UserProfile = {
+  goalType: null,
+  level: null,
+  availableDays: [],
+  timeSlot: null,
+  place: null,
+  sessionMinutes: null,
+  homeEquipment: [],
+  heightCm: null,
+};
 
 export interface UsersRepository {
   /** Busca por `telegramUserId` o crea el usuario con los valores por defecto. */
@@ -44,10 +82,51 @@ export interface UsersRepository {
   setOnboardingStep(userId: string, step: OnboardingStep): Promise<void>;
   confirmAdult(userId: string, at: Date): Promise<void>;
   /** Consecuencias de seguridad de los tamizajes (tamizajes §3). */
-  updateSettings(
-    userId: string,
-    settings: Partial<Pick<UserRecord['settings'], 'lowIntensityStart' | 'numberFreeMode'>>,
-  ): Promise<void>;
+  updateSettings(userId: string, settings: Partial<UserRecord['settings']>): Promise<void>;
+  updateProfile(userId: string, profile: Partial<UserProfile>): Promise<void>;
+  /** Cuenta una interacción del onboarding; la primera fija `startedAt`. */
+  recordOnboardingInteraction(userId: string, at: Date): Promise<void>;
+  completeOnboarding(userId: string, at: Date): Promise<void>;
+  /** "Empezar de nuevo" (SPEC-001 §8): borra lo declarado y vuelve a `step`. */
+  restartOnboarding(userId: string, step: OnboardingStep): Promise<void>;
+}
+
+export interface BodyMeasurementsRepository {
+  /** RN-OBJ-012: el peso es opcional; un registro por día (el último gana). */
+  recordWeight(userId: string, date: LocalDate, weightKg: number): Promise<void>;
+  latestWeightKg(userId: string): Promise<number | null>;
+}
+
+export interface TrainingHabitRecord {
+  readonly userId: string;
+  readonly days: readonly {
+    readonly weekday: Weekday;
+    readonly declaredStart: LocalTime;
+    readonly learnedStart: LocalTime | null;
+    readonly location: TrainingPlace;
+  }[];
+}
+
+export interface TrainingHabitsRepository {
+  /** RN-PLAN-002: un hábito por usuario; se reemplaza. */
+  save(habit: TrainingHabitRecord): Promise<void>;
+}
+
+export interface GoalRecord {
+  readonly userId: string;
+  readonly type: GoalType;
+  readonly metric: GoalMetric;
+  /** null mientras no haya dato inicial (objetivos sin meta de peso en el onboarding). */
+  readonly startValue: number | null;
+  readonly targetValue: number | null;
+  readonly startDate: LocalDate;
+  readonly horizonWeeks: number;
+}
+
+export interface GoalsRepository {
+  /** RN-OBJ-001 y RN-OBJ-007: un solo objetivo activo; el anterior queda `changed`. */
+  activate(goal: GoalRecord): Promise<void>;
+  active(userId: string): Promise<GoalRecord | null>;
 }
 
 export type ScreeningType = 'pre_activity' | 'food_body';

@@ -20,3 +20,9 @@ export {
   renderFoodBodyPositive,
   renderPreActivityPrompt,
 } from './screenings.js';
+export {
+  HOME_EQUIPMENT_OPTIONS,
+  SESSION_NAMES,
+  WEEKDAY_BUTTON_LABELS,
+  WEEKDAY_NAMES,
+} from './onboarding.js';

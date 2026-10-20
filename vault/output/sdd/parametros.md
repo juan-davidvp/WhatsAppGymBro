@@ -3,7 +3,7 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.4.0
+version: 0.5.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
@@ -20,6 +20,10 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | ID | Código | Valor | Rango | Reglas | Duro | Validación |
 |---|---|---|---|---|---|---|
 | P-001 | `goal.horizonWeeksDefault` | 12 semanas | 4–24 | RN-OBJ-003 | No | — |
+| P-088 | `goal.defaultWeeklyGainPct` | 0,25 % del peso por semana | ≤ P-005 | RN-OBJ-003 (meta propuesta al ganar músculo, [[objetivos-y-progreso]] §2) | No | [V] |
+| P-089 | `goal.defaultWeeklyLossPct` | 0,5 % del peso por semana | ≤ P-004 | RN-OBJ-003 (meta propuesta al perder grasa, [[objetivos-y-progreso]] §2) | No | [V] |
+| P-085 | `goal.plausibleHeightCm` | 140–220 cm | — | RN-OBJ-005 (fuera del rango se pide confirmar) | No | `[supuesto]` |
+| P-087 | `goal.plausibleWeightKg` | 35–250 kg | — | RN-OBJ-012 ([[spec-001-onboarding-y-objetivo]] §8: fuera del rango se pide confirmar) | No | — |
 | P-002 | `goal.horizonWeeksMin` | 4 semanas | — | RN-OBJ-003 | Sí | — |
 | P-003 | `goal.horizonWeeksMax` | 24 semanas | — | RN-OBJ-003 | Sí | — |
 | P-004 | `goal.maxWeeklyLossPct` | 1,0 % del peso | 0,5–1,0 | RN-OBJ-004 | Sí | [V] (`F58`) |
@@ -45,6 +49,8 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-018 | `plan.noviceMaxConsecutiveDays` | 3 | — | RN-PLAN-008 | Sí | [V] |
 | P-074 | `plan.availableDaysRange` | 2–6 días | — | RN-PLAN-001 | No | — |
 | P-075 | `plan.sessionMinutesRange` | 20–90 min | — | RN-PLAN-001 | No | — |
+| P-084 | `plan.sessionMinutesOptions` | 20 · 30 · 45 · 60 · 90 min | Dentro de P-075 | RN-PLAN-001 (botones del onboarding) | No | `[supuesto]` |
+| P-083 | `habit.timeSlotStarts` | Mañana 06:00 · Mediodía 12:00 · Tarde 17:00 · Noche 19:30 | — | RN-PLAN-002 (franja del onboarding = hora habitual declarada) | No | `[supuesto]` |
 | P-076 | `plan.warmupMinutes` | 5 min | — | RN-PLAN-006 | No | [V] `[supuesto]` |
 | P-077 | `plan.setSeconds` | 40 s | — | RN-PLAN-006 | No | [V] (igual al trabajo de P-079) |
 | P-078 | `plan.restSecondsByGoal` | Músculo/grasa/recomposición y accesorios 90 s · fuerza en básicos 180 s | — | RN-PLAN-006 | No | [V] (`F94`, `F95`) |
@@ -95,6 +101,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-045 | `messages.budget` | Normal: 2/día de entreno · 1/día de descanso · 8/semana · Baja: 1/día · 4/semana · Alta: 2/día · 12/semana | — | RN-MSJ-002 | Sí (el usuario elige la intensidad, no los números) | — |
 | P-046 | `messages.minGapHours` | 3 h | — | RN-MSJ-003 | Sí | — |
 | P-047 | `messages.quietHours` | 21:30–07:00 | Configurable | RN-MSJ-004 | No | — |
+| P-086 | `messages.quietHoursOptions` | 22:30–07:00 · 23:30–08:00 | — | RN-MSJ-004 (alternativas del onboarding a P-047) | No | `[supuesto]` |
 | P-048 | `messages.planReadyLeadMinutes` | 60 min | 30–120 | RN-MSJ-005 | No | — |
 | P-049 | `messages.usualTimeSessions` | 6 sesiones | — | RN-MSJ-006 | No | — |
 | P-050 | `messages.backoffIgnoredCount` | 3 | — | RN-MSJ-007 | Sí | — |

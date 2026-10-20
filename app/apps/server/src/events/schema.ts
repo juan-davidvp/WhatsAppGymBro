@@ -1,5 +1,5 @@
 import { alertCategorySchema } from '@gymbro/content';
-import { CONSENT_CATEGORIES, ONBOARDING_STEPS } from '@gymbro/domain';
+import { CONSENT_CATEGORIES, ONBOARDING_STEPS, WEEK_DAYS } from '@gymbro/domain';
 import { z } from 'zod';
 import { EVENT_NAMES, STUDY_PHASES, type EventName } from './catalog.js';
 
@@ -51,6 +51,31 @@ export const EVENT_PROPS_SCHEMAS = {
   number_free_mode_enabled: z.strictObject({}),
   deletion_requested: z.strictObject({}),
   deletion_completed: z.strictObject({}),
+  weight_logged: z.strictObject({ source: z.enum(['onboarding', 'progress']) }),
+  goal_set: z.strictObject({
+    type: z.enum([
+      'gain_muscle',
+      'lose_fat',
+      'gain_strength',
+      'recomposition',
+      'consistency',
+      'maintain',
+    ]),
+    horizonWeeks: z.number().int().positive(),
+    withTarget: z.boolean(),
+  }),
+  goal_adjusted: z.strictObject({
+    direction: z.enum(['conservative', 'ambitious']),
+    limited: z.boolean(),
+  }),
+  habit_declared: z.strictObject({
+    days: z.array(z.enum(WEEK_DAYS as readonly [string, ...string[]])).min(1),
+    slot: z.enum(['morning', 'midday', 'afternoon', 'evening']),
+  }),
+  onboarding_completed: z.strictObject({
+    durationMs: z.number().int().nonnegative(),
+    taps: z.number().int().nonnegative(),
+  }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

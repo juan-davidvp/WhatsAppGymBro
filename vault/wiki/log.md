@@ -277,3 +277,49 @@ relacionados: [index, inicio]
   - **Revisión de las 6 respuestas de cuidado**: no tienen cifras fuera del recurso de ayuda ni recomiendan sustancias o dietas.
 - Pausa del juego (HU-009-4, RN-SEG-007): `isGameMechanicsPausedOn` en el dominio usa el día operativo de la señal, y `RiskSignalsRepository.instantsBetween` la consulta. La usará la gamificación del servidor (M5).
 - Queda en [[spec-009-seguridad-y-privacidad]] §10: añadir [Registrar comida] a CU-01 para los falsos positivos requiere aprobación del PO, porque la plantilla es `[VALIDAR-PROFESIONAL]`.
+
+## [2026-10-20] decision | Onboarding: franja, minutos, estatura, silencio y ritmo de la meta propuesta (P-083 a P-089)
+- El PO decide (2026-10-20):
+  - **P-083** `habit.timeSlotStarts` `[supuesto]`: una sola franja horaria para todos los días elegidos (mañana 06:00, mediodía 12:00, tarde 17:00, noche 19:30), que después se ajusta con la hora real (RN-MSJ-006). FR-001-07 decía "franja por día"; se cambia para no alargar el inicio (SC-001-1).
+  - **P-084** `plan.sessionMinutesOptions` `[supuesto]`: botones de 20, 30, 45, 60 y 90 minutos.
+  - **Estatura junto al peso**, solo si hay meta de peso, porque RN-OBJ-005 la necesita. Rangos plausibles para pedir confirmación: **P-085** 140–220 cm `[supuesto]` y **P-087** 35–250 kg (el número estaba en el texto de [[spec-001-onboarding-y-objetivo]] §8). Nuevo paso `height` en el flujo F1 ([[flujos-de-usuario]]).
+  - **P-086** `messages.quietHoursOptions` `[supuesto]`: alternativas 22:30–07:00 y 23:30–08:00 a P-047.
+- **Corrección hacia la bóveda.** [[objetivos-y-progreso]] §2 fija la meta propuesta por defecto en +0,25 %/semana al ganar y −0,5 %/semana al perder, pero `proposeWeightGoal` (T-010) proponía al ritmo máximo (P-004/P-005). Esos ritmos pasan a **P-088** y **P-089** (`[V]`) y RN-OBJ-003 los cita ([[reglas-de-negocio]] v0.4.1, [[parametros]] v0.5.0).
+  - "Más conservadora" es la misma meta en P-003 semanas.
+  - "Más ambiciosa" es la misma meta en P-002 semanas, que se valida; si no es segura, ON-07 ofrece la meta segura o más semanas.
+- [[plantillas-de-mensajes]] v0.6.0: ON-09 a ON-25, redactadas por Claude a pedido del PO, con una nota de los botones generados.
+- [[catalogo-de-ejercicios-base]] v0.3.0 §6: equipamiento de casa que se pregunta.
+- [[modelo-de-datos]] v0.1.5: `users.profile` y los contadores del onboarding.
+
+## [2026-10-20] implementar | T-032 Onboarding completo con reanudación
+- **Dominio** (`onboarding/onboarding.ts`):
+  - paso `height` y modo sin números en el flujo;
+  - nivel por tiempo entrenando;
+  - peso y estatura plausibles;
+  - `weightGoalOffers` e `isSafeWeightGoal`, con una propiedad de fast-check: toda meta ofrecida es segura incluso después de redondearla a una cifra decimal hacia el peso actual.
+- **Servidor** (`apps/server/src/onboarding/`):
+  - `profile-steps.ts`: objetivo, nivel, días y equipamiento (selección múltiple que edita el mismo mensaje; la selección viaja en el botón), franja, lugar, minutos, peso y estatura escritos (con coma decimal, confirmación fuera de rango y "Prefiero no decirlo"), meta, intensidad y silencio;
+  - `summary.ts`: guarda el hábito y el objetivo, genera el plan de esta semana y la siguiente para mostrar la primera sesión (T-040 lo guardará), cierra el onboarding y emite `onboarding_completed` con duración e interacciones;
+  - `/start` a mitad del onboarding ofrece ON-25 [Continuar] [Empezar de nuevo];
+  - si el SCOFF es positivo y el objetivo era perder grasa, ON-21 pide otro objetivo (RN-SEG-003);
+  - las negritas de ON-06 se envían como HTML de Telegram.
+- **Repositorios MongoDB nuevos:** `body_measurements`, `training_habits` y `goals` (un solo objetivo activo; el anterior queda `changed`). Los usuarios guardados antes de este cambio se leen con valores por defecto.
+- **Pruebas** (`full-flow.test.ts`, 18 escenarios):
+  - **SC-001-1:** el camino completo llega al resumen en ≤ 25 interacciones.
+  - **Sin autorización:** el objetivo queda en ser constante.
+  - **Días:** fuera de P-074 no se aceptan; un novato que marca 6 recibe ON-12.
+  - **Equipamiento de casa** se guarda.
+  - **Peso:**
+    - texto ilegible → ON-20;
+    - fuera de rango → ON-19;
+    - una alerta escrita en el paso del peso recibe cuidado y no se toma como peso;
+    - sin estatura no se propone meta.
+  - **Meta:**
+    - "más conservadora" y "más ambiciosa" funcionan;
+    - una meta insegura fabricada en el botón no se guarda.
+  - **SCOFF positivo** con objetivo de perder grasa.
+  - **Retomar:** "empezar de nuevo" funciona.
+  - **Horas de silencio:** cambiarlas funciona.
+- **Pendientes:**
+  - FR-001-11 (teclado persistente y comandos) pasa a T-040/T-041.
+  - Los objetivos sin meta de peso (fuerza, recomposición, constancia, mantener) se guardan sin valores hasta tener datos.

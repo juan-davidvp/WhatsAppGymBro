@@ -9,11 +9,16 @@ import {
   answerScreening,
   isOnboardingComplete,
   privacyCommand,
-  promptFor,
+  answerOnboardingText,
+  answerResume,
+  onboardingPrompt,
   startOnboarding,
   type Reply,
 } from '../onboarding/onboarding.js';
 import type {
+  BodyMeasurementsRepository,
+  GoalsRepository,
+  TrainingHabitsRepository,
   ConsentsRepository,
   ProcessedUpdatesRepository,
   RiskSignalsRepository,
@@ -38,6 +43,9 @@ export interface BotDependencies {
   consents: ConsentsRepository;
   screenings: ScreeningsRepository;
   eraser: UserDataEraser;
+  bodyMeasurements: BodyMeasurementsRepository;
+  habits: TrainingHabitsRepository;
+  goals: GoalsRepository;
   events: EventEmitter;
 }
 
@@ -69,15 +77,36 @@ export function navKeyboard(templateId: string): InlineKeyboard {
 }
 
 /** Envía las respuestas en orden, cada una con sus botones en una columna. */
+/** Negritas `**así**` de las plantillas → HTML de Telegram (el resto se escapa). */
+export function toTelegramHtml(text: string): string {
+  const escaped = text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  return escaped.replaceAll(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+}
+
+/**
+ * Envía las respuestas en orden. Una respuesta marcada `edit` reemplaza el mensaje
+ * del botón tocado (selección múltiple); las demás son mensajes nuevos.
+ */
 async function sendAll(ctx: BotContext, replies: readonly Reply[]): Promise<void> {
   for (const reply of replies) {
-    if (reply.buttons.length === 0) {
-      await ctx.reply(reply.text);
-      continue;
-    }
     const keyboard = new InlineKeyboard();
-    for (const button of reply.buttons) keyboard.text(button.label, button.data).row();
-    await ctx.reply(reply.text, { reply_markup: keyboard });
+    reply.buttons.forEach((button, i) => {
+      keyboard.text(button.label, button.data);
+      if ((i + 1) % (reply.rowSize ?? 1) === 0) keyboard.row();
+    });
+    const formatted = reply.text.includes('**')
+      ? { text: toTelegramHtml(reply.text), parse_mode: 'HTML' as const }
+      : { text: reply.text };
+    const markup = reply.buttons.length > 0 ? { reply_markup: keyboard } : {};
+    const options = {
+      ...markup,
+      ...(formatted.parse_mode ? { parse_mode: formatted.parse_mode } : {}),
+    };
+    if (reply.edit && ctx.callbackQuery?.message) {
+      await ctx.editMessageText(formatted.text, options);
+    } else {
+      await ctx.reply(formatted.text, options);
+    }
   }
 }
 
@@ -141,6 +170,8 @@ export function createBot({
         return sendAll(ctx, await answerScreening(user, action.value, useCases));
       case 'del':
         return sendAll(ctx, await answerDeletion(user, action.value, useCases));
+      case 'rs':
+        return sendAll(ctx, await answerResume(user, action.value, useCases));
       case 'nav':
         // Las pantallas de Hoy, Comida y Progreso llegan con sus tareas (T-04x…).
         return;
@@ -151,8 +182,14 @@ export function createBot({
   // pregunta con sus botones (SPEC-001 §8); después, CU-07. Nunca conversación.
   handlers.on('message', async (ctx) => {
     const user = ctx.user;
-    const prompt = user && !isOnboardingComplete(user) ? promptFor(user.onboarding.step) : [];
-    if (prompt.length > 0) return sendAll(ctx, prompt);
+    if (user && !isOnboardingComplete(user)) {
+      const text = ctx.message.text;
+      const replies =
+        text === undefined
+          ? await onboardingPrompt(user, useCases)
+          : await answerOnboardingText(user, text, useCases);
+      if (replies.length > 0) return sendAll(ctx, replies);
+    }
     return sendOutOfDomain(ctx);
   });
 

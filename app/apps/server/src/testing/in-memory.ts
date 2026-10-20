@@ -2,7 +2,13 @@ import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
-import type { ScreeningType, UserRecord } from '../ports/repositories.js';
+import {
+  EMPTY_PROFILE,
+  type GoalRecord,
+  type ScreeningType,
+  type TrainingHabitRecord,
+  type UserRecord,
+} from '../ports/repositories.js';
 
 /**
  * Dobles en memoria de los puertos del bot, solo para pruebas de los adaptadores.
@@ -44,6 +50,9 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const events: EmittedEvent[] = [];
   const consents: ConsentRow[] = [];
   const screenings: ScreeningRow[] = [];
+  const weights: { userId: string; date: string; weightKg: number }[] = [];
+  const habits: TrainingHabitRecord[] = [];
+  const goals: (GoalRecord & { status: 'active' | 'changed' })[] = [];
 
   /** Reemplaza el usuario con ese id aplicando `change`. */
   function updateUser(userId: string, change: (user: UserRecord) => UserRecord): void {
@@ -51,8 +60,15 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   }
 
   /** Quita del arreglo las filas de ese usuario (sin cambiar la referencia). */
-  function removeRows<T extends { userId: string }>(rows: T[], userId: string): void {
-    for (let i = rows.length - 1; i >= 0; i--) if (rows[i]?.userId === userId) rows.splice(i, 1);
+  function removeRows<T extends { userId: string }>(
+    rows: T[],
+    userId: string,
+    also: (row: T) => boolean = () => true,
+  ): void {
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const row = rows[i];
+      if (row?.userId === userId && also(row)) rows.splice(i, 1);
+    }
   }
 
   const emitter: EventEmitter = {
@@ -88,7 +104,13 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
             numberFreeMode: false,
             lowIntensityStart: false,
           },
-          onboarding: { step: 'privacy', completedAt: options.onboardingCompleted ? now : null },
+          profile: EMPTY_PROFILE,
+          onboarding: {
+            step: 'privacy',
+            startedAt: null,
+            interactions: 0,
+            completedAt: options.onboardingCompleted ? now : null,
+          },
           createdAt: now,
         };
         users.set(telegramUserId, user);
@@ -105,6 +127,86 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
       updateSettings(userId, settings) {
         updateUser(userId, (user) => ({ ...user, settings: { ...user.settings, ...settings } }));
         return Promise.resolve();
+      },
+      updateProfile(userId, profile) {
+        updateUser(userId, (user) => ({ ...user, profile: { ...user.profile, ...profile } }));
+        return Promise.resolve();
+      },
+      recordOnboardingInteraction(userId, at) {
+        updateUser(userId, (user) => ({
+          ...user,
+          onboarding: {
+            ...user.onboarding,
+            interactions: user.onboarding.interactions + 1,
+            startedAt: user.onboarding.startedAt ?? at,
+          },
+        }));
+        return Promise.resolve();
+      },
+      completeOnboarding(userId, at) {
+        updateUser(userId, (user) => ({
+          ...user,
+          onboarding: { ...user.onboarding, completedAt: at, step: 'summary' },
+        }));
+        return Promise.resolve();
+      },
+      restartOnboarding(userId, step) {
+        updateUser(userId, (user) => ({
+          ...user,
+          profile: EMPTY_PROFILE,
+          onboarding: { ...user.onboarding, step },
+        }));
+        return Promise.resolve();
+      },
+    },
+    bodyMeasurements: {
+      recordWeight(userId, date, weightKg) {
+        removeRows(weights, userId, (row) => row.date === date);
+        weights.push({ userId, date, weightKg });
+        return Promise.resolve();
+      },
+      latestWeightKg(userId) {
+        const mine = weights
+          .filter((w) => w.userId === userId)
+          .sort((a, b) => (a.date < b.date ? 1 : -1));
+        return Promise.resolve(mine[0]?.weightKg ?? null);
+      },
+    },
+    habits: {
+      save(habit) {
+        removeRows(habits, habit.userId);
+        habits.push(habit);
+        return Promise.resolve();
+      },
+    },
+    goals: {
+      activate(goal) {
+        for (const g of goals)
+          if (g.userId === goal.userId && g.status === 'active') g.status = 'changed';
+        goals.push({ ...goal, status: 'active' });
+        return Promise.resolve();
+      },
+      active(userId) {
+        const found = goals.find((g) => g.userId === userId && g.status === 'active');
+        if (!found) return Promise.resolve(null);
+        const {
+          userId: id,
+          type,
+          metric,
+          startValue,
+          targetValue,
+          startDate,
+          horizonWeeks,
+        } = found;
+        return Promise.resolve({
+          userId: id,
+          type,
+          metric,
+          startValue,
+          targetValue,
+          startDate,
+          horizonWeeks,
+        });
       },
     },
     consents: {
@@ -140,6 +242,9 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(consents, userId);
         removeRows(screenings, userId);
         removeRows(riskSignals, userId);
+        removeRows(weights, userId);
+        removeRows(habits, userId);
+        removeRows(goals, userId);
         for (const event of events) if (event.subject?.userId === userId) event.subject = null;
         return Promise.resolve();
       },
@@ -161,5 +266,5 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     events: emitter,
   };
 
-  return { deps, users, riskSignals, events, consents, screenings };
+  return { deps, users, riskSignals, events, consents, screenings, weights, habits, goals };
 }

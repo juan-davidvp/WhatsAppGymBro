@@ -297,11 +297,15 @@ function equipmentStem(item: string): string {
   return item.trim().toLowerCase().replace(/s$/, '');
 }
 
+/** ¿Un artículo del usuario sirve para el equipo de un ejercicio? Compara por la raíz. */
+export function equipmentMatches(exerciseEquipment: string, item: string): boolean {
+  return exerciseEquipment.toLowerCase().includes(equipmentStem(item));
+}
+
 /** ¿El usuario tiene el equipo del ejercicio? Peso corporal ("Ninguno") siempre. */
 function hasEquipment(exercise: CatalogExercise, homeEquipment: readonly string[]): boolean {
   if (exercise.equipment === 'Ninguno') return true;
-  const text = exercise.equipment.toLowerCase();
-  return homeEquipment.some((item) => text.includes(equipmentStem(item)));
+  return homeEquipment.some((item) => equipmentMatches(exercise.equipment, item));
 }
 
 /**

@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.5.0
+version: 0.6.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -115,9 +115,36 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | ON-06 | Te propongo **{meta}** en **{semanas} semanas**. [Me sirve] [Más conservadora] [Más ambiciosa] |
 | ON-07 | Esa meta va más rápido de lo que tu cuerpo puede sostener sin riesgo. Te propongo {meta_segura} en {semanas} semanas, o la misma meta en {semanas_largas}. [Opción 1] [Opción 2] |
 | ON-08 | Listo, sin datos sensibles: no te pido peso ni tamizaje de comida, y tu objetivo es ser constante. Puedes cambiarlo en /privacidad. |
+| ON-09 | ¿Cuánto llevas entrenando con pesas? [Nunca] [Menos de 6 meses] [6 meses o más] |
+| ON-10 | ¿Qué días puedes entrenar? Marca entre {min_dias} y {max_dias} y toca Listo. |
+| ON-11 | Elige entre {min_dias} y {max_dias} días para seguir. |
+| ON-12 | Como estás empezando, tu plan usa {dias_entreno} de esos días y deja el resto para descansar y progresar. |
+| ON-13 | ¿A qué hora sueles entrenar? Mañana ≈ {manana} · Mediodía ≈ {mediodia} · Tarde ≈ {tarde} · Noche ≈ {noche}. [Mañana] [Mediodía] [Tarde] [Noche] |
+| ON-14 | ¿Dónde entrenas? [Gym] [Casa] [Ambos] |
+| ON-15 | ¿Cuántos minutos tienes por sesión? |
+| ON-16 | ¿Qué tienes para entrenar en casa? Marca lo que tengas y toca Listo; sin nada también se puede. |
+| ON-17 | Si quieres, escribe tu peso en kg (por ejemplo, 72,5). Es opcional y sirve para proponerte una meta. [Prefiero no decirlo] |
+| ON-18 | Y tu estatura en cm (por ejemplo, 175). [Prefiero no decirlo] |
+| ON-19 | ¿{valor}? Confírmalo o escríbelo de nuevo. [Sí, es correcto] |
+| ON-20 | No entendí el número. Escríbelo solo con cifras (por ejemplo, {ejemplo}) o toca Prefiero no decirlo. [Prefiero no decirlo] |
+| ON-21 | Con este resultado, el objetivo de perder grasa no está disponible. ¿Qué quieres lograr? |
+| ON-22 | ¿Cuánto quieres que te escriba? [Poco] [Normal] [Más] |
+| ON-23 | No te escribo entre las {inicio} y las {fin}. ¿Te sirve? |
+| ON-24 | Listo. Objetivo: {objetivo}{meta}. Entrenas {dias} · {franja}. Tu primera sesión: {primera_sesion}. [Empezar] [Ver plan] |
+| ON-25 | Te quedaste a mitad del inicio. [Continuar] [Empezar de nuevo] |
 | PV-01 | Política de datos (provisional, Fase 0). Responsable: el fundador de Gym Bro. Guardo tus respuestas con botones, tus entrenos, tus comidas y, si lo das, tu peso; de los tamizajes, solo el resultado. Lo uso para tu plan y para medir si el bot ayuda, sin lo que escribes. Las fotos de comida no se guardan. Descargas todo con /exportar y lo borras con /borrar_datos en máximo {horas_borrado} horas. [Acepto] [No acepto] |
 | PV-02 | Hecho: guardé tu autorización. Puedes cambiarla cuando quieras en /privacidad. |
 | PV-03 | Hecho: dejo de pedirte datos sensibles. Si quieres borrar lo que ya está guardado, usa /borrar_datos. |
+
+
+> Botones generados por el código (no van en la tabla porque dependen de datos):
+> - **ON-10:** un botón por día (L M X J V S D) que se marca con ✅ al tocarlo, y [Listo].
+> - **ON-15:** un botón por valor de P-084 ("{n} min").
+> - **ON-16:** las opciones de [[catalogo-de-ejercicios-base]] §6, que se marcan con ✅, y [Listo].
+> - **ON-21:** los objetivos de ON-05 sin [Perder grasa] (RN-SEG-003).
+> - **ON-23:** [Me sirve] más una opción por cada franja de P-086 ("22:30–07:00").
+>
+> En ON-24, `{meta}` es " · meta {kg} kg en {semanas} semanas" o vacío. ON-06 y ON-07 expresan la meta en kg con una cifra decimal. En modo sin números no hay paso de peso ni de meta (RN-SEG-003).
 
 > PV-01 es la política provisional de la Fase 0, que puede operar sin política pública (RN-DAT-007); se muestra con [Ver política] y con /privacidad. Antes de la alfa la reemplaza el texto legal con su responsable designado (Q5). `{horas_borrado}` = P-065.
 

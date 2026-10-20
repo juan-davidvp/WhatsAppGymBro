@@ -3,7 +3,7 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.4.0
+version: 0.4.1
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
@@ -23,7 +23,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 |---|---|---|---|
 | RN-OBJ-001 | Un usuario tiene exactamente **un objetivo activo**, de tipo `ganar_musculo`, `perder_grasa`, `ganar_fuerza`, `recomposicion`, `ser_constante` o `mantener`. | — | FB-001-20 |
 | RN-OBJ-002 | Todo objetivo tiene métrica principal, valor inicial, valor meta, fecha de inicio y horizonte en semanas. | — | FB-001-21 |
-| RN-OBJ-003 | El horizonte de una fase está entre P-002 y P-003 semanas; por defecto P-001. | P-001–P-003 | [[objetivos-y-progreso]] |
+| RN-OBJ-003 | El horizonte de una fase está entre P-002 y P-003 semanas; por defecto P-001. La meta de peso propuesta usa el ritmo por defecto P-088 (ganancia) o P-089 (pérdida) en ese horizonte; el usuario puede pedirla más conservadora o más ambiciosa sin pasar los límites de RN-OBJ-004 y RN-OBJ-005. | P-001–P-003, P-088, P-089 | [[objetivos-y-progreso]] |
 | RN-OBJ-004 | El ritmo semanal implícito de una meta de peso no supera P-004 (pérdida) ni P-005 (ganancia) en % del peso. Si la meta pedida lo supera, el sistema propone un horizonte mayor o una meta menor y **no guarda la meta insegura**. `[VALIDAR-PROFESIONAL]` | P-004, P-005 | `F58`, `F59` |
 | RN-OBJ-005 | Ninguna meta de peso puede implicar un IMC menor que P-006. `[VALIDAR-PROFESIONAL]` | P-006 | Seguridad |
 | RN-OBJ-006 | Un objetivo de peso se cumple cuando la media móvil alcanza la meta y se sostiene P-007 semanas; uno de fuerza, cuando una sesión válida registra el e1RM meta; `ser_constante`, cuando se alcanzan las semanas cumplidas meta. | P-007 | [[objetivos-y-progreso]] |

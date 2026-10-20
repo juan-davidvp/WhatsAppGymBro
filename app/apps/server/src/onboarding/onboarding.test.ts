@@ -96,9 +96,11 @@ describe('FR-001-02 · T-030 · no se salta el aviso', () => {
     expect(last?.buttons).toHaveLength(3);
   });
 
-  it('un segundo /start retoma el paso sin volver a contar el inicio', async () => {
+  it('SPEC-001 §8 · un segundo /start ofrece continuar; continuar retoma el paso sin volver a contar el inicio', async () => {
     const { bot, calls, events, nextUpdateId } = await startAnd('Acepto');
     await bot.handleUpdate(textUpdate('/start', nextUpdateId()));
+    expect(sent(calls).at(-1)?.text).toBe(templateById('ON-25').text);
+    await bot.handleUpdate(callbackUpdate(tapData(calls, 'Continuar'), nextUpdateId()));
     expect(sent(calls).at(-1)?.text).toBe(templateById('ON-03').text);
     expect(events.filter((e) => e.name === 'onboarding_started')).toHaveLength(1);
   });

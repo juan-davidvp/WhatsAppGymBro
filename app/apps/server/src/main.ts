@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs';
 import { MongoClient } from 'mongodb';
 import { ensureIndexes } from './adapters/mongo/indexes.js';
 import {
+  bodyMeasurementsRepository,
+  goalsRepository,
+  trainingHabitsRepository,
   consentsRepository,
   screeningsRepository,
   userDataEraser,
@@ -58,6 +61,9 @@ async function main(): Promise<void> {
         consents: consentsRepository(db),
         screenings: screeningsRepository(db),
         eraser: userDataEraser(db),
+        bodyMeasurements: bodyMeasurementsRepository(db),
+        habits: trainingHabitsRepository(db),
+        goals: goalsRepository(db),
         events: createEventEmitter({
           repository: eventsRepository(db),
           logger,
