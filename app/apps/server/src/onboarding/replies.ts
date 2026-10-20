@@ -19,6 +19,12 @@ export interface Reply {
   readonly edit?: boolean;
   /** Botones por fila (por defecto, uno). */
   readonly rowSize?: number;
+  /** Botones por cada fila, en orden (manda sobre `rowSize`). */
+  readonly layout?: readonly number[];
+  /** Muestra el teclado persistente de FR-001-11 en vez de botones en línea. */
+  readonly mainKeyboard?: boolean;
+  /** Aviso breve sobre el botón tocado, sin mensaje nuevo (p. ej. SC-03). */
+  readonly toast?: boolean;
 }
 
 /** Objetivo de cada botón de ON-05, por su texto en la bóveda. */
@@ -56,6 +62,9 @@ const BUTTON_VALUES: Readonly<Record<string, Readonly<Record<string, string>>>> 
   'TZ-01': { 'Todo NO': 'all_no', 'Algún SÍ': 'some_yes', 'No lo hice': 'not_done' },
   'TZ-02': { 'Ya tengo autorización': 'authorized' },
   'TZ-03': { 'Todo NO': 'all_no', 'Algún SÍ': 'some_yes' },
+  'PL-01': { Gym: 'gym', Casa: 'home', "Exprés 15'": 'express', 'Hoy no puedo': 'cant' },
+  'HN-01': { 'Exprés ahora': 'express', 'Mover a otro día': 'move', 'Hoy descanso': 'rest' },
+  'HY-01': { 'Hice la movilidad': 'mobility' },
   'BD-01': { 'Sí, borrar': 'confirm', Cancelar: 'cancel' },
   'BD-02': { 'Borrar todo': 'erase', Cancelar: 'cancel' },
 };

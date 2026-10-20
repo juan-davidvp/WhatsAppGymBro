@@ -117,6 +117,8 @@ export const PARAMETERS = {
     e1rmMaxReps: 10,
     /** P-025 · RN-ENT-006 · minutos */
     importedActivityMinMinutes: 20,
+    /** P-090 · FR-003-04 · segundos en que se puede deshacer la última serie */
+    undoWindowSeconds: 10,
   },
   nutrition: {
     /** P-026 · RN-NUT-002 · [V] · g por kg y día */

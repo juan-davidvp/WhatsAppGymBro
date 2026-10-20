@@ -344,3 +344,23 @@ relacionados: [index, inicio]
   - [Ajustar días] de HU-002-1 queda para T-045.
   - El plan semanal que acompaña al resumen del domingo (RN-PLAN-009) llega con M7.
   - Si el onboarding termina a mitad de semana, la primera semana puede incluir días ya pasados: la primera sesión que se muestra es la próxima desde hoy.
+
+## [2026-10-20] implementar | T-041 Hoy, elección de versión y "Hoy no puedo" sin deuda
+- `app/apps/server/src/today/today.ts`:
+  - `🏋️ Hoy`, `/hoy` y [Empezar] muestran PL-01 con [Gym] [Casa] [Exprés 15'] [Hoy no puedo] en un día de entreno;
+  - en un día de descanso muestran HY-01 con [Hice la movilidad] (RN-DQC-003, P-032);
+  - si el día ya cuenta, muestran HY-03; si hay una sesión abierta, la retoman.
+- **"Hoy no puedo"** (HN-01):
+  - [Exprés ahora] abre la versión C;
+  - [Mover a otro día] ofrece solo los días de descanso que quedan esta semana y que pasan RN-PLAN-008 (se revalida al tocar);
+  - [Hoy descanso] no cambia nada.
+  - Eventos `cant_today_selected` y `session_rescheduled`.
+- `sessions/session.ts` abre la versión elegida con la tarjeta de la primera serie (`card.ts`, SC-01; las acciones de la tarjeta son T-042) y emite `session_variant_chosen` y `session_started`. Una segunda versión con una sesión abierta pregunta [Continuar la anterior] [Nueva] (SPEC-003 §8).
+- **Lo adelantado de M6** (`days/day-status.ts`): cada actividad es una fuente del día (`session:<id>`, `mobility`), el dominio evalúa el día y `liveCountedDays` (dominio, RN-GAM-001/RN-DQC-007) da el n.º y la racha en vivo, con los comodines.
+- **Dominio nuevo:** `training/session-progress.ts` (avance de la tarjeta, puro, con propiedades de fast-check: nunca más series que las planeadas ni repetidas).
+- **FR-001-11:** al terminar el onboarding llega el teclado persistente (KB-01) y el servidor registra los comandos del menú (§2.3). Comida y Progreso responden KB-02 hasta M5 y M8.
+- **Bóveda:**
+  - [[plantillas-de-mensajes]] v0.8.0 (§2.2 a §2.4);
+  - **P-090** `training.undoWindowSeconds` = 10 s: el número estaba en FR-003-04, que ahora cita P-090 ([[parametros]] v0.6.0);
+  - [[modelo-de-datos]] v0.1.7.
+- **Lectura elegida de RN-PLAN-007:** "la rotación continúa" significa que el próximo día de entreno trae la sesión que el plan ya tenía, sin repetir la saltada ni sumar volumen. Así lo codifica el generador de T-011.

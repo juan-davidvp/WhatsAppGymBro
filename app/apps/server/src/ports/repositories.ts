@@ -11,6 +11,9 @@ import type {
   LocalTime,
   OnboardingStep,
   PlannedSession,
+  SessionProgress,
+  SessionTemplate,
+  SessionVariant,
   TrainingPlace,
   WeeklyPlan,
   Weekday,
@@ -189,6 +192,8 @@ export interface SetEntryRecord {
 export interface SetEntriesRepository {
   /** SC-003-2: repetir la confirmación de la misma serie no la duplica. */
   record(entry: SetEntryRecord): Promise<{ inserted: boolean }>;
+  /** FR-003-04: deshace una serie registrada. */
+  remove(sessionId: string, exerciseCode: string, setIndex: number): Promise<void>;
   /** FR-002-04: última carga registrada de cada ejercicio (para precargar el plan). */
   lastLoads(userId: string): Promise<Record<string, number>>;
 }
@@ -220,6 +225,48 @@ export interface DaysRepository {
   saveStatus(userId: string, date: LocalDate, dayType: DayType, status: DayStatus): Promise<void>;
   /** Cierra el día una sola vez (FR-005-02). */
   close(userId: string, date: LocalDate, at: Date): Promise<{ closedNow: boolean }>;
+  /**
+   * Añade una fuente al día abierto (`session:<id>`, `mobility`) sin repetirla y
+   * devuelve todas sus fuentes; en un día cerrado no cambia nada (RN-DQC-005).
+   */
+  addSource(userId: string, date: LocalDate, dayType: DayType, source: string): Promise<string[]>;
+  sources(userId: string, date: LocalDate): Promise<string[]>;
+  /** Días guardados con si cuentan (para el total y la racha en vivo). */
+  history(userId: string): Promise<{ date: LocalDate; counted: boolean }[]>;
+}
+
+export type WorkoutStatus = 'active' | 'completed' | 'partial' | 'abandoned';
+
+export interface WorkoutSessionRecord {
+  readonly id: string;
+  readonly userId: string;
+  readonly date: LocalDate;
+  readonly plannedSessionId: string;
+  readonly template: SessionTemplate;
+  readonly variant: SessionVariant;
+  readonly status: WorkoutStatus;
+  readonly startedAt: Date;
+  readonly endedAt: Date | null;
+  readonly loggedAsPlanned: boolean;
+  /** Estado de la tarjeta (dominio `SessionProgress`). */
+  readonly progress: SessionProgress;
+  /** Versión del estado: un toque de una tarjeta vieja no lo cambia (FR-003-03). */
+  readonly rev: number;
+  readonly lastConfirmedAt: Date | null;
+}
+
+export interface WorkoutSessionsRepository {
+  create(session: Omit<WorkoutSessionRecord, 'id' | 'rev'>): Promise<WorkoutSessionRecord>;
+  byId(id: string): Promise<WorkoutSessionRecord | null>;
+  /** Sesión activa del usuario en esa fecha, si hay. */
+  activeOn(userId: string, date: LocalDate): Promise<WorkoutSessionRecord | null>;
+  onDate(userId: string, date: LocalDate): Promise<WorkoutSessionRecord[]>;
+  /** Guarda cambios solo si `rev` sigue igual; devuelve la sesión nueva o null si cambió antes. */
+  update(
+    id: string,
+    rev: number,
+    changes: Partial<Omit<WorkoutSessionRecord, 'id' | 'rev' | 'userId'>>,
+  ): Promise<WorkoutSessionRecord | null>;
 }
 
 export interface StreakStatesRepository {

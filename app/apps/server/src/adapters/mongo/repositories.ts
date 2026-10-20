@@ -14,6 +14,8 @@ import {
   type BodyMeasurementsRepository,
   type GoalRecord,
   type PlansRepository,
+  type WorkoutSessionRecord,
+  type WorkoutSessionsRepository,
   type StoredPlanDay,
   type StoredWeeklyPlan,
   type GoalsRepository,
@@ -169,6 +171,11 @@ export function setEntriesRepository(db: Db): SetEntriesRepository {
       const idempotencyKey = setIdempotencyKey(entry.sessionId, entry.exerciseCode, entry.setIndex);
       return insertIfAbsent(() => collection.insertOne({ ...entry, idempotencyKey }));
     },
+    async remove(sessionId, exerciseCode, setIndex) {
+      await collection.deleteOne({
+        idempotencyKey: setIdempotencyKey(sessionId, exerciseCode, setIndex),
+      });
+    },
     async lastLoads(userId) {
       const rows = await collection
         .aggregate<{ _id: string; loadKg: number }>([
@@ -193,7 +200,7 @@ export function mealsRepository(db: Db): MealsRepository {
 
 export function daysRepository(db: Db): DaysRepository {
   const collection = db.collection('days');
-  return {
+  const repository: DaysRepository = {
     async saveStatus(userId: string, date: LocalDate, dayType: DayType, status: DayStatus) {
       try {
         await collection.updateOne(
@@ -216,6 +223,31 @@ export function daysRepository(db: Db): DaysRepository {
         if (!isDuplicateKey(error)) throw error;
       }
     },
+    async addSource(userId, date, dayType, source) {
+      try {
+        await collection.updateOne(
+          { userId, date, status: { $ne: 'closed' } },
+          {
+            $addToSet: { sources: source },
+            $setOnInsert: { userId, date, dayType, status: 'open', counted: false },
+          },
+          { upsert: true },
+        );
+      } catch (error) {
+        if (!isDuplicateKey(error)) throw error;
+      }
+      return repository.sources(userId, date);
+    },
+    async sources(userId, date) {
+      const doc = await collection.findOne({ userId, date });
+      return (doc?.['sources'] as string[] | undefined) ?? [];
+    },
+    async history(userId) {
+      const docs = await collection
+        .find({ userId }, { projection: { _id: 0, date: 1, counted: 1 } })
+        .toArray();
+      return docs.map((d) => ({ date: d['date'] as LocalDate, counted: d['counted'] === true }));
+    },
     async close(userId: string, date: LocalDate, at: Date) {
       const result = await collection.updateOne(
         { userId, date, status: 'open' },
@@ -224,6 +256,7 @@ export function daysRepository(db: Db): DaysRepository {
       return { closedNow: result.modifiedCount === 1 };
     },
   };
+  return repository;
 }
 
 interface StreakStateDocument {
@@ -496,6 +529,46 @@ export function plansRepository(db: Db): PlansRepository {
         { _id: new ObjectId(source.plannedSessionId) },
         { $set: { date: to } },
       );
+    },
+  };
+}
+
+interface WorkoutSessionDocument extends Omit<WorkoutSessionRecord, 'id'> {
+  _id: ObjectId;
+}
+
+function toWorkoutSession(doc: WorkoutSessionDocument): WorkoutSessionRecord {
+  const { _id, ...rest } = doc;
+  return { id: _id.toHexString(), ...rest };
+}
+
+export function workoutSessionsRepository(db: Db): WorkoutSessionsRepository {
+  const collection = db.collection<WorkoutSessionDocument>('workout_sessions');
+  return {
+    async create(session) {
+      const doc = { _id: new ObjectId(), ...session, rev: 0 };
+      await collection.insertOne(doc);
+      return toWorkoutSession(doc);
+    },
+    async byId(id) {
+      if (!ObjectId.isValid(id)) return null;
+      const doc = await collection.findOne({ _id: new ObjectId(id) });
+      return doc ? toWorkoutSession(doc) : null;
+    },
+    async activeOn(userId, date) {
+      const doc = await collection.findOne({ userId, date, status: 'active' });
+      return doc ? toWorkoutSession(doc) : null;
+    },
+    async onDate(userId, date) {
+      return (await collection.find({ userId, date }).toArray()).map(toWorkoutSession);
+    },
+    async update(id, rev, changes) {
+      const doc = await collection.findOneAndUpdate(
+        { _id: new ObjectId(id), rev },
+        { $set: changes, $inc: { rev: 1 } },
+        { returnDocument: 'after' },
+      );
+      return doc ? toWorkoutSession(doc) : null;
     },
   };
 }

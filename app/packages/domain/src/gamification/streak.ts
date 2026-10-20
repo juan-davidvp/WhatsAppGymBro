@@ -1,5 +1,6 @@
 import { PARAMETERS } from '../config/parameters.js';
-import { daysBetween, type LocalDate } from '../time/zoned.js';
+import { loggingGraceEnd } from '../day/day.js';
+import { addDays, daysBetween, type LocalDate } from '../time/zoned.js';
 
 /** Racha, comodines y reparación (RN-GAM-001 a RN-GAM-003). Funciones puras. */
 
@@ -140,4 +141,33 @@ export function repairStreak(
     },
     repaired: true,
   };
+}
+
+/**
+ * RN-GAM-001 y RN-DQC-007, vista en vivo: total de días que cuentan y racha
+ * con lo registrado hasta hoy, antes de que el cierre programado (M6) guarde el
+ * estado. Repite el cierre de cada día pasado (un día sin registro no cuenta,
+ * con su comodín si lo hay) y suma hoy solo si ya cuenta: hoy sigue abierto.
+ */
+export function liveCountedDays(
+  history: readonly { readonly date: LocalDate; readonly counted: boolean }[],
+  today: LocalDate,
+  timeZone: string,
+): { total: number; current: number } {
+  const byDate = new Map(history.map((d) => [d.date, d.counted]));
+  const past = history
+    .map((d) => d.date)
+    .filter((date) => date < today)
+    .sort();
+  let state = initialStreakState();
+  for (let date = past[0]; date !== undefined && date < today; date = addDays(date, 1)) {
+    state = closeStreakDay(state, {
+      date,
+      counted: byDate.get(date) ?? false,
+      closedAt: loggingGraceEnd(date, timeZone),
+    }).state;
+  }
+  const countsToday = byDate.get(today) ?? false;
+  const total = history.filter((d) => d.counted && d.date <= today).length;
+  return { total, current: state.current + (countsToday ? 1 : 0) };
 }

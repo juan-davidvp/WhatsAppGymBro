@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.7.0
+version: 0.8.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -114,6 +114,55 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | PN-04 | Sin plan todavía | Aún no tienes plan: termina el inicio con /start y te lo armo. |
 
 > PN-01 lleva una línea por día (PN-02 o PN-03), cada una en su renglón; `{minutos}` es la duración estimada de la versión del gym (RN-PLAN-006). El hoy se marca con "👉" al inicio de su línea.
+
+
+### 2.2 Hoy y "Hoy no puedo" (T-041)
+
+| ID | Momento | Texto |
+|---|---|---|
+| HY-01 | Hoy en día de descanso | Hoy toca descanso. Para que cuente, haz {minutos} min de movilidad y confírmalo. [Hice la movilidad] |
+| HY-02 | Movilidad confirmada | Movilidad hecha: hoy cuenta. Día que cuenta n.º {n} · 🔥 {racha} |
+| HY-03 | Hoy ya cuenta | Hoy ya cuenta. Mañana seguimos con tu plan. |
+| HN-01 | [Hoy no puedo] | Sin problema, no queda deuda. ¿Qué hacemos? [Exprés ahora] [Mover a otro día] [Hoy descanso] |
+| HN-02 | [Hoy descanso] | Listo. Tu próximo día de entreno sigue con el plan, sin deuda. |
+| HN-03 | [Mover a otro día] | ¿A qué día la pasamos? |
+| HN-04 | Ningún día posible | Esta semana no queda un día que respete tu descanso. Seguimos con el plan el próximo día de entreno, sin deuda. |
+| HN-05 | Sesión movida | Listo: {sesion} pasa al {dia}. |
+| KB-01 | Teclado persistente (al terminar el inicio) | Abajo tienes Hoy, Comida y Progreso a un toque. |
+| KB-02 | Sección aún no disponible | Esa sección todavía no está lista. Por ahora tienes Hoy y /plan. |
+
+> - Hoy en día de entreno usa PL-01 (§1.1) con sus botones.
+> - HN-03 lleva un botón por cada día de esta semana al que se puede mover la sesión (RN-PLAN-007, RN-PLAN-008).
+> - Teclado persistente ([[flujos-de-usuario]] §1): `🏋️ Hoy` · `🍽️ Comida` · `📈 Progreso`.
+> - KB-02 responde a Comida y Progreso hasta que lleguen M5 y M8.
+
+
+### 2.4 Tarjeta de sesión (T-041, T-042)
+
+| ID | Momento | Texto |
+|---|---|---|
+| SC-01 | Tarjeta: serie que toca | {ejercicio} · serie {serie} de {series}: {reps} reps con {carga}. Llevas {hechas} de {total} series. [✅ Hecha] [−1 rep] [+1 rep] [−kg] [+kg] [⏭️ Siguiente ejercicio] [⚠️ Dolor] [🏁 Terminar] |
+| SC-02 | Tarjeta: no quedan series | Hiciste las {hechas} series de {sesion}. [🏁 Terminar] |
+| SC-03 | Toque en una tarjeta vieja | Esta sesión ya terminó. |
+| SC-04 | Ya hay una sesión abierta hoy | Ya tienes una sesión abierta hoy: {sesion}. [Continuar la anterior] [Nueva] |
+
+> - SC-01 es un solo mensaje que se edita en cada toque (FR-003-01).
+> - `{carga}` es "{n} kg" o "peso corporal". Sin carga no se muestran [−kg] ni [+kg].
+> - Después de confirmar una serie aparece [↩️ Deshacer] durante P-090 segundos (FR-003-04).
+> - Antes de la primera serie aparece [La hice tal cual] (HU-003-2).
+> - SC-03 se muestra como aviso breve sobre el botón, sin cambiar datos ([[spec-003-registro-de-entrenamiento]] §8).
+
+### 2.3 Comandos del menú
+
+| Comando | Descripción |
+|---|---|
+| start | Empezar o retomar |
+| hoy | Tu sesión de hoy |
+| plan | Tu plan de la semana |
+| privacidad | Tu autorización y la política de datos |
+| borrar_datos | Borrar todos tus datos |
+
+> Lista que el bot registra en Telegram. Cada comando se añade aquí cuando su tarea lo implementa ([[flujos-de-usuario]] §1 tiene la lista completa prevista).
 
 ## 3. Onboarding (textos base)
 

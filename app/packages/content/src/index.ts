@@ -26,3 +26,4 @@ export {
   WEEKDAY_BUTTON_LABELS,
   WEEKDAY_NAMES,
 } from './onboarding.js';
+export { BOT_COMMANDS, MAIN_KEYBOARD } from './navigation.js';

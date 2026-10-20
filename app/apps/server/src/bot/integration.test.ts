@@ -4,6 +4,8 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ensureIndexes } from '../adapters/mongo/indexes.js';
 import {
+  daysRepository,
+  workoutSessionsRepository,
   plansRepository,
   setEntriesRepository,
   bodyMeasurementsRepository,
@@ -62,6 +64,8 @@ function realBot() {
       goals: goalsRepository(db),
       plans: plansRepository(db),
       setEntries: setEntriesRepository(db),
+      days: daysRepository(db),
+      workouts: workoutSessionsRepository(db),
       events: createEventEmitter({
         repository: eventsRepository(db),
         logger,

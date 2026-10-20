@@ -77,6 +77,10 @@ export const EVENT_PROPS_SCHEMAS = {
     intensity: z.enum(['low', 'normal']),
   }),
   plan_viewed: z.strictObject({}),
+  session_variant_chosen: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
+  session_started: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
+  cant_today_selected: z.strictObject({ option: z.enum(['express', 'move', 'rest']) }),
+  session_rescheduled: z.strictObject({}),
   onboarding_completed: z.strictObject({
     durationMs: z.number().int().nonnegative(),
     taps: z.number().int().nonnegative(),

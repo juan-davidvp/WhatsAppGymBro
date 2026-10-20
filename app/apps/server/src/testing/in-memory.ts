@@ -2,8 +2,10 @@ import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
+import type { DayStatus, DayType } from '@gymbro/domain';
 import {
   EMPTY_PROFILE,
+  type WorkoutSessionRecord,
   type SetEntryRecord,
   type StoredWeeklyPlan,
   type GoalRecord,
@@ -28,6 +30,8 @@ export interface InMemoryOptions {
   /** Crea los usuarios con el onboarding ya terminado. */
   onboardingCompleted?: boolean;
   failErase?: boolean;
+  /** Reloj de la prueba (por defecto, lunes 2026-10-19 10:00 en Bogotá). */
+  clock?: () => Date;
 }
 
 export interface ConsentRow {
@@ -57,6 +61,16 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const goals: (GoalRecord & { status: 'active' | 'changed' })[] = [];
   const weeks: (StoredWeeklyPlan & { userId: string })[] = [];
   const setEntries: (SetEntryRecord & { idempotencyKey: string })[] = [];
+  const days: {
+    userId: string;
+    date: string;
+    dayType: DayType;
+    status: 'open' | 'closed';
+    counted: boolean;
+    sources: string[];
+    dayStatus: DayStatus | null;
+  }[] = [];
+  const workouts: WorkoutSessionRecord[] = [];
   let nextId = 1;
   const newId = () => (nextId++).toString(16).padStart(24, '0');
 
@@ -260,6 +274,12 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         setEntries.push({ ...entry, idempotencyKey });
         return Promise.resolve({ inserted: true });
       },
+      remove(sessionId, exerciseCode, setIndex) {
+        const key = `set:${sessionId}:${exerciseCode}:${setIndex}`;
+        const index = setEntries.findIndex((e) => e.idempotencyKey === key);
+        if (index >= 0) setEntries.splice(index, 1);
+        return Promise.resolve();
+      },
       lastLoads(userId) {
         const loads: Record<string, number> = {};
         const mine = setEntries
@@ -267,6 +287,88 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           .sort((a, b) => a.confirmedAt.getTime() - b.confirmedAt.getTime());
         for (const e of mine) loads[e.exerciseCode] = e.loadKg;
         return Promise.resolve(loads);
+      },
+    },
+    days: {
+      saveStatus(userId, date, dayType, status) {
+        const day = days.find((d) => d.userId === userId && d.date === date);
+        if (day?.status === 'closed') return Promise.resolve();
+        if (day) {
+          day.counted = status.counts;
+          day.dayStatus = status;
+        } else {
+          days.push({
+            userId,
+            date,
+            dayType,
+            status: 'open',
+            counted: status.counts,
+            sources: [],
+            dayStatus: status,
+          });
+        }
+        return Promise.resolve();
+      },
+      close(userId, date) {
+        const day = days.find((d) => d.userId === userId && d.date === date && d.status === 'open');
+        if (day) day.status = 'closed';
+        return Promise.resolve({ closedNow: day !== undefined });
+      },
+      addSource(userId, date, dayType, source) {
+        let day = days.find((d) => d.userId === userId && d.date === date);
+        if (!day) {
+          day = {
+            userId,
+            date,
+            dayType,
+            status: 'open',
+            counted: false,
+            sources: [],
+            dayStatus: null,
+          };
+          days.push(day);
+        }
+        if (day.status === 'open' && !day.sources.includes(source)) day.sources.push(source);
+        return Promise.resolve([...day.sources]);
+      },
+      sources(userId, date) {
+        return Promise.resolve([
+          ...(days.find((d) => d.userId === userId && d.date === date)?.sources ?? []),
+        ]);
+      },
+      history(userId) {
+        return Promise.resolve(
+          days
+            .filter((d) => d.userId === userId)
+            .map((d) => ({ date: d.date, counted: d.counted })),
+        );
+      },
+    },
+    workouts: {
+      create(session) {
+        const record = { ...session, id: newId(), rev: 0 };
+        workouts.push(record);
+        return Promise.resolve(record);
+      },
+      byId(id) {
+        return Promise.resolve(workouts.find((w) => w.id === id) ?? null);
+      },
+      activeOn(userId, date) {
+        return Promise.resolve(
+          workouts.find((w) => w.userId === userId && w.date === date && w.status === 'active') ??
+            null,
+        );
+      },
+      onDate(userId, date) {
+        return Promise.resolve(workouts.filter((w) => w.userId === userId && w.date === date));
+      },
+      update(id, rev, changes) {
+        const index = workouts.findIndex((w) => w.id === id && w.rev === rev);
+        const current = workouts[index];
+        if (!current) return Promise.resolve(null);
+        const next = { ...current, ...changes, rev: rev + 1 };
+        workouts[index] = next;
+        return Promise.resolve(next);
       },
     },
     consents: {
@@ -307,6 +409,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(goals, userId);
         removeRows(weeks, userId);
         removeRows(setEntries, userId);
+        removeRows(days, userId);
+        removeRows(workouts, userId);
         for (const event of events) if (event.subject?.userId === userId) event.subject = null;
         return Promise.resolve();
       },
@@ -340,5 +444,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     goals,
     weeks,
     setEntries,
+    days,
+    workouts,
   };
 }

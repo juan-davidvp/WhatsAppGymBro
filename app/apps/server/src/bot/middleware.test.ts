@@ -175,7 +175,7 @@ describe('T-021 · enrutador', () => {
     for (const data of [encodeCallbackData({ action: 'nav', target: 'today' }), 'v0:viejo']) {
       const { bot, calls } = setupTestBot();
       await bot.handleUpdate(callbackUpdate(data));
-      expect(calls.map((c) => c.method)).toEqual(['answerCallbackQuery']);
+      expect(calls.filter((c) => c.method === 'answerCallbackQuery')).toHaveLength(1);
     }
   });
 });

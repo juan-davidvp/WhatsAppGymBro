@@ -3,7 +3,7 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.6
+version: 0.1.7
 creado: 2026-10-18
 actualizado: 2026-10-20
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
@@ -53,14 +53,14 @@ erDiagram
 | `training_habits` | `userId`, `days[]` {`weekday`, `declaredStart`, `learnedStart`, `location`} | `userId` único | RN-PLAN-002, RN-MSJ-006 |
 | `weekly_plans` | `userId`, `weekStart`, `days[]` {`date`, `dayType`, `plannedSessionId`}, `nextRotationStart`, `intensity` (`low`·`normal`) | `userId+weekStart` único | RN-PLAN-001 a 009. Se guarda una sola vez por semana; la siguiente continúa la rotación desde `nextRotationStart` (RN-PLAN-007) |
 | `planned_sessions` | `userId`, `date`, `template` (código de sesión, [[catalogo-de-ejercicios-base]] §5), `versions` {`GYM`, `HOME`, `EXPRESS`: {`exercises[]` {`exerciseCode`, `pattern`, `sets`, `reps` {min, max}, `targetReps`, `loadKg`, `restSeconds`}, `estimatedMinutes`}} | `userId+date` | RN-PLAN-003, RN-PLAN-006 |
-| `workout_sessions` | `userId`, `plannedSessionId`, `date`, `variant`, `status` (`active`·`completed`·`partial`·`abandoned`), `startedAt`, `endedAt`, `loggedAsPlanned`, `cardMessageId` | `userId+date` | RN-ENT-004 |
+| `workout_sessions` | `userId`, `plannedSessionId`, `date`, `template`, `variant`, `status` (`active`·`completed`·`partial`·`abandoned`), `startedAt`, `endedAt`, `loggedAsPlanned`, `progress` (estado de la tarjeta: ejercicios, serie que toca, valores pendientes y series registradas), `rev`, `lastConfirmedAt` | `userId+date` | RN-ENT-004. `rev` sube en cada cambio: un toque de una tarjeta vieja no modifica nada (FR-003-03) |
 | `set_entries` | `sessionId`, `userId`, `exerciseCode`, `setIndex`, `reps`, `loadKg`, `edited`, `confirmedAt`, `idempotencyKey` | `idempotencyKey` único | RN-ENT-001; NFR-03 |
 | `personal_records` | `userId`, `exerciseCode`, `type` (`e1rm`·`reps`), `value`, `date`, `setEntryId` | `userId+exerciseCode+type` | RN-ENT-005 |
 | `pain_flags` | `userId`, `exerciseCode`, `zone`, `date` | `userId+exerciseCode` | RN-SEG-006 |
 | `meals` | `userId`, `date`, `loggedAt`, `method` (`portions`·`favorite`·`repeat`·`photo`·`text`), `portions` {`palm`, `cuppedHand`, `fist`, `thumb`}, `proteinG`, `favoriteMealId`, `durationMs`, `taps`, `idempotencyKey` | `userId+date`; `idempotencyKey` único | RN-NUT-001 a 005; sin imagen (RN-DAT-004) |
 | `favorite_meals` | `userId`, `name`, `portions`, `foodCodes[]` | `userId` | RN-NUT-004 |
 | `body_measurements` | `userId`, `date`, `weightKg`, `waistCm` | `userId+date` | RN-OBJ-010, RN-OBJ-012 |
-| `days` | `userId`, `date`, `dayType`, `trainingHalf`, `nutritionHalf`, `restMissionMet`, `counted`, `complete`, `sources[]`, `freezeUsed`, `status` (`open`·`closed`), `closedAt` | `userId+date` único | RN-DQC-001 a 007 |
+| `days` | `userId`, `date`, `dayType`, `trainingHalf`, `nutritionHalf`, `restMissionMet`, `counted`, `complete`, `sources[]` (`session:<id>` completada · `mobility`), `freezeUsed`, `status` (`open`·`closed`), `closedAt` | `userId+date` único | RN-DQC-001 a 007 |
 | `streak_states` | `userId`, `current`, `longest`, `freezes`, `totalCountedDays`, `lastClosedDate`, `repairAvailableUntil`, `lastRepairAt` | `userId` único | `totalCountedDays` nunca baja (RN-DQC-007) |
 | `xp_ledger` | `userId`, `at`, `event`, `amount` (> 0), `refId` | `userId+at` | Solo inserciones; suma nunca baja (RN-GAM-006) |
 | `achievements` | `userId`, `code`, `at`, `value`, `context` | `userId+code+at` | Solo inserciones (RN-GAM-011) |

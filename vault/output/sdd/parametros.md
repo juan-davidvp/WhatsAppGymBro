@@ -3,7 +3,7 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.5.0
+version: 0.6.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
@@ -62,6 +62,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-023 | `training.minSetFractionCompleted` | 0,67 | — | RN-ENT-004 | No | — |
 | P-024 | `training.e1rmMaxReps` | 10 repeticiones | — | RN-ENT-005 | No | — |
 | P-025 | `training.importedActivityMinMinutes` | 20 min | 15–30 | RN-ENT-006 | No | — |
+| P-090 | `training.undoWindowSeconds` | 10 s | — | FR-003-04 ([[spec-003-registro-de-entrenamiento]]: [↩️ Deshacer] de la última serie) | No | — |
 
 ## Nutrición
 

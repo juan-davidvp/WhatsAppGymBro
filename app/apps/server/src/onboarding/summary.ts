@@ -132,5 +132,9 @@ export async function completeOnboarding(user: UserRecord, deps: OnboardingDeps)
   const buttons = templateById('ON-24').buttons.map((label) =>
     button(label, { action: 'nav', target: buttonValue('ON-24', label) as 'today' | 'plan' }),
   );
-  return [{ text, buttons }];
+  // FR-001-11: el teclado persistente llega con su propio mensaje (KB-01).
+  return [
+    { text, buttons },
+    { text: renderTemplate('KB-01'), buttons: [], mainKeyboard: true },
+  ];
 }

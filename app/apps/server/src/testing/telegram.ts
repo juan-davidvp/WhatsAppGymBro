@@ -40,7 +40,7 @@ export function setupTestBot(options: InMemoryOptions = {}) {
     token: TEST_TOKEN,
     logger,
     deps: memory.deps,
-    clock: () => new Date('2026-10-19T15:00:00Z'),
+    clock: options.clock ?? (() => new Date('2026-10-19T15:00:00Z')),
     botInfo: TEST_BOT_INFO,
   });
   const calls: ApiCall[] = [];

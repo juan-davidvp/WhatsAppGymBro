@@ -1,11 +1,12 @@
 import { EXERCISES, EXPRESS_EXCEPTIONS } from '@gymbro/content';
-import { evaluateDay, generateWeeklyPlan, type DayInputs } from '@gymbro/domain';
+import { evaluateDay, generateWeeklyPlan, startProgress, type DayInputs } from '@gymbro/domain';
 import { MongoClient, type Db } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { mealIdempotencyKey } from './idempotency.js';
 import { ensureIndexes } from './indexes.js';
 import {
+  workoutSessionsRepository,
   plansRepository,
   bodyMeasurementsRepository,
   goalsRepository,
@@ -440,5 +441,44 @@ describe('RN-PLAN-001 · RN-PLAN-007 · T-040 · planes en MongoDB', () => {
     });
     await sets.record({ ...base, exerciseCode: 'B', loadKg: 10, confirmedAt: now });
     expect(await sets.lastLoads('u12')).toEqual({ A: 42.5, B: 10 });
+  });
+});
+
+describe('RN-DQC-005 · T-041 · fuentes del día abierto', () => {
+  it('añade fuentes sin repetirlas y un día cerrado no cambia', async () => {
+    const days = daysRepository(db);
+    expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
+    expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
+    await days.close('u13', '2026-10-20', now);
+    expect(await days.addSource('u13', '2026-10-20', 'REST', 'session:x')).toEqual(['mobility']);
+    expect(await days.history('u13')).toEqual([{ date: '2026-10-20', counted: false }]);
+  });
+});
+
+describe('FR-003-03 · T-041 · sesiones de entreno con versión de estado', () => {
+  it('crea, lee la activa y solo actualiza si la versión no cambió', async () => {
+    const workouts = workoutSessionsRepository(db);
+    const created = await workouts.create({
+      userId: 'u14',
+      date: '2026-10-19',
+      plannedSessionId: 'p1',
+      template: 'FULL_A',
+      variant: 'GYM',
+      status: 'active',
+      startedAt: now,
+      endedAt: null,
+      loggedAsPlanned: false,
+      progress: startProgress([
+        { exerciseCode: 'SQ', pattern: 'SQUAT', sets: 2, targetReps: 10, loadKg: 60 },
+      ]),
+      lastConfirmedAt: null,
+    });
+    expect((await workouts.activeOn('u14', '2026-10-19'))?.id).toBe(created.id);
+    const updated = await workouts.update(created.id, 0, { status: 'completed' });
+    expect(updated?.rev).toBe(1);
+    expect(await workouts.update(created.id, 0, { status: 'partial' })).toBeNull();
+    expect((await workouts.byId(created.id))?.status).toBe('completed');
+    expect(await workouts.activeOn('u14', '2026-10-19')).toBeNull();
+    expect(await workouts.byId('no-es-un-id')).toBeNull();
   });
 });
