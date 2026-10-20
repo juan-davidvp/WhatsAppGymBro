@@ -472,6 +472,7 @@ describe('FR-003-03 · T-041 · sesiones de entreno con versión de estado', () 
         { exerciseCode: 'SQ', pattern: 'SQUAT', sets: 2, targetReps: 10, loadKg: 60 },
       ]),
       lastConfirmedAt: null,
+      pendingTaps: 0,
     });
     expect((await workouts.activeOn('u14', '2026-10-19'))?.id).toBe(created.id);
     const updated = await workouts.update(created.id, 0, { status: 'completed' });

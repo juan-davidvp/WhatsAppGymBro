@@ -147,7 +147,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | SC-04 | Ya hay una sesión abierta hoy | Ya tienes una sesión abierta hoy: {sesion}. [Continuar la anterior] [Nueva] |
 
 > - SC-01 es un solo mensaje que se edita en cada toque (FR-003-01).
-> - `{carga}` es "{n} kg" o "peso corporal". Sin carga no se muestran [−kg] ni [+kg].
+> - `{carga}` es "{n} kg" en un ejercicio con equipo (también "0 kg" mientras no tenga carga) o "peso corporal" en uno sin equipo, que no muestra [−kg] ni [+kg].
 > - Después de confirmar una serie aparece [↩️ Deshacer] durante P-090 segundos (FR-003-04).
 > - Antes de la primera serie aparece [La hice tal cual] (HU-003-2).
 > - SC-03 se muestra como aviso breve sobre el botón, sin cambiar datos ([[spec-003-registro-de-entrenamiento]] §8).

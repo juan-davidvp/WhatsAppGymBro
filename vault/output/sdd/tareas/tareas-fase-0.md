@@ -66,7 +66,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 |---|---|---|---|---|
 | T-040 ✅ | Plan semanal y `/plan` | HU-002-1 | T-032 | Escenarios pasan |
 | T-041 ✅ | `🏋️ Hoy`, elección de versión y "Hoy no puedo" sin deuda | HU-002-2/3 | T-040 | Escenarios pasan |
-| T-042 | Tarjeta de sesión editable, 1 toque por serie, deshacer, idempotencia | HU-003-1, FR-003-01 a 04 | T-041 | SC-003-1 y SC-003-2 |
+| T-042 ✅ | Tarjeta de sesión editable, 1 toque por serie, deshacer, idempotencia | HU-003-1, FR-003-01 a 04 | T-041 | SC-003-1 y SC-003-2 |
 | T-043 | "La hice tal cual" y terminar sesión | HU-003-2/3 | T-042 | Escenarios pasan |
 | T-044 | *Should:* récords, progresión, estancamiento y dolor | HU-003-4 a 6 | T-043 | Escenarios pasan |
 | T-045 | *Should:* ajustar días disponibles y regenerar el plan sin perder el progreso | HU-002-4, RN-PLAN-001/004 | T-040 | Escenarios pasan |

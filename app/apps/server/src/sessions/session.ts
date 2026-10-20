@@ -85,6 +85,7 @@ export async function startSession(
     loggedAsPlanned: false,
     progress: startProgress(exercises),
     lastConfirmedAt: null,
+    pendingTaps: 0,
   });
   const subject = { userId: user.id, timezone: user.timezone };
   await deps.events.emit('session_variant_chosen', subject, { variant });

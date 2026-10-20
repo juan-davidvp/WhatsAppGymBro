@@ -32,6 +32,7 @@ import type {
 } from '../ports/repositories.js';
 import { plain } from '../onboarding/replies.js';
 import { planView } from '../plans/plan-view.js';
+import { answerSessionCard } from '../sessions/card-actions.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
@@ -246,8 +247,7 @@ export function createBot({
       case 'td':
         return answerToday(user, action.value, useCases);
       case 'ss':
-        // Las operaciones de la tarjeta llegan con T-042.
-        return [];
+        return answerSessionCard(user, action.sessionId, action.value, useCases);
       case 'nav':
         if (action.target === 'plan') return planView(user, useCases);
         if (action.target === 'today') return todayScreen(user, useCases);

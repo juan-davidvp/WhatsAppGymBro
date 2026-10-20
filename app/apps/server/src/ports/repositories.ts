@@ -253,6 +253,8 @@ export interface WorkoutSessionRecord {
   /** Versión del estado: un toque de una tarjeta vieja no lo cambia (FR-003-03). */
   readonly rev: number;
   readonly lastConfirmedAt: Date | null;
+  /** Toques desde la última serie confirmada (SC-003-1: toques por serie). */
+  readonly pendingTaps: number;
 }
 
 export interface WorkoutSessionsRepository {

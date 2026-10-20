@@ -364,3 +364,15 @@ relacionados: [index, inicio]
   - **P-090** `training.undoWindowSeconds` = 10 s: el número estaba en FR-003-04, que ahora cita P-090 ([[parametros]] v0.6.0);
   - [[modelo-de-datos]] v0.1.7.
 - **Lectura elegida de RN-PLAN-007:** "la rotación continúa" significa que el próximo día de entreno trae la sesión que el plan ya tenía, sin repetir la saltada ni sumar volumen. Así lo codifica el generador de T-011.
+
+## [2026-10-20] implementar | T-042 Tarjeta de sesión editable, 1 toque por serie, deshacer e idempotencia
+- `app/apps/server/src/sessions/card-actions.ts`:
+  - [✅ Hecha] registra la serie con su clave estable y edita el mismo mensaje con la siguiente (FR-003-01/02);
+  - [−1 rep] [+1 rep] [−kg] [+kg] ajustan antes de confirmar; la carga cambia en el incremento de su región, P-020/P-021;
+  - [⏭️ Siguiente ejercicio] salta las series que quedan;
+  - [↩️ Deshacer] funciona durante P-090 s (FR-003-04);
+  - sin series pendientes se muestra SC-02.
+- **Idempotencia (SC-003-2):** cada botón lleva la versión del estado de la sesión. Un doble toque, un botón viejo o un reintento de Telegram no registran nada y se vuelve a mostrar la tarjeta actual; la tarjeta de una sesión terminada responde SC-03 como aviso breve.
+- **SC-003-1:** `set_confirmed` lleva los toques que costó la serie (1 si se confirmó tal cual) y si se editó.
+- **Corrección:** sin historial, los ejercicios del gym empiezan en 0 kg. La tarjeta ahora muestra los botones de carga según el equipo del ejercicio, no según la carga actual ("0 kg" en vez de "peso corporal"). Nota de §2.4 en [[plantillas-de-mensajes]].
+- Pruebas: `sessions/card.test.ts` (10 escenarios, incluidos doble toque, reintento con el mismo `update_id`, deshacer fuera de la ventana y tarjeta de una sesión terminada).

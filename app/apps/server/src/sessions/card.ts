@@ -28,9 +28,14 @@ export function exerciseName(code: string): string {
   return EXERCISES.find((e) => e.code === code)?.name ?? code;
 }
 
-/** "42,5 kg" o "peso corporal". */
-export function formatLoad(loadKg: number): string {
-  return loadKg > 0 ? `${String(loadKg).replace('.', ',')} kg` : 'peso corporal';
+/** ¿El ejercicio usa equipo? Sin equipo ("Ninguno") es peso corporal. */
+export function usesEquipment(code: string): boolean {
+  return (EXERCISES.find((e) => e.code === code)?.equipment ?? 'Ninguno') !== 'Ninguno';
+}
+
+/** "42,5 kg" (también "0 kg" si usa equipo y aún no tiene carga) o "peso corporal". */
+export function formatLoad(loadKg: number, withEquipment: boolean): string {
+  return withEquipment || loadKg > 0 ? `${String(loadKg).replace('.', ',')} kg` : 'peso corporal';
 }
 
 function sessionButton(session: WorkoutSessionRecord, label: string, operation: string): Button {
@@ -64,7 +69,7 @@ export function renderCard(session: WorkoutSessionRecord, now: Date, edit = fals
   }
 
   const exercise = progress.exercises[progress.cursor.exercise];
-  const hasLoad = (exercise?.loadKg ?? 0) > 0 || progress.pending.loadKg > 0;
+  const hasLoad = usesEquipment(exercise?.exerciseCode ?? '') || progress.pending.loadKg > 0;
   const labels = templateById('SC-01').buttons.filter(
     (label) => hasLoad || (label !== '−kg' && label !== '+kg'),
   );
@@ -81,7 +86,7 @@ export function renderCard(session: WorkoutSessionRecord, now: Date, edit = fals
       serie: progress.cursor.set + 1,
       series: exercise?.sets ?? 0,
       reps: progress.pending.reps,
-      carga: formatLoad(progress.pending.loadKg),
+      carga: formatLoad(progress.pending.loadKg, hasLoad),
       hechas: done,
       total: plannedSetCount(progress),
     }),
