@@ -175,7 +175,7 @@ describe('T-021 · enrutador', () => {
     for (const data of [encodeCallbackData({ action: 'nav', target: 'today' }), 'v0:viejo']) {
       const { bot, calls } = setupTestBot();
       await bot.handleUpdate(callbackUpdate(data));
-      expect(calls.map((c) => c.method)).toEqual(['answerCallbackQuery']);
+      expect(calls.filter((c) => c.method === 'answerCallbackQuery')).toHaveLength(1);
     }
   });
 });
@@ -189,10 +189,13 @@ describe('T-021 · datos de los botones', () => {
     }
   });
 
-  it('onboarding y privacidad: ida y vuelta, y el paso más largo cabe', () => {
+  it('onboarding, privacidad, tarjeta y estancamiento: ida y vuelta, y el paso más largo cabe', () => {
     for (const action of [
       { action: 'ob', step: 'pre_activity_screening', value: 'q7_yes' },
       { action: 'pv', value: 'decline' },
+      { action: 'ss', sessionId: 'a'.repeat(24), value: 'done_12' },
+      { action: 'pt', sessionId: 'b'.repeat(24), value: 'd3' },
+      { action: 'ml', op: 'kb', state: '4_1_0_0_0_3_t1' },
     ] as const) {
       const data = encodeCallbackData(action);
       expect(new TextEncoder().encode(data).length).toBeLessThanOrEqual(CALLBACK_DATA_MAX_BYTES);

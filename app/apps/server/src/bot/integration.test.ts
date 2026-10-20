@@ -4,6 +4,16 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ensureIndexes } from '../adapters/mongo/indexes.js';
 import {
+  achievementsRepository,
+  exerciseAdjustmentsRepository,
+  favoriteMealsRepository,
+  mealsRepository,
+  painFlagsRepository,
+  personalRecordsRepository,
+  daysRepository,
+  workoutSessionsRepository,
+  plansRepository,
+  setEntriesRepository,
   bodyMeasurementsRepository,
   goalsRepository,
   trainingHabitsRepository,
@@ -58,6 +68,16 @@ function realBot() {
       bodyMeasurements: bodyMeasurementsRepository(db),
       habits: trainingHabitsRepository(db),
       goals: goalsRepository(db),
+      plans: plansRepository(db),
+      setEntries: setEntriesRepository(db),
+      days: daysRepository(db),
+      workouts: workoutSessionsRepository(db),
+      records: personalRecordsRepository(db),
+      achievements: achievementsRepository(db),
+      painFlags: painFlagsRepository(db),
+      adjustments: exerciseAdjustmentsRepository(db),
+      meals: mealsRepository(db),
+      favorites: favoriteMealsRepository(db),
       events: createEventEmitter({
         repository: eventsRepository(db),
         logger,

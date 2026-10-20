@@ -73,12 +73,12 @@ describe('RN-SEG-007 · calidad del catálogo', () => {
     }
   });
 
-  it('todas las respuestas de cuidado CU tienen categoría salvo las de otras rutas (CU-06 sobreuso, CU-07 fuera de dominio)', () => {
+  it('todas las respuestas de cuidado CU tienen categoría salvo las de otras rutas (CU-06 sobreuso, CU-07 fuera de dominio, CU-09 dolor repetido)', () => {
     const used = new Set(ALERT_CATEGORIES_CATALOG.map((c) => c.careResponseId));
     const unused = MESSAGE_TEMPLATES.filter((t) => t.kind === 'care' && !used.has(t.id)).map(
       (t) => t.id,
     );
-    expect(unused).toEqual(['CU-06', 'CU-07']);
+    expect(unused).toEqual(['CU-06', 'CU-07', 'CU-09']);
   });
 });
 

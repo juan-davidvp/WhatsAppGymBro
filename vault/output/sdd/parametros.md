@@ -3,9 +3,9 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.5.0
+version: 0.8.0
 creado: 2026-10-18
-actualizado: 2026-10-19
+actualizado: 2026-10-20
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
 fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93, F94, F95, F99]
 relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
@@ -62,6 +62,8 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-023 | `training.minSetFractionCompleted` | 0,67 | — | RN-ENT-004 | No | — |
 | P-024 | `training.e1rmMaxReps` | 10 repeticiones | — | RN-ENT-005 | No | — |
 | P-025 | `training.importedActivityMinMinutes` | 20 min | 15–30 | RN-ENT-006 | No | — |
+| P-090 | `training.undoWindowSeconds` | 10 s | — | FR-003-04 ([[spec-003-registro-de-entrenamiento]]: [↩️ Deshacer] de la última serie) | No | — |
+| P-091 | `training.deloadSetReduction` | 1 serie | — | RN-ENT-003 ([Semana suave]: series que se quitan a ese ejercicio la semana siguiente) | No | [V] |
 
 ## Nutrición
 
@@ -71,6 +73,10 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-027 | `nutrition.proteinGPerPalm` | 25 g | 20–30 | RN-NUT-002 | No | [V] |
 | P-028 | `nutrition.halfThresholdPct` | 80 % | 70–100 | RN-NUT-003 | No | — |
 | P-072 | `nutrition.numberFreeMealsWithProtein` | 3 comidas | — | RN-NUT-003 | No | — |
+| P-092 | `nutrition.defaultProteinPalms` | 4 palmas/día | — | RN-NUT-002 (sin peso declarado: [[spec-004-registro-de-nutricion]] §8) | No | [V] |
+| P-093 | `nutrition.palmStep` | 0,5 palma | — | RN-NUT-001 (paso de [−🖐️] [+🖐️] en el teclado de porciones; el resto de manos va de 1 en 1) | No | — |
+| P-094 | `nutrition.maxFavoriteButtons` | 6 comidas | — | RN-NUT-004 (frecuentes que se muestran como botones en `🍽️ Comida`) | No | `[supuesto]` |
+| P-095 | `nutrition.suggestedFoods` | 3 alimentos | — | RN-NUT-006 (alimentos del catálogo en la sugerencia antes de entrenar) | No | `[supuesto]` |
 
 ## Día que cuenta y gamificación
 

@@ -1,5 +1,5 @@
-import { templateById } from '@gymbro/content';
-import { Bot, InlineKeyboard, type MiddlewareFn } from 'grammy';
+import { MAIN_KEYBOARD, templateById } from '@gymbro/content';
+import { Bot, GrammyError, InlineKeyboard, Keyboard, type MiddlewareFn } from 'grammy';
 import type { UserFromGetMe } from 'grammy/types';
 import type { EventEmitter } from '../events/emitter.js';
 import type { Logger } from '../logger.js';
@@ -18,6 +18,16 @@ import {
 import type {
   BodyMeasurementsRepository,
   GoalsRepository,
+  DaysRepository,
+  AchievementsRepository,
+  ExerciseAdjustmentsRepository,
+  FavoriteMealsRepository,
+  MealsRepository,
+  PainFlagsRepository,
+  PersonalRecordsRepository,
+  WorkoutSessionsRepository,
+  PlansRepository,
+  SetEntriesRepository,
   TrainingHabitsRepository,
   ConsentsRepository,
   ProcessedUpdatesRepository,
@@ -26,6 +36,15 @@ import type {
   UserDataEraser,
   UsersRepository,
 } from '../ports/repositories.js';
+import { plain } from '../onboarding/replies.js';
+import { planView } from '../plans/plan-view.js';
+import { answerSessionCard } from '../sessions/card-actions.js';
+import { finishSession, logAsPlanned } from '../sessions/finish.js';
+import { recordText } from '../sessions/records.js';
+import { PAIN_OPERATIONS } from '../sessions/pain.js';
+import { answerPlateau, plateauPrompt } from '../sessions/plateau.js';
+import { answerMeal, mealMenu } from '../meals/meals.js';
+import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { deduplicate, loadUser, riskGuard, type BotContext } from './middleware.js';
@@ -46,6 +65,16 @@ export interface BotDependencies {
   bodyMeasurements: BodyMeasurementsRepository;
   habits: TrainingHabitsRepository;
   goals: GoalsRepository;
+  plans: PlansRepository;
+  setEntries: SetEntriesRepository;
+  days: DaysRepository;
+  workouts: WorkoutSessionsRepository;
+  records: PersonalRecordsRepository;
+  achievements: AchievementsRepository;
+  painFlags: PainFlagsRepository;
+  adjustments: ExerciseAdjustmentsRepository;
+  meals: MealsRepository;
+  favorites: FavoriteMealsRepository;
   events: EventEmitter;
 }
 
@@ -57,6 +86,9 @@ export interface CreateBotOptions {
   /** Solo en pruebas: evita la llamada a getMe. */
   botInfo?: UserFromGetMe;
 }
+
+/** Telegram da la fecha de los mensajes en segundos Unix. */
+const MS_PER_SECOND = 1000;
 
 /** Botones de CU-07, por su texto en la bóveda. */
 const NAV_TARGET_BY_LABEL: Record<string, NavTarget> = {
@@ -87,23 +119,63 @@ export function toTelegramHtml(text: string): string {
  * Envía las respuestas en orden. Una respuesta marcada `edit` reemplaza el mensaje
  * del botón tocado (selección múltiple); las demás son mensajes nuevos.
  */
+function inlineKeyboard(reply: Reply): InlineKeyboard {
+  const keyboard = new InlineKeyboard();
+  const rows = reply.layout ?? reply.buttons.map(() => reply.rowSize ?? 1);
+  let index = 0;
+  for (const size of rows) {
+    const row = reply.buttons.slice(index, index + size);
+    for (const b of row) keyboard.text(b.label, b.data);
+    if (row.length > 0) keyboard.row();
+    index += size;
+    if (index >= reply.buttons.length) break;
+  }
+  // Por si el diseño no cubre todos los botones: uno por fila.
+  for (const b of reply.buttons.slice(index)) keyboard.text(b.label, b.data).row();
+  return keyboard;
+}
+
+/** FR-001-11: teclado persistente con 🏋️ Hoy · 🍽️ Comida · 📈 Progreso. */
+function mainKeyboard(): Keyboard {
+  return new Keyboard()
+    .add(...MAIN_KEYBOARD.map((label) => Keyboard.text(label)))
+    .resized()
+    .persistent();
+}
+
+/**
+ * Envía las respuestas en orden. Una respuesta marcada `edit` reemplaza el mensaje
+ * del botón tocado (tarjeta de sesión, selección múltiple); las demás son nuevas.
+ */
 async function sendAll(ctx: BotContext, replies: readonly Reply[]): Promise<void> {
   for (const reply of replies) {
-    const keyboard = new InlineKeyboard();
-    reply.buttons.forEach((button, i) => {
-      keyboard.text(button.label, button.data);
-      if ((i + 1) % (reply.rowSize ?? 1) === 0) keyboard.row();
-    });
+    if (reply.toast) continue;
     const formatted = reply.text.includes('**')
       ? { text: toTelegramHtml(reply.text), parse_mode: 'HTML' as const }
       : { text: reply.text };
-    const markup = reply.buttons.length > 0 ? { reply_markup: keyboard } : {};
+    const markup = reply.mainKeyboard
+      ? { reply_markup: mainKeyboard() }
+      : reply.buttons.length > 0
+        ? { reply_markup: inlineKeyboard(reply) }
+        : {};
     const options = {
       ...markup,
       ...(formatted.parse_mode ? { parse_mode: formatted.parse_mode } : {}),
     };
-    if (reply.edit && ctx.callbackQuery?.message) {
-      await ctx.editMessageText(formatted.text, options);
+    if (reply.edit && ctx.callbackQuery?.message && !reply.mainKeyboard) {
+      try {
+        await ctx.editMessageText(
+          formatted.text,
+          options as Parameters<typeof ctx.editMessageText>[1],
+        );
+      } catch (error) {
+        // Un toque repetido deja la tarjeta igual: Telegram responde "message is not modified".
+        if (!(
+          error instanceof GrammyError && error.description.includes('message is not modified')
+        )) {
+          throw error;
+        }
+      }
     } else {
       await ctx.reply(formatted.text, options);
     }
@@ -148,42 +220,102 @@ export function createBot({
     if (ctx.user) await sendAll(ctx, await deleteDataCommand(ctx.user, useCases));
   });
 
+  handlers.command('hoy', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await todayScreen(ctx.user, useCases));
+  });
+
+  handlers.command('plan', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await planView(ctx.user, useCases));
+  });
+
   handlers.command('privacidad', async (ctx) => {
     if (ctx.user) await sendAll(ctx, [privacyCommand(ctx.user)]);
   });
 
   handlers.on('callback_query:data', async (ctx) => {
-    // El toque se confirma primero para que Telegram no deje el botón cargando.
-    await ctx.answerCallbackQuery();
+    let replies: Reply[] = [];
+    try {
+      replies = await routeCallback(ctx);
+    } finally {
+      // Se confirma siempre el toque (Telegram no deja el botón cargando), con aviso si lo hay.
+      const toast = replies.find((r) => r.toast);
+      await ctx.answerCallbackQuery(toast ? { text: toast.text } : undefined);
+    }
+    await sendAll(ctx, replies);
+  });
+
+  async function routeCallback(
+    ctx: BotContext & { callbackQuery: { data: string } },
+  ): Promise<Reply[]> {
     const action = parseCallbackData(ctx.callbackQuery.data);
     const user = ctx.user;
     if (!action || !user) {
       logger.warn('callback_unknown', { updateId: ctx.update.update_id });
-      return;
+      return [];
     }
     switch (action.action) {
       case 'ob':
-        return sendAll(ctx, await answerOnboarding(user, action.step, action.value, useCases));
+        return answerOnboarding(user, action.step, action.value, useCases);
       case 'pv':
-        return sendAll(ctx, await answerPrivacy(user, action.value, useCases));
+        return answerPrivacy(user, action.value, useCases);
       case 'sc':
-        return sendAll(ctx, await answerScreening(user, action.value, useCases));
+        return answerScreening(user, action.value, useCases);
       case 'del':
-        return sendAll(ctx, await answerDeletion(user, action.value, useCases));
+        return answerDeletion(user, action.value, useCases);
       case 'rs':
-        return sendAll(ctx, await answerResume(user, action.value, useCases));
+        return answerResume(user, action.value, useCases);
+      case 'td':
+        if (action.value === 'food') return mealMenu(user, useCases);
+        return answerToday(user, action.value, useCases);
+      case 'ml': {
+        const message = ctx.callbackQuery.message;
+        return answerMeal(
+          user,
+          action.op,
+          action.state,
+          {
+            chatId: ctx.chat?.id ?? user.chatId,
+            messageId: message?.message_id ?? 0,
+            messageDate: new Date((message?.date ?? 0) * MS_PER_SECOND),
+            data: ctx.callbackQuery.data,
+          },
+          useCases,
+        );
+      }
+      case 'ss':
+        return answerSessionCard(user, action.sessionId, action.value, useCases, {
+          finish: async (session, u, deps) => [
+            ...(await finishSession(session, u, deps, (s) => recordText(s, deps))),
+            ...(await plateauPrompt(session.id, u, deps)),
+          ],
+          asis: async (session, u, deps) => [
+            ...(await logAsPlanned(session, u, deps, (s) => recordText(s, deps))),
+            ...(await plateauPrompt(session.id, u, deps)),
+          ],
+          ...PAIN_OPERATIONS,
+        });
+      case 'pt':
+        return answerPlateau(user, action.sessionId, action.value, useCases);
       case 'nav':
-        // Las pantallas de Hoy, Comida y Progreso llegan con sus tareas (T-04x…).
-        return;
+        if (action.target === 'plan') return planView(user, useCases);
+        if (action.target === 'today') return todayScreen(user, useCases);
+        if (action.target === 'food') return mealMenu(user, useCases);
+        return [plain('KB-02')];
     }
-  });
+  }
 
   // Texto, foto u otro mensaje sin ruta: durante el onboarding se repite la
   // pregunta con sus botones (SPEC-001 §8); después, CU-07. Nunca conversación.
   handlers.on('message', async (ctx) => {
     const user = ctx.user;
+    // FR-001-11: botones del teclado persistente.
+    const text = ctx.message.text;
+    if (user && text === MAIN_KEYBOARD[0]) return sendAll(ctx, await todayScreen(user, useCases));
+    if (user && text === MAIN_KEYBOARD[1]) return sendAll(ctx, await mealMenu(user, useCases));
+    if (user && text !== undefined && (MAIN_KEYBOARD as readonly string[]).includes(text)) {
+      return sendAll(ctx, [plain('KB-02')]);
+    }
     if (user && !isOnboardingComplete(user)) {
-      const text = ctx.message.text;
       const replies =
         text === undefined
           ? await onboardingPrompt(user, useCases)

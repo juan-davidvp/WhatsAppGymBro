@@ -1,7 +1,18 @@
 import { readFileSync } from 'node:fs';
+import { BOT_COMMANDS } from '@gymbro/content';
 import { MongoClient } from 'mongodb';
 import { ensureIndexes } from './adapters/mongo/indexes.js';
 import {
+  achievementsRepository,
+  exerciseAdjustmentsRepository,
+  favoriteMealsRepository,
+  mealsRepository,
+  painFlagsRepository,
+  personalRecordsRepository,
+  daysRepository,
+  workoutSessionsRepository,
+  plansRepository,
+  setEntriesRepository,
   bodyMeasurementsRepository,
   goalsRepository,
   trainingHabitsRepository,
@@ -64,6 +75,16 @@ async function main(): Promise<void> {
         bodyMeasurements: bodyMeasurementsRepository(db),
         habits: trainingHabitsRepository(db),
         goals: goalsRepository(db),
+        plans: plansRepository(db),
+        setEntries: setEntriesRepository(db),
+        days: daysRepository(db),
+        workouts: workoutSessionsRepository(db),
+        records: personalRecordsRepository(db),
+        achievements: achievementsRepository(db),
+        painFlags: painFlagsRepository(db),
+        adjustments: exerciseAdjustmentsRepository(db),
+        meals: mealsRepository(db),
+        favorites: favoriteMealsRepository(db),
         events: createEventEmitter({
           repository: eventsRepository(db),
           logger,
@@ -81,6 +102,8 @@ async function main(): Promise<void> {
     process.once('SIGINT', () => stop('SIGINT'));
     process.once('SIGTERM', () => stop('SIGTERM'));
 
+    // FR-001-11: lista de comandos del menú (plantillas §2.3).
+    await bot.api.setMyCommands(BOT_COMMANDS.map((c) => ({ ...c })));
     await bot.start({
       drop_pending_updates: false,
       onStart: (info) =>

@@ -1,10 +1,18 @@
-import { evaluateDay, type DayInputs } from '@gymbro/domain';
+import { EXERCISES, EXPRESS_EXCEPTIONS } from '@gymbro/content';
+import { evaluateDay, generateWeeklyPlan, startProgress, type DayInputs } from '@gymbro/domain';
 import { MongoClient, type Db } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { mealIdempotencyKey } from './idempotency.js';
 import { ensureIndexes } from './indexes.js';
 import {
+  workoutSessionsRepository,
+  plansRepository,
+  personalRecordsRepository,
+  achievementsRepository,
+  painFlagsRepository,
+  exerciseAdjustmentsRepository,
+  favoriteMealsRepository,
   bodyMeasurementsRepository,
   goalsRepository,
   trainingHabitsRepository,
@@ -111,6 +119,8 @@ describe('SC-003-2 · un toque repetido no duplica una serie, una comida ni un d
       portions: { palm: 1, cuppedHand: 2, fist: 1, thumb: 1 },
       proteinG: 25,
       favoriteMealId: 'fav-1',
+      durationMs: 1200,
+      taps: 1,
       idempotencyKey: mealIdempotencyKey(42, 100, 'v1:fav:fav-1'),
     };
     await repo.record(meal);
@@ -379,5 +389,251 @@ describe('RN-PLAN-002 · RN-OBJ-001 · hábito y objetivo activo', () => {
         (g) => g['status'],
       ),
     ).toEqual(['changed', 'active']);
+  });
+});
+
+describe('RN-PLAN-001 · RN-PLAN-007 · T-040 · planes en MongoDB', () => {
+  const plan = generateWeeklyPlan({
+    level: 'novice',
+    availableDays: ['monday', 'wednesday', 'friday'],
+    sessionMinutes: 45,
+    goal: 'gain_muscle',
+    homeEquipment: [],
+    weekStart: '2026-10-19',
+    rotationStart: 0,
+    catalog: EXERCISES,
+    expressExceptions: EXPRESS_EXCEPTIONS,
+  });
+
+  it('guarda la semana una sola vez y la reconstruye igual', async () => {
+    const plans = plansRepository(db);
+    const first = await plans.saveWeek('u10', plan);
+    const second = await plans.saveWeek('u10', plan);
+    expect(second).toEqual(first);
+    expect(await db.collection('weekly_plans').countDocuments({ userId: 'u10' })).toBe(1);
+    expect(await db.collection('planned_sessions').countDocuments({ userId: 'u10' })).toBe(3);
+    const loaded = await plans.week('u10', '2026-10-19');
+    expect(loaded?.days.map((d) => d.session?.template ?? null)).toEqual(
+      plan.days.map((d) => d.session?.template ?? null),
+    );
+    expect(loaded?.days[0]?.session?.versions).toEqual(plan.days[0]?.session?.versions);
+  });
+
+  it('mover una sesión cambia el día y la fecha de la sesión, sin duplicarla', async () => {
+    const plans = plansRepository(db);
+    await plans.saveWeek('u11', plan);
+    await plans.moveSession('u11', '2026-10-19', '2026-10-19', '2026-10-20');
+    const week = await plans.week('u11', '2026-10-19');
+    expect(week?.days.map((d) => d.type).slice(0, 2)).toEqual(['REST', 'TRAINING']);
+    expect(
+      await db.collection('planned_sessions').countDocuments({ userId: 'u11', date: '2026-10-20' }),
+    ).toBe(1);
+  });
+
+  it('FR-002-04 · la última carga de cada ejercicio', async () => {
+    const sets = setEntriesRepository(db);
+    const base = { userId: 'u12', sessionId: 's', setIndex: 0, reps: 8, edited: false };
+    await sets.record({
+      ...base,
+      exerciseCode: 'A',
+      loadKg: 40,
+      confirmedAt: new Date('2026-10-18T10:00:00Z'),
+    });
+    await sets.record({
+      ...base,
+      exerciseCode: 'A',
+      setIndex: 1,
+      loadKg: 42.5,
+      confirmedAt: new Date('2026-10-19T10:00:00Z'),
+    });
+    await sets.record({ ...base, exerciseCode: 'B', loadKg: 10, confirmedAt: now });
+    expect(await sets.lastLoads('u12')).toEqual({ A: 42.5, B: 10 });
+  });
+});
+
+describe('RN-DQC-005 · T-041 · fuentes del día abierto', () => {
+  it('añade fuentes sin repetirlas y un día cerrado no cambia', async () => {
+    const days = daysRepository(db);
+    expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
+    expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
+    await days.close('u13', '2026-10-20', now);
+    expect(await days.addSource('u13', '2026-10-20', 'REST', 'session:x')).toEqual(['mobility']);
+    expect(await days.history('u13')).toEqual([{ date: '2026-10-20', counted: false }]);
+  });
+});
+
+describe('FR-003-03 · T-041 · sesiones de entreno con versión de estado', () => {
+  it('crea, lee la activa y solo actualiza si la versión no cambió', async () => {
+    const workouts = workoutSessionsRepository(db);
+    const created = await workouts.create({
+      userId: 'u14',
+      date: '2026-10-19',
+      plannedSessionId: 'p1',
+      template: 'FULL_A',
+      variant: 'GYM',
+      status: 'active',
+      startedAt: now,
+      endedAt: null,
+      loggedAsPlanned: false,
+      progress: startProgress([
+        { exerciseCode: 'SQ', pattern: 'SQUAT', sets: 2, targetReps: 10, loadKg: 60 },
+      ]),
+      lastConfirmedAt: null,
+      pendingTaps: 0,
+    });
+    expect((await workouts.activeOn('u14', '2026-10-19'))?.id).toBe(created.id);
+    const updated = await workouts.update(created.id, 0, { status: 'completed' });
+    expect(updated?.rev).toBe(1);
+    expect(await workouts.update(created.id, 0, { status: 'partial' })).toBeNull();
+    expect((await workouts.byId(created.id))?.status).toBe('completed');
+    expect(await workouts.activeOn('u14', '2026-10-19')).toBeNull();
+    expect(await workouts.byId('no-es-un-id')).toBeNull();
+  });
+});
+
+describe('RN-ENT-003 · T-044 · descartar una semana sin usar', () => {
+  it('borra la semana y sus sesiones planeadas; otra semana no cambia', async () => {
+    const plan = generateWeeklyPlan({
+      level: 'novice',
+      availableDays: ['monday', 'wednesday', 'friday'],
+      sessionMinutes: 45,
+      goal: 'gain_muscle',
+      homeEquipment: [],
+      weekStart: '2026-10-26',
+      rotationStart: 0,
+      catalog: EXERCISES,
+      expressExceptions: EXPRESS_EXCEPTIONS,
+    });
+    const plans = plansRepository(db);
+    await plans.saveWeek('u20', plan);
+    await plans.saveWeek('u21', plan);
+    await plans.discardWeek('u20', '2026-10-26');
+    expect(await plans.week('u20', '2026-10-26')).toBeNull();
+    expect(await db.collection('planned_sessions').countDocuments({ userId: 'u20' })).toBe(0);
+    expect(await plans.week('u21', '2026-10-26')).not.toBeNull();
+    await plans.discardWeek('u20', '2026-10-26');
+  });
+});
+
+describe('RN-ENT-005 · T-044 · historia de un ejercicio, récords y bitácora', () => {
+  it('la historia sale en orden y deshacer quita la serie', async () => {
+    const sets = setEntriesRepository(db);
+    const base = { userId: 'u22', exerciseCode: 'A', reps: 8, loadKg: 40, edited: false };
+    await sets.record({ ...base, sessionId: 's2', setIndex: 0, confirmedAt: now });
+    await sets.record({
+      ...base,
+      sessionId: 's1',
+      setIndex: 0,
+      confirmedAt: new Date('2026-10-12T15:00:00Z'),
+    });
+    await sets.record({ ...base, sessionId: 's2', setIndex: 1, confirmedAt: now });
+    expect((await sets.exerciseHistory('u22', 'A')).map((h) => [h.sessionId, h.setIndex])).toEqual([
+      ['s1', 0],
+      ['s2', 0],
+      ['s2', 1],
+    ]);
+    await sets.remove('s2', 'A', 1);
+    expect(await sets.exerciseHistory('u22', 'A')).toHaveLength(2);
+  });
+
+  it('un récord por serie (setKey único) y se cuentan por usuario y por sesión', async () => {
+    const records = personalRecordsRepository(db);
+    const record = {
+      userId: 'u23',
+      exerciseCode: 'A',
+      type: 'reps' as const,
+      value: 9,
+      date: '2026-10-19',
+      setKey: 'set:abc:A:0',
+    };
+    expect(await records.record(record)).toEqual({ inserted: true });
+    expect(await records.record(record)).toEqual({ inserted: false });
+    await records.record({ ...record, setKey: 'set:def:A:0' });
+    expect(await records.count('u23')).toBe(2);
+    expect(await records.countForSession('u23', 'abc')).toBe(1);
+  });
+
+  it('RN-GAM-011 · cada logro se anota una sola vez', async () => {
+    const achievements = achievementsRepository(db);
+    const entry = { userId: 'u24', code: 'FIRST_PR', at: now, value: 'A', context: 'reps' };
+    expect(await achievements.appendOnce(entry)).toEqual({ added: true });
+    expect(await achievements.appendOnce({ ...entry, value: 'B' })).toEqual({ added: false });
+    expect(await db.collection('achievements').countDocuments({ userId: 'u24' })).toBe(1);
+  });
+});
+
+describe('RN-SEG-006 · T-044 · dolor y ajustes por estancamiento', () => {
+  it('cuenta sesiones distintas con dolor en un ejercicio', async () => {
+    const pain = painFlagsRepository(db);
+    const base = { userId: 'u25', exerciseCode: 'A', zone: 'knee', date: '2026-10-19' };
+    await pain.record({ ...base, sessionId: 's1' });
+    await pain.record({ ...base, sessionId: 's1', zone: 'hip' });
+    await pain.record({ ...base, sessionId: 's2' });
+    await pain.record({ ...base, exerciseCode: 'B', sessionId: 's3' });
+    expect((await pain.sessionsWithPain('u25', 'A')).sort()).toEqual(['s1', 's2']);
+  });
+
+  it('RN-ENT-003 · guarda y lista los ajustes del usuario', async () => {
+    const adjustments = exerciseAdjustmentsRepository(db);
+    const adjustment = {
+      exerciseCode: 'A',
+      strategy: 'variant' as const,
+      fromWeek: '2026-10-26',
+      replacementCode: 'B',
+    };
+    await adjustments.save('u26', adjustment);
+    expect(await adjustments.list('u26')).toEqual([adjustment]);
+    expect(await adjustments.list('otro')).toEqual([]);
+  });
+});
+
+describe('RN-NUT-004 · T-051 · comidas del día y frecuentes', () => {
+  it('lee las comidas de un día en orden', async () => {
+    const meals = mealsRepository(db);
+    const base = {
+      userId: 'u30',
+      method: 'portions' as const,
+      portions: { palm: 1, cuppedHand: 0, fist: 0, thumb: 0 },
+      proteinG: 25,
+      favoriteMealId: null,
+      durationMs: 0,
+      taps: 1,
+    };
+    await meals.record({ ...base, date: '2026-10-19', loggedAt: now, idempotencyKey: 'b' });
+    await meals.record({
+      ...base,
+      date: '2026-10-19',
+      loggedAt: new Date('2026-10-19T12:00:00Z'),
+      idempotencyKey: 'a',
+    });
+    await meals.record({ ...base, date: '2026-10-18', loggedAt: now, idempotencyKey: 'c' });
+    expect((await meals.onDate('u30', '2026-10-19')).map((m) => m.idempotencyKey)).toEqual([
+      'a',
+      'b',
+    ]);
+  });
+
+  it('crea, lista, ajusta y borra frecuentes solo del usuario', async () => {
+    const favorites = favoriteMealsRepository(db);
+    const created = await favorites.create({
+      userId: 'u31',
+      name: 'Almuerzo',
+      portions: { palm: 1, cuppedHand: 2, fist: 1, thumb: 0 },
+      foodCodes: ['CORRIENTAZO'],
+    });
+    expect(await favorites.list('u31')).toEqual([created]);
+    expect(await favorites.byId('otro', created.id)).toBeNull();
+    expect(await favorites.byId('u31', 'no-es-un-id')).toBeNull();
+    await favorites.updatePortions('u31', created.id, {
+      palm: 2,
+      cuppedHand: 2,
+      fist: 1,
+      thumb: 0,
+    });
+    expect((await favorites.byId('u31', created.id))?.portions.palm).toBe(2);
+    await favorites.remove('otro', created.id);
+    expect(await favorites.list('u31')).toHaveLength(1);
+    await favorites.remove('u31', created.id);
+    expect(await favorites.list('u31')).toEqual([]);
   });
 });

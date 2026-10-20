@@ -323,3 +323,135 @@ relacionados: [index, inicio]
 - **Pendientes:**
   - FR-001-11 (teclado persistente y comandos) pasa a T-040/T-041.
   - Los objetivos sin meta de peso (fuerza, recomposición, constancia, mantener) se guardan sin valores hasta tener datos.
+
+## [2026-10-20] decision | M4: textos, conteo del día adelantado y alcance
+- El PO decide (2026-10-20):
+  1. Claude redacta en la bóveda los textos de M4 que faltan (plan, Hoy, "Hoy no puedo", tarjeta de sesión, fin de sesión) y el PO los revisa en el pull request.
+  2. Al terminar una sesión, SE-01/02/03 muestran el número de día que cuenta y la racha. Para eso se adelanta lo mínimo de M6: evaluar el día con el dominio (RN-DQC) y calcular número y racha con los días guardados. El cierre programado, los comodines aplicados por el planificador y la reparación siguen en M6.
+  3. Se incluye T-044 (récords, progresión, estancamiento y dolor) y queda fuera T-045 (ajustar días).
+- Consecuencia de (2): sin una forma de registrar el descanso, la racha se rompería cada día de descanso. La pantalla Hoy en día de descanso ofrece [Hice la movilidad], que RN-DQC-003 ya admite (P-032).
+
+## [2026-10-20] implementar | T-040 Plan semanal y `/plan`
+- `app/apps/server/src/plans/weekly-plan.ts`:
+  - `ensureWeek` arma las entradas del generador desde el perfil;
+  - continúa la rotación de la semana anterior (RN-PLAN-007);
+  - precarga la última carga de cada ejercicio (FR-002-04);
+  - guarda la semana una sola vez y emite `plan_generated`.
+- El onboarding guarda esta semana y la siguiente al terminar.
+- `plan-view.ts`: `/plan` y [Ver plan] muestran los 7 días (PN-01 a PN-04, [[plantillas-de-mensajes]] v0.7.0 §2.1) con el hoy marcado. Emite `plan_viewed`.
+- Repositorio MongoDB `plansRepository` (`weekly_plans` + `planned_sessions`, [[modelo-de-datos]] v0.1.6) y `lastLoads` en las series.
+- Pendientes:
+  - [Ajustar días] de HU-002-1 queda para T-045.
+  - El plan semanal que acompaña al resumen del domingo (RN-PLAN-009) llega con M7.
+  - Si el onboarding termina a mitad de semana, la primera semana puede incluir días ya pasados: la primera sesión que se muestra es la próxima desde hoy.
+
+## [2026-10-20] implementar | T-041 Hoy, elección de versión y "Hoy no puedo" sin deuda
+- `app/apps/server/src/today/today.ts`:
+  - `🏋️ Hoy`, `/hoy` y [Empezar] muestran PL-01 con [Gym] [Casa] [Exprés 15'] [Hoy no puedo] en un día de entreno;
+  - en un día de descanso muestran HY-01 con [Hice la movilidad] (RN-DQC-003, P-032);
+  - si el día ya cuenta, muestran HY-03; si hay una sesión abierta, la retoman.
+- **"Hoy no puedo"** (HN-01):
+  - [Exprés ahora] abre la versión C;
+  - [Mover a otro día] ofrece solo los días de descanso que quedan esta semana y que pasan RN-PLAN-008 (se revalida al tocar);
+  - [Hoy descanso] no cambia nada.
+  - Eventos `cant_today_selected` y `session_rescheduled`.
+- `sessions/session.ts` abre la versión elegida con la tarjeta de la primera serie (`card.ts`, SC-01; las acciones de la tarjeta son T-042) y emite `session_variant_chosen` y `session_started`. Una segunda versión con una sesión abierta pregunta [Continuar la anterior] [Nueva] (SPEC-003 §8).
+- **Lo adelantado de M6** (`days/day-status.ts`): cada actividad es una fuente del día (`session:<id>`, `mobility`), el dominio evalúa el día y `liveCountedDays` (dominio, RN-GAM-001/RN-DQC-007) da el n.º y la racha en vivo, con los comodines.
+- **Dominio nuevo:** `training/session-progress.ts` (avance de la tarjeta, puro, con propiedades de fast-check: nunca más series que las planeadas ni repetidas).
+- **FR-001-11:** al terminar el onboarding llega el teclado persistente (KB-01) y el servidor registra los comandos del menú (§2.3). Comida y Progreso responden KB-02 hasta M5 y M8.
+- **Bóveda:**
+  - [[plantillas-de-mensajes]] v0.8.0 (§2.2 a §2.4);
+  - **P-090** `training.undoWindowSeconds` = 10 s: el número estaba en FR-003-04, que ahora cita P-090 ([[parametros]] v0.6.0);
+  - [[modelo-de-datos]] v0.1.7.
+- **Lectura elegida de RN-PLAN-007:** "la rotación continúa" significa que el próximo día de entreno trae la sesión que el plan ya tenía, sin repetir la saltada ni sumar volumen. Así lo codifica el generador de T-011.
+
+## [2026-10-20] implementar | T-042 Tarjeta de sesión editable, 1 toque por serie, deshacer e idempotencia
+- `app/apps/server/src/sessions/card-actions.ts`:
+  - [✅ Hecha] registra la serie con su clave estable y edita el mismo mensaje con la siguiente (FR-003-01/02);
+  - [−1 rep] [+1 rep] [−kg] [+kg] ajustan antes de confirmar; la carga cambia en el incremento de su región, P-020/P-021;
+  - [⏭️ Siguiente ejercicio] salta las series que quedan;
+  - [↩️ Deshacer] funciona durante P-090 s (FR-003-04);
+  - sin series pendientes se muestra SC-02.
+- **Idempotencia (SC-003-2):** cada botón lleva la versión del estado de la sesión. Un doble toque, un botón viejo o un reintento de Telegram no registran nada y se vuelve a mostrar la tarjeta actual; la tarjeta de una sesión terminada responde SC-03 como aviso breve.
+- **SC-003-1:** `set_confirmed` lleva los toques que costó la serie (1 si se confirmó tal cual) y si se editó.
+- **Corrección:** sin historial, los ejercicios del gym empiezan en 0 kg. La tarjeta ahora muestra los botones de carga según el equipo del ejercicio, no según la carga actual ("0 kg" en vez de "peso corporal"). Nota de §2.4 en [[plantillas-de-mensajes]].
+- Pruebas: `sessions/card.test.ts` (10 escenarios, incluidos doble toque, reintento con el mismo `update_id`, deshacer fuera de la ventana y tarjeta de una sesión terminada).
+
+## [2026-10-20] implementar | T-043 "La hice tal cual" y terminar sesión
+- `app/apps/server/src/sessions/finish.ts`:
+  - [🏁 Terminar] deja la sesión **completada** si llega a P-023 de sus series (la exprés, entera, RN-ENT-004) o **parcial** si no.
+  - Completada: el día suma la fuente `session:<id>`, se evalúa y la tarjeta se edita con SE-01/02/03, que muestran el n.º del día y la racha en vivo.
+  - Parcial: SE-04, sin reproche.
+  - Eventos `session_completed` (versión, series, minutos) y `session_partial`.
+- **[La hice tal cual]** en la tarjeta antes de la primera serie registra todas las series como estaban (RN-ENT-001) y termina. Evento `session_logged_as_planned`.
+- **FR-003-05 y RN-DQC-005:** si ayer había sesión y no se registró, Hoy ofrece primero HY-04 [La hice tal cual] hasta el fin de la gracia (12:00 del día siguiente). Se registra en la versión del lugar habitual y cuenta para ayer.
+- Pruebas: `sessions/finish.test.ts` (10 escenarios). Incluyen el umbral P-023, la exprés incompleta, la gracia antes y después de las 12:00, y n.º y racha de 3 tras lunes de sesión, martes de movilidad y miércoles de sesión.
+- Pendiente para T-044: `{record_txt}` de SE-01 (récords del día).
+
+## [2026-10-20] implementar | T-044 Récords, progresión, estancamiento y dolor (Should)
+- **Récords (HU-003-4, RN-ENT-005, RN-GAM-011):** `app/apps/server/src/sessions/records.ts`.
+  - Al confirmar una serie se compara con todo lo anterior del ejercicio: e1RM mayor, o más repeticiones con la misma carga.
+  - El récord se guarda una vez por serie (`setKey` único) y se avisa con PR-01 sobre el botón, sin mensaje nuevo.
+  - La bitácora anota FIRST_PR y PR_10 una sola vez; PR_10 lee su número de la condición del catálogo.
+  - Evento `pr_detected`. SE-01 muestra `{record_txt}`.
+  - **El XP del récord queda para T-062** (decisión del PO en M4).
+- **Progresión (HU-003-5 escenario 1, RN-ENT-002):** la semana nueva sube la carga P-020/P-021 tras P-019 sesiones en el tope del rango (lo hacía ya T-040). No sube si hubo dolor en alguna de esas sesiones (RN-SEG-006).
+  - **Pendiente:** la "variante más difícil" en casa no está implementada. El catálogo no ordena las variantes por dificultad. HU-003-5 sigue abierta por eso y por el XP; la spec queda en `borrador`.
+- **Estancamiento (HU-003-5 escenario 2, RN-ENT-003 `[VALIDAR-PROFESIONAL]`):** `sessions/plateau.ts`.
+  - Al terminar una sesión (o "La hice tal cual"), si un ejercicio lleva P-022 sesiones sin superar su mejor marca anterior, ES-01 ofrece rango, variante o semana suave. Evento `plateau_detected`.
+  - Cada estrategia se confirma con ES-02 a ES-05 y se guarda en `exercise_adjustments` desde la semana siguiente.
+  - Si esa semana ya estaba generada y sin usar, se descarta y se regenera con el ajuste.
+  - No resta XP ni toca días o rachas.
+  - **Lectura elegida:** la spec dice "cuando se genera la siguiente". La propuesta se muestra al terminar la sesión en que se detecta, que es cuando hay alguien para tocar el botón; el ajuste entra en el plan siguiente.
+- **Dolor (HU-003-6, RN-SEG-006):** `sessions/pain.ts`.
+  - [⚠️ Dolor] → zona (DL-01) en la misma tarjeta → se guarda con la sesión y se emite `pain_flagged` (solo la zona).
+  - Responde CU-04, o CU-09 si hubo dolor en P-062 sesiones distintas del ejercicio. Ambas son plantillas fijas.
+  - [Ver variante] cambia el ejercicio por otro del mismo patrón y versión, o pasa al siguiente con DL-02.
+- **Corrección:** el lector de `callback_data` no aceptaba la acción `pt` (botones de ES-01). Lo detectó la prueba de estancamiento; ahora hay prueba de ida y vuelta para `ss` y `pt`.
+- Pruebas:
+  - `sessions/records-plateau-pain.test.ts` (17 escenarios);
+  - repositorios de MongoDB de récords, bitácora, dolor, ajustes, historia del ejercicio y descarte de semana.
+
+## [2026-10-20] decision | M5 · nutrición: alcance y lecturas aprobadas por el PO
+- **Foto y texto → porciones (T-053 *Should*, T-054 *Could*):** quedan para después. El proveedor de IA y su política de retención de imágenes siguen como `[NEEDS CLARIFICATION]` en [[spec-004-registro-de-nutricion]] §10. Hasta entonces, una foto recibe la respuesta de siempre y Comida usa porciones.
+- **Proteína de las plantillas:** palmas × P-027 en toda comida (FR-004-04). Con un rango de porciones se usa el valor bajo. La proteína aproximada del catálogo queda como referencia. Nombres cortos para los botones en [[alimentos-accesibles-base]] v0.2.0.
+- **Paso de la palma:** media palma (P-093); las demás manos, de 1 en 1.
+- **Día en vivo:** la mitad de comida se guarda como fuente `nutrition_half` del día y puede hacer contar el descanso (DC-01) o completar el día (DC-02). El cierre programado sigue en T-060.
+- **Parámetros nuevos** ([[parametros]] v0.8.0):
+  - P-092: 4 palmas sin peso declarado `[V]`, de SPEC-004 §8;
+  - P-093: paso de la palma;
+  - P-094: 6 frecuentes como botones `[supuesto]`;
+  - P-095: 3 alimentos en la sugerencia `[supuesto]`.
+- **Textos:** CM-01 a CM-17 redactados por Claude ([[plantillas-de-mensajes]] v0.11.0 §2.5). HY-01 ahora nombra la misión de proteína y trae [Registrar comida]; KB-02 queda solo para Progreso. Pendientes de revisión del PO en el PR.
+
+## [2026-10-20] implementar | T-050 Teclado de porciones y barra de proteína
+- `app/apps/server/src/meals/meals.ts`: `🍽️ Comida` (teclado, CU-07 y [Registrar comida] de Hoy) → CM-01 → [Porciones] → CM-03.
+  - El teclado se edita en el mismo mensaje. El borrador de la comida viaja en los datos del botón (`meals/draft.ts`, ≤ 64 bytes).
+  - 1 palma cuesta 5 toques desde `🍽️ Comida`, dentro del presupuesto de FR-004-02.
+- [Guardar] registra la comida con su clave de toque (un doble toque no duplica) y edita el mensaje con la barra CM-04/CM-05.
+  - La meta sale del peso (RN-NUT-002) o de P-092.
+  - En modo sin números se usan CM-06/CM-07 (HU-004-3).
+- **FR-004-07:** durante la gracia (hasta P-030), [Era de ayer] registra la comida en el día anterior.
+- **FR-004-08:** cada comida guarda duración (desde que se abrió el menú) y toques.
+- **Eventos:** `meal_logged` (método, duración, toques, proteína) y `nutrition_half_completed` (modo).
+- **Dominio nuevo:** `dailyProteinGoal`, `palmsFromProtein`, `adjustPortion` (propiedad: nunca bajo 0), `hasPortions`, `rotatingPick`.
+
+## [2026-10-20] implementar | T-051 Frecuentes, plantillas y "repetir ayer"
+- **Frecuentes:**
+  - [Guardar como frecuente] registra la comida y guarda la frecuente, con el nombre corto de la plantilla o CM-17. Evento `favorite_meal_saved`.
+  - Las frecuentes salen como botones en CM-01, hasta P-094, y se registran con 1 toque.
+  - [Editar frecuentes] permite ✏️ ajustar las porciones o 🗑️ borrar (FR-004-03).
+- **Plantillas:** abren el teclado con el valor bajo de cada rango.
+- **Repetir ayer:**
+  - CM-10 muestra las comidas de ayer; [Registrar] las suma hoy con 1 toque. Evento `meal_repeated`.
+  - [Cancelar] no registra nada.
+- **Repositorios** (MongoDB y dobles en memoria): `meals.onDate` y `favorite_meals`.
+
+## [2026-10-20] implementar | T-052 Sugerencias según el tipo de día
+- **Día de entreno:** antes de la hora habitual (P-083 de su franja), `🍽️ Comida` muestra primero CM-15. Lleva P-095 fuentes de proteína de costo `$` del catálogo, que rotan con el día de la semana (RN-NUT-006).
+- **Día de descanso:** Hoy (HY-01) dice que la misión es la proteína o la recuperación activa (HU-004-6 escenario 2).
+- **Pruebas:** `meals/meals.test.ts` (29 escenarios) y `meals/draft.test.ts` (ida y vuelta con fast-check).
+- **Pendiente:**
+  - T-053 y T-054 (IA), por decisión del PO.
+  - Pedir el peso en `/progreso` (SPEC-004 §8) llega con M8.
+  - SPEC-004 sigue en `borrador` mientras falten HU-004-4/5.

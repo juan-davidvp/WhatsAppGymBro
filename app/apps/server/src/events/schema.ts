@@ -72,6 +72,51 @@ export const EVENT_PROPS_SCHEMAS = {
     days: z.array(z.enum(WEEK_DAYS as readonly [string, ...string[]])).min(1),
     slot: z.enum(['morning', 'midday', 'afternoon', 'evening']),
   }),
+  plan_generated: z.strictObject({
+    trainingDays: z.number().int().nonnegative(),
+    intensity: z.enum(['low', 'normal']),
+  }),
+  plan_viewed: z.strictObject({}),
+  progression_suggested: z.strictObject({ exercises: z.number().int().positive() }),
+  session_variant_chosen: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
+  session_started: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
+  cant_today_selected: z.strictObject({ option: z.enum(['express', 'move', 'rest']) }),
+  session_rescheduled: z.strictObject({}),
+  set_confirmed: z.strictObject({
+    taps: z.number().int().positive(),
+    edited: z.boolean(),
+  }),
+  set_undone: z.strictObject({}),
+  plateau_detected: z.strictObject({}),
+  meal_logged: z.strictObject({
+    method: z.enum(['portions', 'favorite', 'repeat', 'photo', 'text']),
+    durationMs: z.number().int().nonnegative(),
+    taps: z.number().int().nonnegative(),
+    proteinG: z.number().nonnegative(),
+  }),
+  favorite_meal_saved: z.strictObject({ fromTemplate: z.boolean() }),
+  meal_repeated: z.strictObject({ meals: z.number().int().positive() }),
+  nutrition_half_completed: z.strictObject({ mode: z.enum(['numbers', 'number_free']) }),
+  pain_flagged: z.strictObject({
+    zone: z.enum(['shoulder', 'elbow', 'wrist', 'back', 'hip', 'knee', 'ankle', 'other']),
+  }),
+  pr_detected: z.strictObject({
+    exerciseCode: z.string().regex(/^[A-Z0-9_]{1,40}$/),
+    kind: z.enum(['e1rm', 'reps']),
+  }),
+  session_completed: z.strictObject({
+    variant: z.enum(['GYM', 'HOME', 'EXPRESS']),
+    sets: z.number().int().nonnegative(),
+    durationMin: z.number().int().nonnegative(),
+  }),
+  session_partial: z.strictObject({
+    variant: z.enum(['GYM', 'HOME', 'EXPRESS']),
+    sets: z.number().int().nonnegative(),
+  }),
+  session_logged_as_planned: z.strictObject({
+    variant: z.enum(['GYM', 'HOME', 'EXPRESS']),
+    sets: z.number().int().nonnegative(),
+  }),
   onboarding_completed: z.strictObject({
     durationMs: z.number().int().nonnegative(),
     taps: z.number().int().nonnegative(),

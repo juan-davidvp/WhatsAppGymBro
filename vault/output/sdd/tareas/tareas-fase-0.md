@@ -64,20 +64,20 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-040 | Plan semanal y `/plan` | HU-002-1 | T-032 | Escenarios pasan |
-| T-041 | `🏋️ Hoy`, elección de versión y "Hoy no puedo" sin deuda | HU-002-2/3 | T-040 | Escenarios pasan |
-| T-042 | Tarjeta de sesión editable, 1 toque por serie, deshacer, idempotencia | HU-003-1, FR-003-01 a 04 | T-041 | SC-003-1 y SC-003-2 |
-| T-043 | "La hice tal cual" y terminar sesión | HU-003-2/3 | T-042 | Escenarios pasan |
-| T-044 | *Should:* récords, progresión, estancamiento y dolor | HU-003-4 a 6 | T-043 | Escenarios pasan |
+| T-040 ✅ | Plan semanal y `/plan` | HU-002-1 | T-032 | Escenarios pasan |
+| T-041 ✅ | `🏋️ Hoy`, elección de versión y "Hoy no puedo" sin deuda | HU-002-2/3 | T-040 | Escenarios pasan |
+| T-042 ✅ | Tarjeta de sesión editable, 1 toque por serie, deshacer, idempotencia | HU-003-1, FR-003-01 a 04 | T-041 | SC-003-1 y SC-003-2 |
+| T-043 ✅ | "La hice tal cual" y terminar sesión | HU-003-2/3 | T-042 | Escenarios pasan |
+| T-044 ✅ | *Should:* récords, progresión, estancamiento y dolor | HU-003-4 a 6 | T-043 | Escenarios pasan |
 | T-045 | *Should:* ajustar días disponibles y regenerar el plan sin perder el progreso | HU-002-4, RN-PLAN-001/004 | T-040 | Escenarios pasan |
 
 ## M5 · Nutrición (SPEC-004)
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-050 | Teclado de porciones y barra de proteína | HU-004-1/3 | T-032 | SC-004-1 (porciones) |
-| T-051 | Comidas frecuentes, plantillas predefinidas y "repetir ayer" | HU-004-2 | T-050 | SC-004-1 (frecuente) |
-| T-052 [P] | Sugerencias según el tipo de día | HU-004-6 | T-050 | Escenarios pasan |
+| T-050 ✅ | Teclado de porciones y barra de proteína | HU-004-1/3 | T-032 | SC-004-1 (porciones) |
+| T-051 ✅ | Comidas frecuentes, plantillas predefinidas y "repetir ayer" | HU-004-2 | T-050 | SC-004-1 (frecuente) |
+| T-052 [P] ✅ | Sugerencias según el tipo de día | HU-004-6 | T-050 | Escenarios pasan |
 | T-053 | *Should:* foto → propuesta de porciones (adaptador de IA, esquema, límite diario, costo) | HU-004-4 | T-050 | SC-004-3; costo registrado |
 | T-054 | *Could:* texto → propuesta de porciones | HU-004-5 | T-053 | Escenarios pasan |
 

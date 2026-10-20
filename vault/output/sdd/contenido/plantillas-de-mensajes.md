@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.6.0
+version: 0.11.0
 creado: 2026-10-18
-actualizado: 2026-10-19
+actualizado: 2026-10-20
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -99,9 +99,113 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | RA-02 | Racha reiniciada | Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés? |
 | RA-03 | Racha reparada | Racha reparada. Volver también suma. |
 | BR-01 | Bonificación de regreso | Volviste. Eso vale +{xp} puntos. |
-| PR-01 | Récord | 🏆 Récord: {ejercicio} {kg} kg × {reps}. Quedó en tu bitácora. |
+| PR-01 | Récord | 🏆 Récord: {ejercicio}, {carga} × {reps}. Quedó en tu bitácora. |
 | PR-02 | Récord con memoria | 🏆 {ejercicio}: {kg} kg × {reps}. Hace {semanas} semanas eran {kg_antes}. |
-| ES-01 | Estancamiento | {ejercicio} está quieto hace 3 sesiones. Es normal. ¿Probamos algo distinto? [Cambiar rango] [Cambiar variante] [Semana suave] |
+| ES-01 | Estancamiento | {ejercicio} está quieto hace {sesiones} sesiones. Es normal. ¿Probamos algo distinto? [Cambiar rango] [Cambiar variante] [Semana suave] |
+| ES-02 | Estrategia: variante | Listo: desde la próxima semana, {ejercicio} cambia por {nuevo}. |
+| ES-03 | Estrategia: rango | Listo: desde la próxima semana, {ejercicio} va de {min} a {max} repeticiones. |
+| ES-04 | Estrategia: semana suave | Listo: la próxima semana {ejercicio} lleva {series} series para recuperar. |
+| ES-05 | Sin otra variante | No tengo otra variante de {ejercicio} en el catálogo. Prueba con el rango o la semana suave. |
+| DL-01 | [⚠️ Dolor] | ¿Dónde te duele? [Hombro] [Codo] [Muñeca] [Espalda] [Cadera] [Rodilla] [Tobillo] [Otra zona] |
+| DL-02 | Sin variante sin dolor | No tengo otra variante para ese ejercicio en esta versión: pasamos al siguiente. |
+
+
+### 2.1 Plan de la semana (`/plan`, T-040)
+
+| ID | Momento | Texto |
+|---|---|---|
+| PN-01 | `/plan` | Tu plan de esta semana:{lineas} |
+| PN-02 | Línea de un día de entreno | {dia}: {sesion} · {minutos} min |
+| PN-03 | Línea de un día de descanso | {dia}: descanso |
+| PN-04 | Sin plan todavía | Aún no tienes plan: termina el inicio con /start y te lo armo. |
+
+> PN-01 lleva una línea por día (PN-02 o PN-03), cada una en su renglón; `{minutos}` es la duración estimada de la versión del gym (RN-PLAN-006). El hoy se marca con "👉" al inicio de su línea.
+
+
+### 2.2 Hoy y "Hoy no puedo" (T-041)
+
+| ID | Momento | Texto |
+|---|---|---|
+| HY-01 | Hoy en día de descanso | Hoy toca descanso: tu misión es la proteína o la recuperación activa. Para que cuente, cumple la mitad de comida o haz {minutos} min de movilidad. [Hice la movilidad] [Registrar comida] |
+| HY-02 | Movilidad confirmada | Movilidad hecha: hoy cuenta. Día que cuenta n.º {n} · 🔥 {racha} |
+| HY-03 | Hoy ya cuenta | Hoy ya cuenta. Mañana seguimos con tu plan. |
+| HY-04 | Ayer sin registrar, dentro de la gracia (RN-DQC-005) | ¿Hiciste ayer {sesion}? Si la hiciste tal cual, regístrala con un toque. [La hice tal cual] |
+| HN-01 | [Hoy no puedo] | Sin problema, no queda deuda. ¿Qué hacemos? [Exprés ahora] [Mover a otro día] [Hoy descanso] |
+| HN-02 | [Hoy descanso] | Listo. Tu próximo día de entreno sigue con el plan, sin deuda. |
+| HN-03 | [Mover a otro día] | ¿A qué día la pasamos? |
+| HN-04 | Ningún día posible | Esta semana no queda un día que respete tu descanso. Seguimos con el plan el próximo día de entreno, sin deuda. |
+| HN-05 | Sesión movida | Listo: {sesion} pasa al {dia}. |
+| KB-01 | Teclado persistente (al terminar el inicio) | Abajo tienes Hoy, Comida y Progreso a un toque. |
+| KB-02 | Sección aún no disponible | Esa sección todavía no está lista. Por ahora tienes Hoy, Comida y /plan. |
+
+> - Hoy en día de entreno usa PL-01 (§1.1) con sus botones.
+> - HN-03 lleva un botón por cada día de esta semana al que se puede mover la sesión (RN-PLAN-007, RN-PLAN-008).
+> - Teclado persistente ([[flujos-de-usuario]] §1): `🏋️ Hoy` · `🍽️ Comida` · `📈 Progreso`.
+> - KB-02 responde a Progreso hasta que llegue M8.
+
+
+### 2.4 Tarjeta de sesión (T-041, T-042)
+
+| ID | Momento | Texto |
+|---|---|---|
+| SC-01 | Tarjeta: serie que toca | {ejercicio} · serie {serie} de {series}: {reps} reps con {carga}. Llevas {hechas} de {total} series. [✅ Hecha] [−1 rep] [+1 rep] [−kg] [+kg] [⏭️ Siguiente ejercicio] [⚠️ Dolor] [🏁 Terminar] |
+| SC-02 | Tarjeta: no quedan series | Hiciste las {hechas} series de {sesion}. [🏁 Terminar] |
+| SC-03 | Toque en una tarjeta vieja | Esta sesión ya terminó. |
+| SC-04 | Ya hay una sesión abierta hoy | Ya tienes una sesión abierta hoy: {sesion}. [Continuar la anterior] [Nueva] |
+
+> - SC-01 es un solo mensaje que se edita en cada toque (FR-003-01).
+> - `{carga}` es "{n} kg" en un ejercicio con equipo (también "0 kg" mientras no tenga carga) o "peso corporal" en uno sin equipo, que no muestra [−kg] ni [+kg].
+> - Después de confirmar una serie aparece [↩️ Deshacer] durante P-090 segundos (FR-003-04).
+> - Antes de la primera serie aparece [La hice tal cual] (HU-003-2).
+> - SC-03 se muestra como aviso breve sobre el botón, sin cambiar datos ([[spec-003-registro-de-entrenamiento]] §8).
+> - En SE-01, `{record_txt}` es " y {n} récord 🏆" (o "récords") si hubo récords en la sesión, o vacío. El récord de cada serie se avisa con PR-01 como aviso breve sobre [✅ Hecha].
+> - [⚠️ Dolor] muestra DL-01; con la zona elegida, la tarjeta pasa a CU-04, o a CU-09 si el dolor se repite (RN-SEG-006). [Ver variante] cambia el ejercicio por otro del mismo patrón y versión, o pasa al siguiente con DL-02 si no hay otro.
+> - ES-01 llega como mensaje nuevo después del fin de sesión, con un solo ejercicio estancado por vez. ES-02 a ES-05 confirman la estrategia elegida (RN-ENT-003).
+
+### 2.3 Comandos del menú
+
+| Comando | Descripción |
+|---|---|
+| start | Empezar o retomar |
+| hoy | Tu sesión de hoy |
+| plan | Tu plan de la semana |
+| privacidad | Tu autorización y la política de datos |
+| borrar_datos | Borrar todos tus datos |
+
+> Lista que el bot registra en Telegram. Cada comando se añade aquí cuando su tarea lo implementa ([[flujos-de-usuario]] §1 tiene la lista completa prevista).
+
+### 2.5 Comida (T-050 a T-052)
+
+| ID | Momento | Texto |
+|---|---|---|
+| CM-01 | `🍽️ Comida` | ¿Qué comiste? Tus frecuentes se registran con un toque. [Porciones] [Plantillas] [Repetir ayer] [Editar frecuentes] [Era de ayer] |
+| CM-02 | `🍽️ Comida` para ayer (gracia, RN-DQC-005) | Registrando una comida de ayer. ¿Qué comiste? [Porciones] [Plantillas] [Editar frecuentes] [Era de hoy] |
+| CM-03 | Teclado de porciones | Porciones de esta comida: 🖐️ Palma {palma} · 🤲 Mano ahuecada {mano} · ✊ Puño {puno} · 👍 Pulgar {pulgar} [−🖐️] [+🖐️] [−🤲] [+🤲] [−✊] [+✊] [−👍] [+👍] [Guardar] [Guardar como frecuente] |
+| CM-04 | Comida guardada | Comida registrada ✅ {barra} {proteina}/{meta} g ({palmas}/{meta_palmas} palmas) |
+| CM-05 | Comida guardada, mitad cumplida | Comida registrada ✅ {barra} {proteina}/{meta} g ({palmas}/{meta_palmas} palmas) · mitad de comida cumplida |
+| CM-06 | Comida guardada (modo sin números) | Comida registrada ✅ |
+| CM-07 | Igual, mitad cumplida | Comida registrada ✅ Mitad de comida cumplida. |
+| CM-08 | [Guardar como frecuente] | Quedó en tus frecuentes: {nombre}. |
+| CM-09 | [Plantillas] | Comidas típicas para empezar. Elige una y ajusta las porciones si hace falta. |
+| CM-10 | [Repetir ayer] | Ayer registraste: {lista}. ¿Lo registro igual hoy? [Registrar] [Cancelar] |
+| CM-11 | Ayer sin comidas | Ayer no registraste comidas. Elige una frecuente o usa porciones. |
+| CM-12 | [Editar frecuentes] | Tus frecuentes: ✏️ para ajustar las porciones, 🗑️ para borrarla. |
+| CM-13 | Frecuente borrada | Borré {nombre} de tus frecuentes. |
+| CM-14 | [Guardar] sin porciones | Agrega al menos una porción antes de guardar. |
+| CM-15 | Día de entreno, antes de la hora habitual (HU-004-6) | Hoy entrenas: antes de la sesión te sirve algo con proteína, como {alimentos}. |
+| CM-16 | [Cancelar] | Listo, no registré nada. |
+| CM-17 | Nombre de una frecuente sin plantilla | 🖐️{palma} 🤲{mano} ✊{puno} 👍{pulgar} |
+
+> - CM-01 empieza con las frecuentes como botones (hasta P-094), cada una con su nombre. [Repetir ayer] solo aparece si ayer hubo comidas; [Editar frecuentes], si hay frecuentes; [Era de ayer], solo durante la gracia (hasta P-030). CM-02 registra para ayer y [Era de hoy] vuelve a CM-01.
+> - CM-03 se edita en el mismo mensaje con cada toque. La palma cambia de P-093 en P-093; las otras manos, de 1 en 1. [Guardar como frecuente] registra la comida y la guarda con el nombre corto de la plantilla, o con CM-17 si no viene de una.
+> - Presupuesto (FR-004-02): `🍽️ Comida` → [Porciones] → dos toques en [+🖐️] → [Guardar] son 5 toques. Una frecuente es 1 toque desde CM-01 (RN-NUT-004).
+> - `{barra}` tiene 10 celdas (▓ llena, ░ vacía), llenas según la proteína del día sobre la meta. `{palmas}` es la proteína ÷ P-027, redondeada hacia abajo a la media palma. La meta es peso × P-026 (RN-NUT-002) o P-092 palmas sin peso declarado.
+> - En modo sin números se usan CM-06 y CM-07, sin gramos ni palmas (HU-004-3).
+> - Si la comida hace que el día de descanso cuente, sigue DC-01; si lo completa, DC-02 (RN-DQC-003, RN-DQC-004).
+> - CM-12 lleva por cada frecuente dos botones: ✏️ {nombre} y 🗑️ {nombre}. ✏️ abre CM-03 con sus porciones; ahí [Guardar como frecuente] la actualiza.
+> - CM-10: `{lista}` es cada comida de ayer con su nombre (CM-17 si no era frecuente), separadas por " · ". [Registrar] las registra todas con 1 toque.
+> - CM-15 sale antes de CM-01 en un día de entreno, antes de la hora habitual (P-083). `{alimentos}` son P-095 fuentes de proteína de costo `$` del [[alimentos-accesibles-base]], que rotan cada día (RN-NUT-006).
+> - CM-08, CM-14 y CM-16 se muestran como aviso breve sobre el botón.
 
 ## 3. Onboarding (textos base)
 
@@ -190,3 +294,4 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | CU-06 | Sobreuso | Vienes entrenando también en tus descansos. El músculo crece cuando descansas; ¿le damos un día libre? [Sí, descanso] [Ajustar plan] |
 | CU-07 | Pregunta fuera del dominio | Funciono con botones para tu entreno y tu comida. ¿Qué quieres hacer? [Hoy] [Comida] [Progreso] |
 | CU-08 | Síntomas cardíacos con el esfuerzo | Para el ejercicio ahora. Si la molestia en el pecho, la falta de aire o el mareo no pasan en unos minutos o empeoran, busca ayuda de emergencia ya: {recurso_local} |
+| CU-09 | Dolor repetido en un ejercicio (RN-SEG-006, P-062) | El dolor se repite en este ejercicio. Antes de seguir con él, lo indicado es que lo revise un profesional de la salud. [Ver variante] |
