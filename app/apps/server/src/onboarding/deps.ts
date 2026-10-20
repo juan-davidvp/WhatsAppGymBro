@@ -3,6 +3,8 @@ import type {
   BodyMeasurementsRepository,
   ConsentsRepository,
   GoalsRepository,
+  PlansRepository,
+  SetEntriesRepository,
   ScreeningsRepository,
   TrainingHabitsRepository,
   UserDataEraser,
@@ -19,6 +21,8 @@ export interface OnboardingDeps {
   bodyMeasurements: BodyMeasurementsRepository;
   habits: TrainingHabitsRepository;
   goals: GoalsRepository;
+  plans: PlansRepository;
+  setEntries: SetEntriesRepository;
   events: EventEmitter;
   clock: () => Date;
 }

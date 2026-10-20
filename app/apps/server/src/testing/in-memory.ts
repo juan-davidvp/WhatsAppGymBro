@@ -4,6 +4,8 @@ import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.j
 import type { EventName } from '../events/catalog.js';
 import {
   EMPTY_PROFILE,
+  type SetEntryRecord,
+  type StoredWeeklyPlan,
   type GoalRecord,
   type ScreeningType,
   type TrainingHabitRecord,
@@ -53,6 +55,10 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const weights: { userId: string; date: string; weightKg: number }[] = [];
   const habits: TrainingHabitRecord[] = [];
   const goals: (GoalRecord & { status: 'active' | 'changed' })[] = [];
+  const weeks: (StoredWeeklyPlan & { userId: string })[] = [];
+  const setEntries: (SetEntryRecord & { idempotencyKey: string })[] = [];
+  let nextId = 1;
+  const newId = () => (nextId++).toString(16).padStart(24, '0');
 
   /** Reemplaza el usuario con ese id aplicando `change`. */
   function updateUser(userId: string, change: (user: UserRecord) => UserRecord): void {
@@ -209,6 +215,60 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         });
       },
     },
+    plans: {
+      saveWeek(userId, plan) {
+        const existing = weeks.find((w) => w.userId === userId && w.weekStart === plan.weekStart);
+        if (existing) return Promise.resolve(existing);
+        const stored = {
+          ...plan,
+          userId,
+          days: plan.days.map((d) => ({
+            ...d,
+            session: d.session ? { ...d.session, id: newId() } : null,
+          })),
+        };
+        weeks.push(stored);
+        return Promise.resolve(stored);
+      },
+      week(userId, weekStart) {
+        return Promise.resolve(
+          weeks.find((w) => w.userId === userId && w.weekStart === weekStart) ?? null,
+        );
+      },
+      moveSession(userId, weekStart, from, to) {
+        const index = weeks.findIndex((w) => w.userId === userId && w.weekStart === weekStart);
+        const week = weeks[index];
+        const source = week?.days.find((d) => d.date === from)?.session;
+        if (!week || !source) return Promise.resolve();
+        weeks[index] = {
+          ...week,
+          days: week.days.map((d) => {
+            if (d.date === from) return { ...d, type: 'REST' as const, session: null };
+            if (d.date === to) return { ...d, type: 'TRAINING' as const, session: source };
+            return d;
+          }),
+        };
+        return Promise.resolve();
+      },
+    },
+    setEntries: {
+      record(entry) {
+        const idempotencyKey = `set:${entry.sessionId}:${entry.exerciseCode}:${entry.setIndex}`;
+        if (setEntries.some((e) => e.idempotencyKey === idempotencyKey)) {
+          return Promise.resolve({ inserted: false });
+        }
+        setEntries.push({ ...entry, idempotencyKey });
+        return Promise.resolve({ inserted: true });
+      },
+      lastLoads(userId) {
+        const loads: Record<string, number> = {};
+        const mine = setEntries
+          .filter((e) => e.userId === userId)
+          .sort((a, b) => a.confirmedAt.getTime() - b.confirmedAt.getTime());
+        for (const e of mine) loads[e.exerciseCode] = e.loadKg;
+        return Promise.resolve(loads);
+      },
+    },
     consents: {
       record({ userId, granted, declined, at, policyVersion }) {
         for (const category of granted)
@@ -245,6 +305,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(weights, userId);
         removeRows(habits, userId);
         removeRows(goals, userId);
+        removeRows(weeks, userId);
+        removeRows(setEntries, userId);
         for (const event of events) if (event.subject?.userId === userId) event.subject = null;
         return Promise.resolve();
       },
@@ -266,5 +328,17 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     events: emitter,
   };
 
-  return { deps, users, riskSignals, events, consents, screenings, weights, habits, goals };
+  return {
+    deps,
+    users,
+    riskSignals,
+    events,
+    consents,
+    screenings,
+    weights,
+    habits,
+    goals,
+    weeks,
+    setEntries,
+  };
 }

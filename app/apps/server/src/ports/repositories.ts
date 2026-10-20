@@ -10,7 +10,9 @@ import type {
   LocalDate,
   LocalTime,
   OnboardingStep,
+  PlannedSession,
   TrainingPlace,
+  WeeklyPlan,
   Weekday,
 } from '@gymbro/domain';
 
@@ -187,6 +189,8 @@ export interface SetEntryRecord {
 export interface SetEntriesRepository {
   /** SC-003-2: repetir la confirmación de la misma serie no la duplica. */
   record(entry: SetEntryRecord): Promise<{ inserted: boolean }>;
+  /** FR-002-04: última carga registrada de cada ejercicio (para precargar el plan). */
+  lastLoads(userId: string): Promise<Record<string, number>>;
 }
 
 export interface MealRecord {
@@ -236,4 +240,23 @@ export interface RiskSignalsRepository {
 export interface EventsRepository {
   /** Guarda un evento ya validado (`validateEvent`). */
   insert(event: AnalyticsEvent): Promise<void>;
+}
+
+/** Día de un plan guardado: la sesión lleva su id (`planned_sessions`). */
+export interface StoredPlanDay {
+  readonly date: LocalDate;
+  readonly type: DayType;
+  readonly session: (PlannedSession & { readonly id: string }) | null;
+}
+
+export interface StoredWeeklyPlan extends Omit<WeeklyPlan, 'days'> {
+  readonly days: readonly StoredPlanDay[];
+}
+
+export interface PlansRepository {
+  /** Guarda la semana si no existe (RN-PLAN-001); devuelve la guardada. Idempotente. */
+  saveWeek(userId: string, plan: WeeklyPlan): Promise<StoredWeeklyPlan>;
+  week(userId: string, weekStart: LocalDate): Promise<StoredWeeklyPlan | null>;
+  /** RN-PLAN-007: mueve la sesión de `from` a `to` dentro de la misma semana. */
+  moveSession(userId: string, weekStart: LocalDate, from: LocalDate, to: LocalDate): Promise<void>;
 }

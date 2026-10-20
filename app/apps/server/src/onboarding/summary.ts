@@ -1,25 +1,17 @@
-import {
-  EXERCISES,
-  EXPRESS_EXCEPTIONS,
-  SESSION_NAMES,
-  WEEKDAY_NAMES,
-  renderTemplate,
-  templateById,
-} from '@gymbro/content';
+import { SESSION_NAMES, WEEKDAY_NAMES, renderTemplate, templateById } from '@gymbro/content';
 import {
   PARAMETERS,
   WEEK_DAYS,
   addDays,
-  generateWeeklyPlan,
   operationalDate,
   weekStartOf,
   weekdayOf,
   type GoalMetric,
   type GoalType,
   type LocalDate,
-  type WeeklyPlan,
 } from '@gymbro/domain';
-import type { TimeSlot, UserRecord } from '../ports/repositories.js';
+import { ensureWeek } from '../plans/weekly-plan.js';
+import type { StoredWeeklyPlan, TimeSlot, UserRecord } from '../ports/repositories.js';
 import { reload, subjectOf, type OnboardingDeps } from './deps.js';
 import { formatKg, joinSpanish } from './profile-steps.js';
 import { GOAL_BY_LABEL, button, buttonValue, type Reply } from './replies.js';
@@ -56,7 +48,7 @@ function weekdayName(date: LocalDate): string {
 }
 
 /** Primer día con sesión desde hoy (esta semana o la siguiente). */
-function firstSession(plans: readonly WeeklyPlan[], today: LocalDate) {
+function firstSession(plans: readonly StoredWeeklyPlan[], today: LocalDate) {
   for (const plan of plans) {
     const day = plan.days.find((d) => d.date >= today && d.session !== null);
     if (day?.session) return { date: day.date, template: day.session.template };
@@ -70,7 +62,6 @@ export async function completeOnboarding(user: UserRecord, deps: OnboardingDeps)
   const now = deps.clock();
   const today = operationalDate(now, fresh.timezone);
   const goalType: GoalType = profile.goalType ?? 'consistency';
-  const level = profile.level ?? 'novice';
   const slot = profile.timeSlot ?? 'morning';
 
   // RN-PLAN-002: hábito declarado (días, hora habitual por la franja P-083 y lugar).
@@ -108,26 +99,13 @@ export async function completeOnboarding(user: UserRecord, deps: OnboardingDeps)
     });
   }
 
-  // FR-001-10: primer plan (esta semana y la siguiente, para la primera sesión).
-  const inputs = {
-    level,
-    availableDays: profile.availableDays,
-    sessionMinutes: profile.sessionMinutes ?? PARAMETERS.plan.sessionMinutesRange.max,
-    goal: goalType,
-    homeEquipment: profile.homeEquipment,
-    rotationStart: 0,
-    lowIntensity: fresh.settings.lowIntensityStart,
-    catalog: EXERCISES,
-    expressExceptions: EXPRESS_EXCEPTIONS,
-  };
-  const thisWeek = generateWeeklyPlan({ ...inputs, weekStart: weekStartOf(today) });
-  const nextWeek = generateWeeklyPlan({
-    ...inputs,
-    weekStart: addDays(weekStartOf(today), 7),
-    rotationStart: thisWeek.nextRotationStart,
-  });
-  const first = firstSession([thisWeek, nextWeek], today);
-  const trainingDays = thisWeek.days
+  // FR-001-10 y T-040: primer plan guardado (esta semana y la siguiente, para la primera sesión).
+  const monday = weekStartOf(today);
+  const thisWeek = await ensureWeek(fresh, monday, deps);
+  const nextWeek = await ensureWeek(fresh, addDays(monday, WEEK_DAYS.length), deps);
+  const plans = [thisWeek, nextWeek].filter((p): p is StoredWeeklyPlan => p !== null);
+  const first = firstSession(plans, today);
+  const trainingDays = (thisWeek?.days ?? [])
     .filter((d) => d.session !== null)
     .map((d) => weekdayName(d.date));
 

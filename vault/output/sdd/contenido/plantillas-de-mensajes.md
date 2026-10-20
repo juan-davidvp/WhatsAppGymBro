@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.6.0
+version: 0.7.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -102,6 +102,18 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | PR-01 | Récord | 🏆 Récord: {ejercicio} {kg} kg × {reps}. Quedó en tu bitácora. |
 | PR-02 | Récord con memoria | 🏆 {ejercicio}: {kg} kg × {reps}. Hace {semanas} semanas eran {kg_antes}. |
 | ES-01 | Estancamiento | {ejercicio} está quieto hace 3 sesiones. Es normal. ¿Probamos algo distinto? [Cambiar rango] [Cambiar variante] [Semana suave] |
+
+
+### 2.1 Plan de la semana (`/plan`, T-040)
+
+| ID | Momento | Texto |
+|---|---|---|
+| PN-01 | `/plan` | Tu plan de esta semana:{lineas} |
+| PN-02 | Línea de un día de entreno | {dia}: {sesion} · {minutos} min |
+| PN-03 | Línea de un día de descanso | {dia}: descanso |
+| PN-04 | Sin plan todavía | Aún no tienes plan: termina el inicio con /start y te lo armo. |
+
+> PN-01 lleva una línea por día (PN-02 o PN-03), cada una en su renglón; `{minutos}` es la duración estimada de la versión del gym (RN-PLAN-006). El hoy se marca con "👉" al inicio de su línea.
 
 ## 3. Onboarding (textos base)
 

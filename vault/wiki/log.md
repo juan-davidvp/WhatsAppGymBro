@@ -323,3 +323,24 @@ relacionados: [index, inicio]
 - **Pendientes:**
   - FR-001-11 (teclado persistente y comandos) pasa a T-040/T-041.
   - Los objetivos sin meta de peso (fuerza, recomposición, constancia, mantener) se guardan sin valores hasta tener datos.
+
+## [2026-10-20] decision | M4: textos, conteo del día adelantado y alcance
+- El PO decide (2026-10-20):
+  1. Claude redacta en la bóveda los textos de M4 que faltan (plan, Hoy, "Hoy no puedo", tarjeta de sesión, fin de sesión) y el PO los revisa en el pull request.
+  2. Al terminar una sesión, SE-01/02/03 muestran el número de día que cuenta y la racha. Para eso se adelanta lo mínimo de M6: evaluar el día con el dominio (RN-DQC) y calcular número y racha con los días guardados. El cierre programado, los comodines aplicados por el planificador y la reparación siguen en M6.
+  3. Se incluye T-044 (récords, progresión, estancamiento y dolor) y queda fuera T-045 (ajustar días).
+- Consecuencia de (2): sin una forma de registrar el descanso, la racha se rompería cada día de descanso. La pantalla Hoy en día de descanso ofrece [Hice la movilidad], que RN-DQC-003 ya admite (P-032).
+
+## [2026-10-20] implementar | T-040 Plan semanal y `/plan`
+- `app/apps/server/src/plans/weekly-plan.ts`:
+  - `ensureWeek` arma las entradas del generador desde el perfil;
+  - continúa la rotación de la semana anterior (RN-PLAN-007);
+  - precarga la última carga de cada ejercicio (FR-002-04);
+  - guarda la semana una sola vez y emite `plan_generated`.
+- El onboarding guarda esta semana y la siguiente al terminar.
+- `plan-view.ts`: `/plan` y [Ver plan] muestran los 7 días (PN-01 a PN-04, [[plantillas-de-mensajes]] v0.7.0 §2.1) con el hoy marcado. Emite `plan_viewed`.
+- Repositorio MongoDB `plansRepository` (`weekly_plans` + `planned_sessions`, [[modelo-de-datos]] v0.1.6) y `lastLoads` en las series.
+- Pendientes:
+  - [Ajustar días] de HU-002-1 queda para T-045.
+  - El plan semanal que acompaña al resumen del domingo (RN-PLAN-009) llega con M7.
+  - Si el onboarding termina a mitad de semana, la primera semana puede incluir días ya pasados: la primera sesión que se muestra es la próxima desde hoy.

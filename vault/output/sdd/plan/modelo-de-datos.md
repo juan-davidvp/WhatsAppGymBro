@@ -3,7 +3,7 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.5
+version: 0.1.6
 creado: 2026-10-18
 actualizado: 2026-10-20
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
@@ -51,8 +51,8 @@ erDiagram
 | `screenings` | `userId`, `type` (`pre_activity`·`food_body`), `result` (`clear`·`flag`), `at` | `userId` | **No se guardan las respuestas**, solo el resultado (minimización); solo con autorización `screening`. Las consecuencias (`lowIntensityStart`, `numberFreeMode`) van en `users.settings` siempre ([[tamizajes]] §3) |
 | `goals` | `userId`, `type`, `metric`, `startValue`, `targetValue`, `startDate`, `horizonWeeks`, `status` (`active`·`completed`·`partially_completed`·`changed`·`paused`), `closedAt`, `progressPct` | `userId+status` | Un solo `active` por usuario (RN-OBJ-001). `startValue` y `targetValue` quedan en null en un objetivo sin meta de peso del onboarding, hasta tener datos |
 | `training_habits` | `userId`, `days[]` {`weekday`, `declaredStart`, `learnedStart`, `location`} | `userId` único | RN-PLAN-002, RN-MSJ-006 |
-| `weekly_plans` | `userId`, `weekStart`, `split`, `days[]` {`date`, `dayType`, `plannedSessionId`} | `userId+weekStart` único | RN-PLAN-001 a 009 |
-| `planned_sessions` | `userId`, `date`, `name`, `variants` {`GYM`, `HOME`, `EXPRESS`: `[{exerciseCode, sets, repsMin, repsMax, loadKg}]`}, `estimatedMinutes` | `userId+date` | RN-PLAN-003, RN-PLAN-006 |
+| `weekly_plans` | `userId`, `weekStart`, `days[]` {`date`, `dayType`, `plannedSessionId`}, `nextRotationStart`, `intensity` (`low`·`normal`) | `userId+weekStart` único | RN-PLAN-001 a 009. Se guarda una sola vez por semana; la siguiente continúa la rotación desde `nextRotationStart` (RN-PLAN-007) |
+| `planned_sessions` | `userId`, `date`, `template` (código de sesión, [[catalogo-de-ejercicios-base]] §5), `versions` {`GYM`, `HOME`, `EXPRESS`: {`exercises[]` {`exerciseCode`, `pattern`, `sets`, `reps` {min, max}, `targetReps`, `loadKg`, `restSeconds`}, `estimatedMinutes`}} | `userId+date` | RN-PLAN-003, RN-PLAN-006 |
 | `workout_sessions` | `userId`, `plannedSessionId`, `date`, `variant`, `status` (`active`·`completed`·`partial`·`abandoned`), `startedAt`, `endedAt`, `loggedAsPlanned`, `cardMessageId` | `userId+date` | RN-ENT-004 |
 | `set_entries` | `sessionId`, `userId`, `exerciseCode`, `setIndex`, `reps`, `loadKg`, `edited`, `confirmedAt`, `idempotencyKey` | `idempotencyKey` único | RN-ENT-001; NFR-03 |
 | `personal_records` | `userId`, `exerciseCode`, `type` (`e1rm`·`reps`), `value`, `date`, `setEntryId` | `userId+exerciseCode+type` | RN-ENT-005 |

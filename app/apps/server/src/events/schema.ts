@@ -72,6 +72,11 @@ export const EVENT_PROPS_SCHEMAS = {
     days: z.array(z.enum(WEEK_DAYS as readonly [string, ...string[]])).min(1),
     slot: z.enum(['morning', 'midday', 'afternoon', 'evening']),
   }),
+  plan_generated: z.strictObject({
+    trainingDays: z.number().int().nonnegative(),
+    intensity: z.enum(['low', 'normal']),
+  }),
+  plan_viewed: z.strictObject({}),
   onboarding_completed: z.strictObject({
     durationMs: z.number().int().nonnegative(),
     taps: z.number().int().nonnegative(),

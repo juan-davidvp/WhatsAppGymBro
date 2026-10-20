@@ -1,10 +1,12 @@
-import { evaluateDay, type DayInputs } from '@gymbro/domain';
+import { EXERCISES, EXPRESS_EXCEPTIONS } from '@gymbro/content';
+import { evaluateDay, generateWeeklyPlan, type DayInputs } from '@gymbro/domain';
 import { MongoClient, type Db } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { mealIdempotencyKey } from './idempotency.js';
 import { ensureIndexes } from './indexes.js';
 import {
+  plansRepository,
   bodyMeasurementsRepository,
   goalsRepository,
   trainingHabitsRepository,
@@ -379,5 +381,64 @@ describe('RN-PLAN-002 · RN-OBJ-001 · hábito y objetivo activo', () => {
         (g) => g['status'],
       ),
     ).toEqual(['changed', 'active']);
+  });
+});
+
+describe('RN-PLAN-001 · RN-PLAN-007 · T-040 · planes en MongoDB', () => {
+  const plan = generateWeeklyPlan({
+    level: 'novice',
+    availableDays: ['monday', 'wednesday', 'friday'],
+    sessionMinutes: 45,
+    goal: 'gain_muscle',
+    homeEquipment: [],
+    weekStart: '2026-10-19',
+    rotationStart: 0,
+    catalog: EXERCISES,
+    expressExceptions: EXPRESS_EXCEPTIONS,
+  });
+
+  it('guarda la semana una sola vez y la reconstruye igual', async () => {
+    const plans = plansRepository(db);
+    const first = await plans.saveWeek('u10', plan);
+    const second = await plans.saveWeek('u10', plan);
+    expect(second).toEqual(first);
+    expect(await db.collection('weekly_plans').countDocuments({ userId: 'u10' })).toBe(1);
+    expect(await db.collection('planned_sessions').countDocuments({ userId: 'u10' })).toBe(3);
+    const loaded = await plans.week('u10', '2026-10-19');
+    expect(loaded?.days.map((d) => d.session?.template ?? null)).toEqual(
+      plan.days.map((d) => d.session?.template ?? null),
+    );
+    expect(loaded?.days[0]?.session?.versions).toEqual(plan.days[0]?.session?.versions);
+  });
+
+  it('mover una sesión cambia el día y la fecha de la sesión, sin duplicarla', async () => {
+    const plans = plansRepository(db);
+    await plans.saveWeek('u11', plan);
+    await plans.moveSession('u11', '2026-10-19', '2026-10-19', '2026-10-20');
+    const week = await plans.week('u11', '2026-10-19');
+    expect(week?.days.map((d) => d.type).slice(0, 2)).toEqual(['REST', 'TRAINING']);
+    expect(
+      await db.collection('planned_sessions').countDocuments({ userId: 'u11', date: '2026-10-20' }),
+    ).toBe(1);
+  });
+
+  it('FR-002-04 · la última carga de cada ejercicio', async () => {
+    const sets = setEntriesRepository(db);
+    const base = { userId: 'u12', sessionId: 's', setIndex: 0, reps: 8, edited: false };
+    await sets.record({
+      ...base,
+      exerciseCode: 'A',
+      loadKg: 40,
+      confirmedAt: new Date('2026-10-18T10:00:00Z'),
+    });
+    await sets.record({
+      ...base,
+      exerciseCode: 'A',
+      setIndex: 1,
+      loadKg: 42.5,
+      confirmedAt: new Date('2026-10-19T10:00:00Z'),
+    });
+    await sets.record({ ...base, exerciseCode: 'B', loadKg: 10, confirmedAt: now });
+    expect(await sets.lastLoads('u12')).toEqual({ A: 42.5, B: 10 });
   });
 });

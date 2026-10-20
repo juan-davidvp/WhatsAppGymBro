@@ -1,6 +1,8 @@
 import {
   PARAMETERS,
   closeDay,
+  type PlannedSession,
+  type WeeklyPlan,
   type ConsentCategory,
   type DayStatus,
   type DayType,
@@ -11,6 +13,9 @@ import {
   EMPTY_PROFILE,
   type BodyMeasurementsRepository,
   type GoalRecord,
+  type PlansRepository,
+  type StoredPlanDay,
+  type StoredWeeklyPlan,
   type GoalsRepository,
   type TrainingHabitsRepository,
   type ConsentsRepository,
@@ -163,6 +168,16 @@ export function setEntriesRepository(db: Db): SetEntriesRepository {
     async record(entry: SetEntryRecord) {
       const idempotencyKey = setIdempotencyKey(entry.sessionId, entry.exerciseCode, entry.setIndex);
       return insertIfAbsent(() => collection.insertOne({ ...entry, idempotencyKey }));
+    },
+    async lastLoads(userId) {
+      const rows = await collection
+        .aggregate<{ _id: string; loadKg: number }>([
+          { $match: { userId } },
+          { $sort: { confirmedAt: -1 } },
+          { $group: { _id: '$exerciseCode', loadKg: { $first: '$loadKg' } } },
+        ])
+        .toArray();
+      return Object.fromEntries(rows.map((r) => [r._id, r.loadKg]));
     },
   };
 }
@@ -375,6 +390,112 @@ export function goalsRepository(db: Db): GoalsRepository {
         horizonWeeks,
       } = doc as unknown as GoalRecord;
       return { userId: id, type, metric, startValue, targetValue, startDate, horizonWeeks };
+    },
+  };
+}
+
+interface WeeklyPlanDocument {
+  userId: string;
+  weekStart: LocalDate;
+  days: { date: LocalDate; dayType: DayType; plannedSessionId: string | null }[];
+  nextRotationStart: number;
+  intensity: WeeklyPlan['intensity'];
+}
+
+interface PlannedSessionDocument {
+  _id: ObjectId;
+  userId: string;
+  date: LocalDate;
+  template: PlannedSession['template'];
+  versions: PlannedSession['versions'];
+}
+
+export function plansRepository(db: Db): PlansRepository {
+  const weeks = db.collection<WeeklyPlanDocument>('weekly_plans');
+  const sessions = db.collection<PlannedSessionDocument>('planned_sessions');
+
+  async function load(userId: string, weekStart: LocalDate): Promise<StoredWeeklyPlan | null> {
+    const week = await weeks.findOne({ userId, weekStart });
+    if (!week) return null;
+    const ids = week.days.flatMap((d) =>
+      d.plannedSessionId ? [new ObjectId(d.plannedSessionId)] : [],
+    );
+    const docs = await sessions.find({ _id: { $in: ids } }).toArray();
+    const byId = new Map(docs.map((d) => [d._id.toHexString(), d]));
+    const days: StoredPlanDay[] = week.days.map((d) => {
+      const doc = d.plannedSessionId ? byId.get(d.plannedSessionId) : undefined;
+      return {
+        date: d.date,
+        type: d.dayType,
+        session: doc
+          ? { id: d.plannedSessionId ?? '', template: doc.template, versions: doc.versions }
+          : null,
+      };
+    });
+    return {
+      weekStart,
+      days,
+      nextRotationStart: week.nextRotationStart,
+      intensity: week.intensity,
+    };
+  }
+
+  return {
+    async saveWeek(userId, plan) {
+      const existing = await load(userId, plan.weekStart);
+      if (existing) return existing;
+      const days: WeeklyPlanDocument['days'] = [];
+      for (const day of plan.days) {
+        let plannedSessionId: string | null = null;
+        if (day.session) {
+          const _id = new ObjectId();
+          await sessions.insertOne({
+            _id,
+            userId,
+            date: day.date,
+            template: day.session.template,
+            versions: day.session.versions,
+          });
+          plannedSessionId = _id.toHexString();
+        }
+        days.push({ date: day.date, dayType: day.type, plannedSessionId });
+      }
+      // Dos generaciones simultáneas: gana la primera y la segunda deja sus sesiones huérfanas fuera.
+      const inserted = await insertIfAbsent(() =>
+        weeks.insertOne({
+          userId,
+          weekStart: plan.weekStart,
+          days,
+          nextRotationStart: plan.nextRotationStart,
+          intensity: plan.intensity,
+        }),
+      );
+      if (!inserted.inserted) {
+        const orphans = days.flatMap((d) =>
+          d.plannedSessionId ? [new ObjectId(d.plannedSessionId)] : [],
+        );
+        await sessions.deleteMany({ _id: { $in: orphans } });
+      }
+      const stored = await load(userId, plan.weekStart);
+      if (!stored) throw new Error('No se pudo guardar el plan');
+      return stored;
+    },
+    week: load,
+    async moveSession(userId, weekStart, from, to) {
+      const week = await weeks.findOne({ userId, weekStart });
+      const source = week?.days.find((d) => d.date === from);
+      if (!week || !source?.plannedSessionId) return;
+      const days = week.days.map((d) => {
+        if (d.date === from) return { ...d, dayType: 'REST' as const, plannedSessionId: null };
+        if (d.date === to)
+          return { ...d, dayType: 'TRAINING' as const, plannedSessionId: source.plannedSessionId };
+        return d;
+      });
+      await weeks.updateOne({ userId, weekStart }, { $set: { days } });
+      await sessions.updateOne(
+        { _id: new ObjectId(source.plannedSessionId) },
+        { $set: { date: to } },
+      );
     },
   };
 }

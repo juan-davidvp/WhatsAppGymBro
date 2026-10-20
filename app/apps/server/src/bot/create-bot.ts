@@ -18,6 +18,8 @@ import {
 import type {
   BodyMeasurementsRepository,
   GoalsRepository,
+  PlansRepository,
+  SetEntriesRepository,
   TrainingHabitsRepository,
   ConsentsRepository,
   ProcessedUpdatesRepository,
@@ -26,6 +28,7 @@ import type {
   UserDataEraser,
   UsersRepository,
 } from '../ports/repositories.js';
+import { planView } from '../plans/plan-view.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { deduplicate, loadUser, riskGuard, type BotContext } from './middleware.js';
@@ -46,6 +49,8 @@ export interface BotDependencies {
   bodyMeasurements: BodyMeasurementsRepository;
   habits: TrainingHabitsRepository;
   goals: GoalsRepository;
+  plans: PlansRepository;
+  setEntries: SetEntriesRepository;
   events: EventEmitter;
 }
 
@@ -148,6 +153,10 @@ export function createBot({
     if (ctx.user) await sendAll(ctx, await deleteDataCommand(ctx.user, useCases));
   });
 
+  handlers.command('plan', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await planView(ctx.user, useCases));
+  });
+
   handlers.command('privacidad', async (ctx) => {
     if (ctx.user) await sendAll(ctx, [privacyCommand(ctx.user)]);
   });
@@ -173,7 +182,8 @@ export function createBot({
       case 'rs':
         return sendAll(ctx, await answerResume(user, action.value, useCases));
       case 'nav':
-        // Las pantallas de Hoy, Comida y Progreso llegan con sus tareas (T-04x…).
+        if (action.target === 'plan') return sendAll(ctx, await planView(user, useCases));
+        // Las pantallas de Hoy, Comida y Progreso llegan con sus tareas (T-041, T-05x, T-08x).
         return;
     }
   });
