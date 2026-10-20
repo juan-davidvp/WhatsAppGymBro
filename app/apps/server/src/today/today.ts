@@ -6,6 +6,7 @@ import { dayLabel } from '../plans/plan-view.js';
 import { currentWeek } from '../plans/weekly-plan.js';
 import type { UserRecord } from '../ports/repositories.js';
 import type { TrainingDeps } from '../sessions/deps.js';
+import { logYesterdayAsPlanned, yesterdayPrompt } from '../sessions/finish.js';
 import {
   VARIANT_BY_VALUE,
   planDayToday,
@@ -28,6 +29,16 @@ export async function todayScreen(user: UserRecord, deps: TrainingDeps): Promise
   if (resumed.length > 0) return resumed;
   const day = await planDayToday(user, deps);
   if (!day) return [plain('PN-04')];
+  // HU-003-2: ayer sin registrar, dentro de la gracia → [La hice tal cual] antes que hoy.
+  const yesterday = await yesterdayPrompt(user, deps);
+  return [...yesterday, ...(await todayFor(user, day, deps))];
+}
+
+async function todayFor(
+  user: UserRecord,
+  day: NonNullable<Awaited<ReturnType<typeof planDayToday>>>,
+  deps: TrainingDeps,
+): Promise<Reply[]> {
   if (await dayCounts(user, day.date, deps)) return [plain('HY-03')];
   if (!day.session) {
     return [
@@ -88,6 +99,8 @@ export async function answerToday(
   switch (value) {
     case 'resume':
       return resumeSession(user, deps);
+    case 'asis_yesterday':
+      return logYesterdayAsPlanned(user, deps);
     case 'cant':
       return [templateReply('HN-01', (v) => td(v === 'express' ? 'express_now' : v))];
     case 'express_now':

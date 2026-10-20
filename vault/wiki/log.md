@@ -376,3 +376,14 @@ relacionados: [index, inicio]
 - **SC-003-1:** `set_confirmed` lleva los toques que costó la serie (1 si se confirmó tal cual) y si se editó.
 - **Corrección:** sin historial, los ejercicios del gym empiezan en 0 kg. La tarjeta ahora muestra los botones de carga según el equipo del ejercicio, no según la carga actual ("0 kg" en vez de "peso corporal"). Nota de §2.4 en [[plantillas-de-mensajes]].
 - Pruebas: `sessions/card.test.ts` (10 escenarios, incluidos doble toque, reintento con el mismo `update_id`, deshacer fuera de la ventana y tarjeta de una sesión terminada).
+
+## [2026-10-20] implementar | T-043 "La hice tal cual" y terminar sesión
+- `app/apps/server/src/sessions/finish.ts`:
+  - [🏁 Terminar] deja la sesión **completada** si llega a P-023 de sus series (la exprés, entera, RN-ENT-004) o **parcial** si no.
+  - Completada: el día suma la fuente `session:<id>`, se evalúa y la tarjeta se edita con SE-01/02/03, que muestran el n.º del día y la racha en vivo.
+  - Parcial: SE-04, sin reproche.
+  - Eventos `session_completed` (versión, series, minutos) y `session_partial`.
+- **[La hice tal cual]** en la tarjeta antes de la primera serie registra todas las series como estaban (RN-ENT-001) y termina. Evento `session_logged_as_planned`.
+- **FR-003-05 y RN-DQC-005:** si ayer había sesión y no se registró, Hoy ofrece primero HY-04 [La hice tal cual] hasta el fin de la gracia (12:00 del día siguiente). Se registra en la versión del lugar habitual y cuenta para ayer.
+- Pruebas: `sessions/finish.test.ts` (10 escenarios). Incluyen el umbral P-023, la exprés incompleta, la gracia antes y después de las 12:00, y n.º y racha de 3 tras lunes de sesión, martes de movilidad y miércoles de sesión.
+- Pendiente para T-044: `{record_txt}` de SE-01 (récords del día).

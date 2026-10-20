@@ -33,6 +33,7 @@ import type {
 import { plain } from '../onboarding/replies.js';
 import { planView } from '../plans/plan-view.js';
 import { answerSessionCard } from '../sessions/card-actions.js';
+import { finishSession, logAsPlanned } from '../sessions/finish.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
@@ -247,7 +248,10 @@ export function createBot({
       case 'td':
         return answerToday(user, action.value, useCases);
       case 'ss':
-        return answerSessionCard(user, action.sessionId, action.value, useCases);
+        return answerSessionCard(user, action.sessionId, action.value, useCases, {
+          finish: (session, u, deps) => finishSession(session, u, deps),
+          asis: (session, u, deps) => logAsPlanned(session, u, deps),
+        });
       case 'nav':
         if (action.target === 'plan') return planView(user, useCases);
         if (action.target === 'today') return todayScreen(user, useCases);

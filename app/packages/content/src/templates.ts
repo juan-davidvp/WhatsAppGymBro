@@ -391,6 +391,13 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: [],
   },
   {
+    id: 'HY-04',
+    kind: 'response',
+    when: 'Ayer sin registrar, dentro de la gracia (RN-DQC-005)',
+    text: '¿Hiciste ayer {sesion}? Si la hiciste tal cual, regístrala con un toque.',
+    buttons: ['La hice tal cual'],
+  },
+  {
     id: 'HN-01',
     kind: 'response',
     when: '[Hoy no puedo]',

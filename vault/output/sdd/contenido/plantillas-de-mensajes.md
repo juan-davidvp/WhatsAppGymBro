@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.8.0
+version: 0.9.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -123,6 +123,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | HY-01 | Hoy en día de descanso | Hoy toca descanso. Para que cuente, haz {minutos} min de movilidad y confírmalo. [Hice la movilidad] |
 | HY-02 | Movilidad confirmada | Movilidad hecha: hoy cuenta. Día que cuenta n.º {n} · 🔥 {racha} |
 | HY-03 | Hoy ya cuenta | Hoy ya cuenta. Mañana seguimos con tu plan. |
+| HY-04 | Ayer sin registrar, dentro de la gracia (RN-DQC-005) | ¿Hiciste ayer {sesion}? Si la hiciste tal cual, regístrala con un toque. [La hice tal cual] |
 | HN-01 | [Hoy no puedo] | Sin problema, no queda deuda. ¿Qué hacemos? [Exprés ahora] [Mover a otro día] [Hoy descanso] |
 | HN-02 | [Hoy descanso] | Listo. Tu próximo día de entreno sigue con el plan, sin deuda. |
 | HN-03 | [Mover a otro día] | ¿A qué día la pasamos? |

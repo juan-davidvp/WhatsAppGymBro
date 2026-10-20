@@ -86,6 +86,19 @@ export const EVENT_PROPS_SCHEMAS = {
     edited: z.boolean(),
   }),
   set_undone: z.strictObject({}),
+  session_completed: z.strictObject({
+    variant: z.enum(['GYM', 'HOME', 'EXPRESS']),
+    sets: z.number().int().nonnegative(),
+    durationMin: z.number().int().nonnegative(),
+  }),
+  session_partial: z.strictObject({
+    variant: z.enum(['GYM', 'HOME', 'EXPRESS']),
+    sets: z.number().int().nonnegative(),
+  }),
+  session_logged_as_planned: z.strictObject({
+    variant: z.enum(['GYM', 'HOME', 'EXPRESS']),
+    sets: z.number().int().nonnegative(),
+  }),
   onboarding_completed: z.strictObject({
     durationMs: z.number().int().nonnegative(),
     taps: z.number().int().nonnegative(),
