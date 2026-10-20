@@ -119,6 +119,8 @@ export const PARAMETERS = {
     importedActivityMinMinutes: 20,
     /** P-090 · FR-003-04 · segundos en que se puede deshacer la última serie */
     undoWindowSeconds: 10,
+    /** P-091 · RN-ENT-003 · [V] · series que quita [Semana suave] a ese ejercicio la semana siguiente */
+    deloadSetReduction: 1,
   },
   nutrition: {
     /** P-026 · RN-NUT-002 · [V] · g por kg y día */

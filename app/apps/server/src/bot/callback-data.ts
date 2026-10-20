@@ -32,7 +32,9 @@ export type CallbackAction =
   /** Pantalla Hoy: versión, "Hoy no puedo", movilidad, mover de día (T-041). */
   | { action: 'td'; value: string }
   /** Tarjeta de una sesión: `<operación>_<versión del estado>` (T-042). */
-  | { action: 'ss'; sessionId: string; value: string };
+  | { action: 'ss'; sessionId: string; value: string }
+  /** Estrategia ante un estancamiento: `<r|v|d><índice del ejercicio>` (RN-ENT-003). */
+  | { action: 'pt'; sessionId: string; value: string };
 
 function checkSize(data: string): string {
   const bytes = new TextEncoder().encode(data).length;
@@ -54,8 +56,11 @@ export function encodeCallbackData(action: CallbackAction): string {
     case 'ob':
       return checkSize(`${VERSION}:ob:${action.step}:${checkValue(action.value)}`);
     case 'ss':
+    case 'pt':
       if (!SESSION_ID.test(action.sessionId)) throw new Error('Id de sesión inválido');
-      return checkSize(`${VERSION}:ss:${action.sessionId}:${checkValue(action.value)}`);
+      return checkSize(
+        `${VERSION}:${action.action}:${action.sessionId}:${checkValue(action.value)}`,
+      );
     case 'pv':
     case 'sc':
     case 'del':
@@ -93,13 +98,13 @@ export function parseCallbackData(data: string): CallbackAction | null {
     return { action, value: arg };
   }
   if (
-    action === 'ss' &&
+    (action === 'ss' || action === 'pt') &&
     arg !== undefined &&
     SESSION_ID.test(arg) &&
     value !== undefined &&
     VALUE.test(value)
   ) {
-    return { action: 'ss', sessionId: arg, value };
+    return { action, sessionId: arg, value };
   }
   return null;
 }

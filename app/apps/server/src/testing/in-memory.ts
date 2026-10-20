@@ -2,7 +2,7 @@ import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
-import type { DayStatus, DayType } from '@gymbro/domain';
+import type { DayStatus, DayType, ExerciseAdjustment } from '@gymbro/domain';
 import {
   EMPTY_PROFILE,
   type WorkoutSessionRecord,
@@ -71,6 +71,29 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     dayStatus: DayStatus | null;
   }[] = [];
   const workouts: WorkoutSessionRecord[] = [];
+  const records: {
+    userId: string;
+    exerciseCode: string;
+    type: 'e1rm' | 'reps';
+    value: number;
+    date: string;
+    setKey: string;
+  }[] = [];
+  const achievements: {
+    userId: string;
+    code: string;
+    at: Date;
+    value: unknown;
+    context: unknown;
+  }[] = [];
+  const painFlags: {
+    userId: string;
+    exerciseCode: string;
+    zone: string;
+    date: string;
+    sessionId: string;
+  }[] = [];
+  const adjustments: (ExerciseAdjustment & { userId: string })[] = [];
   let nextId = 1;
   const newId = () => (nextId++).toString(16).padStart(24, '0');
 
@@ -249,6 +272,11 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           weeks.find((w) => w.userId === userId && w.weekStart === weekStart) ?? null,
         );
       },
+      discardWeek(userId, weekStart) {
+        const index = weeks.findIndex((w) => w.userId === userId && w.weekStart === weekStart);
+        if (index >= 0) weeks.splice(index, 1);
+        return Promise.resolve();
+      },
       moveSession(userId, weekStart, from, to) {
         const index = weeks.findIndex((w) => w.userId === userId && w.weekStart === weekStart);
         const week = weeks[index];
@@ -279,6 +307,24 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         const index = setEntries.findIndex((e) => e.idempotencyKey === key);
         if (index >= 0) setEntries.splice(index, 1);
         return Promise.resolve();
+      },
+      exerciseHistory(userId, exerciseCode) {
+        return Promise.resolve(
+          setEntries
+            .filter((e) => e.userId === userId && e.exerciseCode === exerciseCode)
+            .sort(
+              (a, b) =>
+                a.confirmedAt.getTime() - b.confirmedAt.getTime() || a.setIndex - b.setIndex,
+            )
+            .map(({ sessionId, setIndex, reps, loadKg, edited, confirmedAt }) => ({
+              sessionId,
+              setIndex,
+              reps,
+              loadKg,
+              edited,
+              confirmedAt,
+            })),
+        );
       },
       lastLoads(userId) {
         const loads: Record<string, number> = {};
@@ -371,6 +417,65 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve(next);
       },
     },
+    records: {
+      record(input) {
+        if (records.some((r) => r.setKey === input.setKey))
+          return Promise.resolve({ inserted: false });
+        records.push(input);
+        return Promise.resolve({ inserted: true });
+      },
+      count(userId) {
+        return Promise.resolve(records.filter((r) => r.userId === userId).length);
+      },
+      countForSession(userId, sessionId) {
+        return Promise.resolve(
+          records.filter((r) => r.userId === userId && r.setKey.startsWith(`set:${sessionId}:`))
+            .length,
+        );
+      },
+    },
+    achievements: {
+      appendOnce(input) {
+        if (achievements.some((a) => a.userId === input.userId && a.code === input.code)) {
+          return Promise.resolve({ added: false });
+        }
+        achievements.push(input);
+        return Promise.resolve({ added: true });
+      },
+    },
+    painFlags: {
+      record(input) {
+        painFlags.push(input);
+        return Promise.resolve();
+      },
+      sessionsWithPain(userId, exerciseCode) {
+        return Promise.resolve([
+          ...new Set(
+            painFlags
+              .filter((p) => p.userId === userId && p.exerciseCode === exerciseCode)
+              .map((p) => p.sessionId),
+          ),
+        ]);
+      },
+    },
+    adjustments: {
+      save(userId, adjustment) {
+        adjustments.push({ userId, ...adjustment });
+        return Promise.resolve();
+      },
+      list(userId) {
+        return Promise.resolve(
+          adjustments
+            .filter((a) => a.userId === userId)
+            .map(({ exerciseCode, strategy, fromWeek, replacementCode }) => ({
+              exerciseCode,
+              strategy,
+              fromWeek,
+              replacementCode,
+            })),
+        );
+      },
+    },
     consents: {
       record({ userId, granted, declined, at, policyVersion }) {
         for (const category of granted)
@@ -411,6 +516,10 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(setEntries, userId);
         removeRows(days, userId);
         removeRows(workouts, userId);
+        removeRows(records, userId);
+        removeRows(achievements, userId);
+        removeRows(painFlags, userId);
+        removeRows(adjustments, userId);
         for (const event of events) if (event.subject?.userId === userId) event.subject = null;
         return Promise.resolve();
       },
@@ -446,5 +555,9 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     setEntries,
     days,
     workouts,
+    records,
+    achievements,
+    painFlags,
+    adjustments,
   };
 }

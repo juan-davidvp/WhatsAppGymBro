@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.9.0
+version: 0.10.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -99,9 +99,15 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | RA-02 | Racha reiniciada | Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés? |
 | RA-03 | Racha reparada | Racha reparada. Volver también suma. |
 | BR-01 | Bonificación de regreso | Volviste. Eso vale +{xp} puntos. |
-| PR-01 | Récord | 🏆 Récord: {ejercicio} {kg} kg × {reps}. Quedó en tu bitácora. |
+| PR-01 | Récord | 🏆 Récord: {ejercicio}, {carga} × {reps}. Quedó en tu bitácora. |
 | PR-02 | Récord con memoria | 🏆 {ejercicio}: {kg} kg × {reps}. Hace {semanas} semanas eran {kg_antes}. |
-| ES-01 | Estancamiento | {ejercicio} está quieto hace 3 sesiones. Es normal. ¿Probamos algo distinto? [Cambiar rango] [Cambiar variante] [Semana suave] |
+| ES-01 | Estancamiento | {ejercicio} está quieto hace {sesiones} sesiones. Es normal. ¿Probamos algo distinto? [Cambiar rango] [Cambiar variante] [Semana suave] |
+| ES-02 | Estrategia: variante | Listo: desde la próxima semana, {ejercicio} cambia por {nuevo}. |
+| ES-03 | Estrategia: rango | Listo: desde la próxima semana, {ejercicio} va de {min} a {max} repeticiones. |
+| ES-04 | Estrategia: semana suave | Listo: la próxima semana {ejercicio} lleva {series} series para recuperar. |
+| ES-05 | Sin otra variante | No tengo otra variante de {ejercicio} en el catálogo. Prueba con el rango o la semana suave. |
+| DL-01 | [⚠️ Dolor] | ¿Dónde te duele? [Hombro] [Codo] [Muñeca] [Espalda] [Cadera] [Rodilla] [Tobillo] [Otra zona] |
+| DL-02 | Sin variante sin dolor | No tengo otra variante para ese ejercicio en esta versión: pasamos al siguiente. |
 
 
 ### 2.1 Plan de la semana (`/plan`, T-040)
@@ -152,6 +158,9 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 > - Después de confirmar una serie aparece [↩️ Deshacer] durante P-090 segundos (FR-003-04).
 > - Antes de la primera serie aparece [La hice tal cual] (HU-003-2).
 > - SC-03 se muestra como aviso breve sobre el botón, sin cambiar datos ([[spec-003-registro-de-entrenamiento]] §8).
+> - En SE-01, `{record_txt}` es " y {n} récord 🏆" (o "récords") si hubo récords en la sesión, o vacío. El récord de cada serie se avisa con PR-01 como aviso breve sobre [✅ Hecha].
+> - [⚠️ Dolor] muestra DL-01; con la zona elegida, la tarjeta pasa a CU-04, o a CU-09 si el dolor se repite (RN-SEG-006). [Ver variante] cambia el ejercicio por otro del mismo patrón y versión, o pasa al siguiente con DL-02 si no hay otro.
+> - ES-01 llega como mensaje nuevo después del fin de sesión, con un solo ejercicio estancado por vez. ES-02 a ES-05 confirman la estrategia elegida (RN-ENT-003).
 
 ### 2.3 Comandos del menú
 
@@ -252,3 +261,4 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | CU-06 | Sobreuso | Vienes entrenando también en tus descansos. El músculo crece cuando descansas; ¿le damos un día libre? [Sí, descanso] [Ajustar plan] |
 | CU-07 | Pregunta fuera del dominio | Funciono con botones para tu entreno y tu comida. ¿Qué quieres hacer? [Hoy] [Comida] [Progreso] |
 | CU-08 | Síntomas cardíacos con el esfuerzo | Para el ejercicio ahora. Si la molestia en el pecho, la falta de aire o el mareo no pasan en unos minutos o empeoran, busca ayuda de emergencia ya: {recurso_local} |
+| CU-09 | Dolor repetido en un ejercicio (RN-SEG-006, P-062) | El dolor se repite en este ejercicio. Antes de seguir con él, lo indicado es que lo revise un profesional de la salud. [Ver variante] |

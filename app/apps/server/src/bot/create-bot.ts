@@ -19,6 +19,10 @@ import type {
   BodyMeasurementsRepository,
   GoalsRepository,
   DaysRepository,
+  AchievementsRepository,
+  ExerciseAdjustmentsRepository,
+  PainFlagsRepository,
+  PersonalRecordsRepository,
   WorkoutSessionsRepository,
   PlansRepository,
   SetEntriesRepository,
@@ -34,6 +38,9 @@ import { plain } from '../onboarding/replies.js';
 import { planView } from '../plans/plan-view.js';
 import { answerSessionCard } from '../sessions/card-actions.js';
 import { finishSession, logAsPlanned } from '../sessions/finish.js';
+import { recordText } from '../sessions/records.js';
+import { PAIN_OPERATIONS } from '../sessions/pain.js';
+import { answerPlateau, plateauPrompt } from '../sessions/plateau.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
@@ -59,6 +66,10 @@ export interface BotDependencies {
   setEntries: SetEntriesRepository;
   days: DaysRepository;
   workouts: WorkoutSessionsRepository;
+  records: PersonalRecordsRepository;
+  achievements: AchievementsRepository;
+  painFlags: PainFlagsRepository;
+  adjustments: ExerciseAdjustmentsRepository;
   events: EventEmitter;
 }
 
@@ -249,9 +260,18 @@ export function createBot({
         return answerToday(user, action.value, useCases);
       case 'ss':
         return answerSessionCard(user, action.sessionId, action.value, useCases, {
-          finish: (session, u, deps) => finishSession(session, u, deps),
-          asis: (session, u, deps) => logAsPlanned(session, u, deps),
+          finish: async (session, u, deps) => [
+            ...(await finishSession(session, u, deps, (s) => recordText(s, deps))),
+            ...(await plateauPrompt(session.id, u, deps)),
+          ],
+          asis: async (session, u, deps) => [
+            ...(await logAsPlanned(session, u, deps, (s) => recordText(s, deps))),
+            ...(await plateauPrompt(session.id, u, deps)),
+          ],
+          ...PAIN_OPERATIONS,
         });
+      case 'pt':
+        return answerPlateau(user, action.sessionId, action.value, useCases);
       case 'nav':
         if (action.target === 'plan') return planView(user, useCases);
         if (action.target === 'today') return todayScreen(user, useCases);

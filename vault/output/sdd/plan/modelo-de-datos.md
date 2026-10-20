@@ -3,7 +3,7 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.7
+version: 0.1.8
 creado: 2026-10-18
 actualizado: 2026-10-20
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
@@ -55,8 +55,9 @@ erDiagram
 | `planned_sessions` | `userId`, `date`, `template` (código de sesión, [[catalogo-de-ejercicios-base]] §5), `versions` {`GYM`, `HOME`, `EXPRESS`: {`exercises[]` {`exerciseCode`, `pattern`, `sets`, `reps` {min, max}, `targetReps`, `loadKg`, `restSeconds`}, `estimatedMinutes`}} | `userId+date` | RN-PLAN-003, RN-PLAN-006 |
 | `workout_sessions` | `userId`, `plannedSessionId`, `date`, `template`, `variant`, `status` (`active`·`completed`·`partial`·`abandoned`), `startedAt`, `endedAt`, `loggedAsPlanned`, `progress` (estado de la tarjeta: ejercicios, serie que toca, valores pendientes y series registradas), `rev`, `lastConfirmedAt` | `userId+date` | RN-ENT-004. `rev` sube en cada cambio: un toque de una tarjeta vieja no modifica nada (FR-003-03) |
 | `set_entries` | `sessionId`, `userId`, `exerciseCode`, `setIndex`, `reps`, `loadKg`, `edited`, `confirmedAt`, `idempotencyKey` | `idempotencyKey` único | RN-ENT-001; NFR-03 |
-| `personal_records` | `userId`, `exerciseCode`, `type` (`e1rm`·`reps`), `value`, `date`, `setEntryId` | `userId+exerciseCode+type` | RN-ENT-005 |
-| `pain_flags` | `userId`, `exerciseCode`, `zone`, `date` | `userId+exerciseCode` | RN-SEG-006 |
+| `personal_records` | `userId`, `exerciseCode`, `type` (`e1rm`·`reps`), `value`, `date`, `setKey` (clave de la serie) | `userId+exerciseCode+type`; `setKey` único | RN-ENT-005. Un récord por serie: repetir el toque no lo duplica |
+| `pain_flags` | `userId`, `exerciseCode`, `zone`, `date`, `sessionId` | `userId+exerciseCode` | RN-SEG-006 (P-062 cuenta sesiones distintas) |
+| `exercise_adjustments` | `userId`, `exerciseCode`, `strategy` (`variant`·`range`·`deload`), `fromWeek`, `replacementCode` | `userId+exerciseCode` | RN-ENT-003: estrategia elegida ante un estancamiento, aplicada a los planes desde `fromWeek` |
 | `meals` | `userId`, `date`, `loggedAt`, `method` (`portions`·`favorite`·`repeat`·`photo`·`text`), `portions` {`palm`, `cuppedHand`, `fist`, `thumb`}, `proteinG`, `favoriteMealId`, `durationMs`, `taps`, `idempotencyKey` | `userId+date`; `idempotencyKey` único | RN-NUT-001 a 005; sin imagen (RN-DAT-004) |
 | `favorite_meals` | `userId`, `name`, `portions`, `foodCodes[]` | `userId` | RN-NUT-004 |
 | `body_measurements` | `userId`, `date`, `weightKg`, `waistCm` | `userId+date` | RN-OBJ-010, RN-OBJ-012 |

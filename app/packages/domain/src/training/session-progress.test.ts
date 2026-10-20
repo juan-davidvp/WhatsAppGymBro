@@ -128,3 +128,14 @@ describe('RN-ENT-001 · propiedades del avance', () => {
     );
   });
 });
+
+describe('RN-SEG-006 · cambiar el ejercicio en curso por una variante', () => {
+  it('las series que faltan usan la variante; lo registrado no cambia', async () => {
+    const { replaceCurrentExercise } = await import('./session-progress.js');
+    const done = confirmCurrent(startProgress([SQUAT])).progress;
+    const swapped = replaceCurrentExercise(done, 'LEG_PRESS', 0);
+    expect(swapped.exercises[0]?.exerciseCode).toBe('LEG_PRESS');
+    expect(swapped.pending).toEqual({ reps: SQUAT.targetReps, loadKg: 0 });
+    expect(swapped.logged[0]?.exerciseCode).toBe('SQ');
+  });
+});

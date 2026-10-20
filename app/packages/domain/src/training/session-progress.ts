@@ -149,3 +149,21 @@ export function undoLast(progress: SessionProgress): {
 export function plannedSetCount(progress: SessionProgress): number {
   return progress.exercises.reduce((sum, e) => sum + e.sets, 0);
 }
+
+/**
+ * RN-SEG-006: cambia el ejercicio en curso por una variante (mismo patrón) para
+ * las series que faltan; lo ya registrado se conserva con su ejercicio original.
+ */
+export function replaceCurrentExercise(
+  progress: SessionProgress,
+  exerciseCode: string,
+  loadKg: number,
+): SessionProgress {
+  const { cursor } = progress;
+  const current = cursor ? progress.exercises[cursor.exercise] : undefined;
+  if (!cursor || !current) return progress;
+  const exercises = progress.exercises.map((e, i) =>
+    i === cursor.exercise ? { ...e, exerciseCode, loadKg } : e,
+  );
+  return { ...progress, exercises, pending: { reps: current.targetReps, loadKg } };
+}

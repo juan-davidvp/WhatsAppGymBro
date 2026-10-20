@@ -77,6 +77,7 @@ export const EVENT_PROPS_SCHEMAS = {
     intensity: z.enum(['low', 'normal']),
   }),
   plan_viewed: z.strictObject({}),
+  progression_suggested: z.strictObject({ exercises: z.number().int().positive() }),
   session_variant_chosen: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
   session_started: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
   cant_today_selected: z.strictObject({ option: z.enum(['express', 'move', 'rest']) }),
@@ -86,6 +87,14 @@ export const EVENT_PROPS_SCHEMAS = {
     edited: z.boolean(),
   }),
   set_undone: z.strictObject({}),
+  plateau_detected: z.strictObject({}),
+  pain_flagged: z.strictObject({
+    zone: z.enum(['shoulder', 'elbow', 'wrist', 'back', 'hip', 'knee', 'ankle', 'other']),
+  }),
+  pr_detected: z.strictObject({
+    exerciseCode: z.string().regex(/^[A-Z0-9_]{1,40}$/),
+    kind: z.enum(['e1rm', 'reps']),
+  }),
   session_completed: z.strictObject({
     variant: z.enum(['GYM', 'HOME', 'EXPRESS']),
     sets: z.number().int().nonnegative(),

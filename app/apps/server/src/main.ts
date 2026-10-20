@@ -3,6 +3,10 @@ import { BOT_COMMANDS } from '@gymbro/content';
 import { MongoClient } from 'mongodb';
 import { ensureIndexes } from './adapters/mongo/indexes.js';
 import {
+  achievementsRepository,
+  exerciseAdjustmentsRepository,
+  painFlagsRepository,
+  personalRecordsRepository,
   daysRepository,
   workoutSessionsRepository,
   plansRepository,
@@ -73,6 +77,10 @@ async function main(): Promise<void> {
         setEntries: setEntriesRepository(db),
         days: daysRepository(db),
         workouts: workoutSessionsRepository(db),
+        records: personalRecordsRepository(db),
+        achievements: achievementsRepository(db),
+        painFlags: painFlagsRepository(db),
+        adjustments: exerciseAdjustmentsRepository(db),
         events: createEventEmitter({
           repository: eventsRepository(db),
           logger,

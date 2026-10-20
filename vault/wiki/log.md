@@ -387,3 +387,27 @@ relacionados: [index, inicio]
 - **FR-003-05 y RN-DQC-005:** si ayer había sesión y no se registró, Hoy ofrece primero HY-04 [La hice tal cual] hasta el fin de la gracia (12:00 del día siguiente). Se registra en la versión del lugar habitual y cuenta para ayer.
 - Pruebas: `sessions/finish.test.ts` (10 escenarios). Incluyen el umbral P-023, la exprés incompleta, la gracia antes y después de las 12:00, y n.º y racha de 3 tras lunes de sesión, martes de movilidad y miércoles de sesión.
 - Pendiente para T-044: `{record_txt}` de SE-01 (récords del día).
+
+## [2026-10-20] implementar | T-044 Récords, progresión, estancamiento y dolor (Should)
+- **Récords (HU-003-4, RN-ENT-005, RN-GAM-011):** `app/apps/server/src/sessions/records.ts`.
+  - Al confirmar una serie se compara con todo lo anterior del ejercicio: e1RM mayor, o más repeticiones con la misma carga.
+  - El récord se guarda una vez por serie (`setKey` único) y se avisa con PR-01 sobre el botón, sin mensaje nuevo.
+  - La bitácora anota FIRST_PR y PR_10 una sola vez; PR_10 lee su número de la condición del catálogo.
+  - Evento `pr_detected`. SE-01 muestra `{record_txt}`.
+  - **El XP del récord queda para T-062** (decisión del PO en M4).
+- **Progresión (HU-003-5 escenario 1, RN-ENT-002):** la semana nueva sube la carga P-020/P-021 tras P-019 sesiones en el tope del rango (lo hacía ya T-040). No sube si hubo dolor en alguna de esas sesiones (RN-SEG-006).
+  - **Pendiente:** la "variante más difícil" en casa no está implementada. El catálogo no ordena las variantes por dificultad. HU-003-5 sigue abierta por eso y por el XP; la spec queda en `borrador`.
+- **Estancamiento (HU-003-5 escenario 2, RN-ENT-003 `[VALIDAR-PROFESIONAL]`):** `sessions/plateau.ts`.
+  - Al terminar una sesión (o "La hice tal cual"), si un ejercicio lleva P-022 sesiones sin superar su mejor marca anterior, ES-01 ofrece rango, variante o semana suave. Evento `plateau_detected`.
+  - Cada estrategia se confirma con ES-02 a ES-05 y se guarda en `exercise_adjustments` desde la semana siguiente.
+  - Si esa semana ya estaba generada y sin usar, se descarta y se regenera con el ajuste.
+  - No resta XP ni toca días o rachas.
+  - **Lectura elegida:** la spec dice "cuando se genera la siguiente". La propuesta se muestra al terminar la sesión en que se detecta, que es cuando hay alguien para tocar el botón; el ajuste entra en el plan siguiente.
+- **Dolor (HU-003-6, RN-SEG-006):** `sessions/pain.ts`.
+  - [⚠️ Dolor] → zona (DL-01) en la misma tarjeta → se guarda con la sesión y se emite `pain_flagged` (solo la zona).
+  - Responde CU-04, o CU-09 si hubo dolor en P-062 sesiones distintas del ejercicio. Ambas son plantillas fijas.
+  - [Ver variante] cambia el ejercicio por otro del mismo patrón y versión, o pasa al siguiente con DL-02.
+- **Corrección:** el lector de `callback_data` no aceptaba la acción `pt` (botones de ES-01). Lo detectó la prueba de estancamiento; ahora hay prueba de ida y vuelta para `ss` y `pt`.
+- Pruebas:
+  - `sessions/records-plateau-pain.test.ts` (17 escenarios);
+  - repositorios de MongoDB de récords, bitácora, dolor, ajustes, historia del ejercicio y descarte de semana.

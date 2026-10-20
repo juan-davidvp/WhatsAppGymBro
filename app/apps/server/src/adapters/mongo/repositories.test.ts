@@ -8,6 +8,10 @@ import { ensureIndexes } from './indexes.js';
 import {
   workoutSessionsRepository,
   plansRepository,
+  personalRecordsRepository,
+  achievementsRepository,
+  painFlagsRepository,
+  exerciseAdjustmentsRepository,
   bodyMeasurementsRepository,
   goalsRepository,
   trainingHabitsRepository,
@@ -481,5 +485,101 @@ describe('FR-003-03 · T-041 · sesiones de entreno con versión de estado', () 
     expect((await workouts.byId(created.id))?.status).toBe('completed');
     expect(await workouts.activeOn('u14', '2026-10-19')).toBeNull();
     expect(await workouts.byId('no-es-un-id')).toBeNull();
+  });
+});
+
+describe('RN-ENT-003 · T-044 · descartar una semana sin usar', () => {
+  it('borra la semana y sus sesiones planeadas; otra semana no cambia', async () => {
+    const plan = generateWeeklyPlan({
+      level: 'novice',
+      availableDays: ['monday', 'wednesday', 'friday'],
+      sessionMinutes: 45,
+      goal: 'gain_muscle',
+      homeEquipment: [],
+      weekStart: '2026-10-26',
+      rotationStart: 0,
+      catalog: EXERCISES,
+      expressExceptions: EXPRESS_EXCEPTIONS,
+    });
+    const plans = plansRepository(db);
+    await plans.saveWeek('u20', plan);
+    await plans.saveWeek('u21', plan);
+    await plans.discardWeek('u20', '2026-10-26');
+    expect(await plans.week('u20', '2026-10-26')).toBeNull();
+    expect(await db.collection('planned_sessions').countDocuments({ userId: 'u20' })).toBe(0);
+    expect(await plans.week('u21', '2026-10-26')).not.toBeNull();
+    await plans.discardWeek('u20', '2026-10-26');
+  });
+});
+
+describe('RN-ENT-005 · T-044 · historia de un ejercicio, récords y bitácora', () => {
+  it('la historia sale en orden y deshacer quita la serie', async () => {
+    const sets = setEntriesRepository(db);
+    const base = { userId: 'u22', exerciseCode: 'A', reps: 8, loadKg: 40, edited: false };
+    await sets.record({ ...base, sessionId: 's2', setIndex: 0, confirmedAt: now });
+    await sets.record({
+      ...base,
+      sessionId: 's1',
+      setIndex: 0,
+      confirmedAt: new Date('2026-10-12T15:00:00Z'),
+    });
+    await sets.record({ ...base, sessionId: 's2', setIndex: 1, confirmedAt: now });
+    expect((await sets.exerciseHistory('u22', 'A')).map((h) => [h.sessionId, h.setIndex])).toEqual([
+      ['s1', 0],
+      ['s2', 0],
+      ['s2', 1],
+    ]);
+    await sets.remove('s2', 'A', 1);
+    expect(await sets.exerciseHistory('u22', 'A')).toHaveLength(2);
+  });
+
+  it('un récord por serie (setKey único) y se cuentan por usuario y por sesión', async () => {
+    const records = personalRecordsRepository(db);
+    const record = {
+      userId: 'u23',
+      exerciseCode: 'A',
+      type: 'reps' as const,
+      value: 9,
+      date: '2026-10-19',
+      setKey: 'set:abc:A:0',
+    };
+    expect(await records.record(record)).toEqual({ inserted: true });
+    expect(await records.record(record)).toEqual({ inserted: false });
+    await records.record({ ...record, setKey: 'set:def:A:0' });
+    expect(await records.count('u23')).toBe(2);
+    expect(await records.countForSession('u23', 'abc')).toBe(1);
+  });
+
+  it('RN-GAM-011 · cada logro se anota una sola vez', async () => {
+    const achievements = achievementsRepository(db);
+    const entry = { userId: 'u24', code: 'FIRST_PR', at: now, value: 'A', context: 'reps' };
+    expect(await achievements.appendOnce(entry)).toEqual({ added: true });
+    expect(await achievements.appendOnce({ ...entry, value: 'B' })).toEqual({ added: false });
+    expect(await db.collection('achievements').countDocuments({ userId: 'u24' })).toBe(1);
+  });
+});
+
+describe('RN-SEG-006 · T-044 · dolor y ajustes por estancamiento', () => {
+  it('cuenta sesiones distintas con dolor en un ejercicio', async () => {
+    const pain = painFlagsRepository(db);
+    const base = { userId: 'u25', exerciseCode: 'A', zone: 'knee', date: '2026-10-19' };
+    await pain.record({ ...base, sessionId: 's1' });
+    await pain.record({ ...base, sessionId: 's1', zone: 'hip' });
+    await pain.record({ ...base, sessionId: 's2' });
+    await pain.record({ ...base, exerciseCode: 'B', sessionId: 's3' });
+    expect((await pain.sessionsWithPain('u25', 'A')).sort()).toEqual(['s1', 's2']);
+  });
+
+  it('RN-ENT-003 · guarda y lista los ajustes del usuario', async () => {
+    const adjustments = exerciseAdjustmentsRepository(db);
+    const adjustment = {
+      exerciseCode: 'A',
+      strategy: 'variant' as const,
+      fromWeek: '2026-10-26',
+      replacementCode: 'B',
+    };
+    await adjustments.save('u26', adjustment);
+    expect(await adjustments.list('u26')).toEqual([adjustment]);
+    expect(await adjustments.list('otro')).toEqual([]);
   });
 });

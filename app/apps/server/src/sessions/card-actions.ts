@@ -9,6 +9,7 @@ import { renderTemplate } from '@gymbro/content';
 import type { Reply } from '../onboarding/replies.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
 import { canUndo, renderCard } from './card.js';
+import { checkRecord } from './records.js';
 import type { TrainingDeps } from './deps.js';
 
 /**
@@ -83,7 +84,9 @@ export async function answerSessionCard(
       taps: session.pendingTaps + 1,
       edited: confirmed.entry.edited,
     });
-    return [renderCard(updated, now, true)];
+    // HU-003-4: si la serie es récord, se avisa sobre el botón (sin otro mensaje).
+    const record = await checkRecord(user, updated, confirmed.entry, deps);
+    return [renderCard(updated, now, true), ...(record ? [record] : [])];
   } else if (operation === 'skip') {
     progress = skipExercise(progress);
   } else if (operation === 'undo') {

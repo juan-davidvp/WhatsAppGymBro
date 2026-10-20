@@ -1,6 +1,7 @@
 import {
   PARAMETERS,
   closeDay,
+  type ExerciseAdjustment,
   type PlannedSession,
   type WeeklyPlan,
   type ConsentCategory,
@@ -14,6 +15,10 @@ import {
   type BodyMeasurementsRepository,
   type GoalRecord,
   type PlansRepository,
+  type AchievementsRepository,
+  type ExerciseAdjustmentsRepository,
+  type PainFlagsRepository,
+  type PersonalRecordsRepository,
   type WorkoutSessionRecord,
   type WorkoutSessionsRepository,
   type StoredPlanDay,
@@ -175,6 +180,19 @@ export function setEntriesRepository(db: Db): SetEntriesRepository {
       await collection.deleteOne({
         idempotencyKey: setIdempotencyKey(sessionId, exerciseCode, setIndex),
       });
+    },
+    async exerciseHistory(userId, exerciseCode) {
+      const docs = await collection
+        .find({ userId, exerciseCode }, { sort: { confirmedAt: 1, setIndex: 1 } })
+        .toArray();
+      return docs.map((d) => ({
+        sessionId: d['sessionId'] as string,
+        setIndex: d['setIndex'] as number,
+        reps: d['reps'] as number,
+        loadKg: d['loadKg'] as number,
+        edited: d['edited'] === true,
+        confirmedAt: d['confirmedAt'] as Date,
+      }));
     },
     async lastLoads(userId) {
       const rows = await collection
@@ -514,6 +532,15 @@ export function plansRepository(db: Db): PlansRepository {
       return stored;
     },
     week: load,
+    async discardWeek(userId, weekStart) {
+      const week = await weeks.findOne({ userId, weekStart });
+      if (!week) return;
+      const ids = week.days.flatMap((d) =>
+        d.plannedSessionId ? [new ObjectId(d.plannedSessionId)] : [],
+      );
+      await sessions.deleteMany({ _id: { $in: ids } });
+      await weeks.deleteOne({ userId, weekStart });
+    },
     async moveSession(userId, weekStart, from, to) {
       const week = await weeks.findOne({ userId, weekStart });
       const source = week?.days.find((d) => d.date === from);
@@ -569,6 +596,62 @@ export function workoutSessionsRepository(db: Db): WorkoutSessionsRepository {
         { returnDocument: 'after' },
       );
       return doc ? toWorkoutSession(doc) : null;
+    },
+  };
+}
+
+export function personalRecordsRepository(db: Db): PersonalRecordsRepository {
+  const collection = db.collection('personal_records');
+  return {
+    async record(input) {
+      return insertIfAbsent(() => collection.insertOne({ ...input }));
+    },
+    async count(userId) {
+      return collection.countDocuments({ userId });
+    },
+    async countForSession(userId, sessionId) {
+      return collection.countDocuments({ userId, setKey: { $regex: `^set:${sessionId}:` } });
+    },
+  };
+}
+
+export function achievementsRepository(db: Db): AchievementsRepository {
+  const collection = db.collection('achievements');
+  return {
+    async appendOnce(input) {
+      const result = await collection.updateOne(
+        { userId: input.userId, code: input.code },
+        { $setOnInsert: { ...input } },
+        { upsert: true },
+      );
+      return { added: result.upsertedCount === 1 };
+    },
+  };
+}
+
+export function painFlagsRepository(db: Db): PainFlagsRepository {
+  const collection = db.collection('pain_flags');
+  return {
+    async record(input) {
+      await collection.insertOne({ ...input });
+    },
+    async sessionsWithPain(userId, exerciseCode) {
+      return (await collection.distinct('sessionId', { userId, exerciseCode })) as string[];
+    },
+  };
+}
+
+export function exerciseAdjustmentsRepository(db: Db): ExerciseAdjustmentsRepository {
+  const collection = db.collection<ExerciseAdjustment & { userId: string }>('exercise_adjustments');
+  return {
+    async save(userId, adjustment) {
+      await collection.insertOne({ userId, ...adjustment });
+    },
+    async list(userId) {
+      const docs = await collection
+        .find({ userId }, { projection: { _id: 0, userId: 0 } })
+        .toArray();
+      return docs as ExerciseAdjustment[];
     },
   };
 }

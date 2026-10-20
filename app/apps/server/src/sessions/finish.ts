@@ -17,6 +17,7 @@ import { button, plain, type Reply } from '../onboarding/replies.js';
 import { ensureWeek } from '../plans/weekly-plan.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
 import type { TrainingDeps } from './deps.js';
+import { checkRecord } from './records.js';
 
 /**
  * Terminar una sesión (T-043, HU-003-2/3): completada si llega a P-023 de sus
@@ -117,6 +118,7 @@ export async function logAsPlanned(
       edited: false,
       confirmedAt: now,
     });
+    await checkRecord(user, updated, set, deps);
   }
   await deps.events.emit(
     'session_logged_as_planned',

@@ -189,10 +189,12 @@ describe('T-021 · datos de los botones', () => {
     }
   });
 
-  it('onboarding y privacidad: ida y vuelta, y el paso más largo cabe', () => {
+  it('onboarding, privacidad, tarjeta y estancamiento: ida y vuelta, y el paso más largo cabe', () => {
     for (const action of [
       { action: 'ob', step: 'pre_activity_screening', value: 'q7_yes' },
       { action: 'pv', value: 'decline' },
+      { action: 'ss', sessionId: 'a'.repeat(24), value: 'done_12' },
+      { action: 'pt', sessionId: 'b'.repeat(24), value: 'd3' },
     ] as const) {
       const data = encodeCallbackData(action);
       expect(new TextEncoder().encode(data).length).toBeLessThanOrEqual(CALLBACK_DATA_MAX_BYTES);

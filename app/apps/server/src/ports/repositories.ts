@@ -3,6 +3,7 @@ import type {
   ConsentCategory,
   DayStatus,
   DayType,
+  ExerciseAdjustment,
   ExperienceLevel,
   GoalMetric,
   GoalType,
@@ -196,6 +197,8 @@ export interface SetEntriesRepository {
   remove(sessionId: string, exerciseCode: string, setIndex: number): Promise<void>;
   /** FR-002-04: última carga registrada de cada ejercicio (para precargar el plan). */
   lastLoads(userId: string): Promise<Record<string, number>>;
+  /** Todas las series de un ejercicio, en orden (récords, progresión y estancamiento). */
+  exerciseHistory(userId: string, exerciseCode: string): Promise<ExerciseSet[]>;
 }
 
 export interface MealRecord {
@@ -308,4 +311,59 @@ export interface PlansRepository {
   week(userId: string, weekStart: LocalDate): Promise<StoredWeeklyPlan | null>;
   /** RN-PLAN-007: mueve la sesión de `from` a `to` dentro de la misma semana. */
   moveSession(userId: string, weekStart: LocalDate, from: LocalDate, to: LocalDate): Promise<void>;
+  /** Descarta una semana futura todavía sin usar, para regenerarla (RN-ENT-003). */
+  discardWeek(userId: string, weekStart: LocalDate): Promise<void>;
+}
+
+export interface ExerciseSet {
+  readonly sessionId: string;
+  readonly setIndex: number;
+  readonly reps: number;
+  readonly loadKg: number;
+  readonly edited: boolean;
+  readonly confirmedAt: Date;
+}
+
+export interface PersonalRecordsRepository {
+  /** RN-ENT-005: un récord por serie (la clave de la serie lo hace idempotente). */
+  record(input: {
+    userId: string;
+    exerciseCode: string;
+    type: 'e1rm' | 'reps';
+    value: number;
+    date: LocalDate;
+    setKey: string;
+  }): Promise<{ inserted: boolean }>;
+  count(userId: string): Promise<number>;
+  /** Récords de una sesión (para el fin de sesión). */
+  countForSession(userId: string, sessionId: string): Promise<number>;
+}
+
+export interface AchievementsRepository {
+  /** RN-GAM-011: cada logro del catálogo se guarda una vez en la bitácora. */
+  appendOnce(input: {
+    userId: string;
+    code: string;
+    at: Date;
+    value: string | number | null;
+    context: string | null;
+  }): Promise<{ added: boolean }>;
+}
+
+export interface PainFlagsRepository {
+  record(input: {
+    userId: string;
+    exerciseCode: string;
+    zone: string;
+    date: LocalDate;
+    sessionId: string;
+  }): Promise<void>;
+  /** Sesiones distintas en las que se marcó dolor en ese ejercicio (RN-SEG-006). */
+  sessionsWithPain(userId: string, exerciseCode: string): Promise<string[]>;
+}
+
+export interface ExerciseAdjustmentsRepository {
+  /** RN-ENT-003: estrategia elegida ante un estancamiento. */
+  save(userId: string, adjustment: ExerciseAdjustment): Promise<void>;
+  list(userId: string): Promise<ExerciseAdjustment[]>;
 }

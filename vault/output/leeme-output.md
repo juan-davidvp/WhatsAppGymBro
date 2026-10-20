@@ -22,8 +22,8 @@ relacionados: [constitucion, spec-000-vision-fase-0, tareas-fase-0, inicio]
 |---|---|---|---|
 | [[constitucion]] | Principios no negociables (I–XI), restricciones, definición de terminado y gobernanza. Se importa en cada sesión de Claude Code | 1.0.0 | en-revision |
 | [[glosario]] | Términos del dominio y su nombre en código (inglés) | 0.1.0 | borrador |
-| [[reglas-de-negocio]] | **Fuente única** de las 103 reglas `RN-…` (14 por validar con un profesional) | 0.1.0 | en-revision |
-| [[parametros]] | Los 90 valores numéricos `P-001…P-090`, que el código replica en `parameters.ts` | 0.1.0 | en-revision |
+| [[reglas-de-negocio]] | **Fuente única** de las 103 reglas `RN-…` (15 por validar con un profesional) | 0.1.0 | en-revision |
+| [[parametros]] | Los 91 valores numéricos `P-001…P-091`, que el código replica en `parameters.ts` | 0.1.0 | en-revision |
 | [[spec-000-vision-fase-0]] | Mapa de specs, orden de implementación, MoSCoW, requisitos no funcionales y criterios globales | 0.1.0 | borrador |
 | [[spec-001-onboarding-y-objetivo]] · [[spec-002-plan-y-sesion-del-dia]] · [[spec-003-registro-de-entrenamiento]] · [[spec-004-registro-de-nutricion]] · [[spec-005-dia-que-cuenta-y-gamificacion]] · [[spec-006-progreso-logros-y-mantenimiento]] · [[spec-007-proactividad-y-mensajes]] · [[spec-008-integraciones]] · [[spec-009-seguridad-y-privacidad]] | Una spec por módulo: historias (HU) con escenarios Dado/Cuando/Entonces, requisitos (FR), reglas citadas, criterios de éxito (SC), eventos, casos borde, fuera de alcance y dudas `[NEEDS CLARIFICATION]` | 0.1.0 | borrador |
 | [[plan-tecnico]] | Stack, arquitectura hexagonal, estructura del repositorio, flujo de una actualización, planificador, IA acotada, despliegue | 0.1.0 | borrador |
