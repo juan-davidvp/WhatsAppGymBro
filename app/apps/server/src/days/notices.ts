@@ -45,7 +45,15 @@ export async function takeNotices(user: UserRecord, deps: NoticeDeps): Promise<R
 /** Avisos que un aviso posterior de la misma plantilla deja sin vigencia. */
 const LATEST_ONLY: ReadonlySet<string> = new Set(['RA-01', 'RA-02', 'MI-01']);
 
+/** T-065 · CU-06 (RN-SEG-008) con [Sí, descanso] y [Ajustar plan]. */
+export function overuseCareReply(): Reply {
+  return templateReply(OVERUSE_CARE, (value) => ({ action: 'td', value }));
+}
+
+const OVERUSE_CARE = 'CU-06';
+
 function noticeReply(notice: NoticeRecord): Reply {
+  if (notice.templateId === OVERUSE_CARE) return overuseCareReply();
   if (notice.templateId === REPAIR_OFFER) {
     return templateReply(
       REPAIR_OFFER,

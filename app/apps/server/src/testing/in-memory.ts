@@ -498,6 +498,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
               fulfilled: w.fulfilled,
               countedDays: w.countedDays,
               nutritionHalfDays: w.nutritionHalfDays,
+              restDaysPlanned: w.restDaysPlanned,
+              restDaysTrained: w.restDaysTrained,
             }))
             .sort((a, b) => a.weekStart.localeCompare(b.weekStart)),
         );

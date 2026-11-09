@@ -360,6 +360,9 @@ export interface WeekRecord {
   readonly countedDays: number;
   /** Días con la mitad de comida (base de la misión de comida, RN-GAM-008). */
   readonly nutritionHalfDays: number;
+  /** RN-SEG-008: días de descanso del plan y en cuántos se entrenó. */
+  readonly restDaysPlanned: number;
+  readonly restDaysTrained: number;
 }
 
 /** Misión de la semana guardada (`quests`, RN-GAM-008). */

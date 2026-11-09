@@ -499,6 +499,8 @@ export function weeksRepository(db: Db): WeeksRepository {
         fulfilled: d.fulfilled,
         countedDays: d.countedDays,
         nutritionHalfDays: d.nutritionHalfDays ?? 0,
+        restDaysPlanned: d.restDaysPlanned ?? 0,
+        restDaysTrained: d.restDaysTrained ?? 0,
       }));
     },
   };

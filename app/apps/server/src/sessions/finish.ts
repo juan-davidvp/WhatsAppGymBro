@@ -1,7 +1,9 @@
 import { SESSION_NAMES, renderTemplate, templateById } from '@gymbro/content';
 import {
+  PARAMETERS,
   addDays,
   isSessionCompleted,
+  overuseSignal,
   loggingGraceEnd,
   logSessionAsPlanned,
   operationalDate,
@@ -14,7 +16,7 @@ import {
 } from '@gymbro/domain';
 import { recordDayActivity, sessionSource, withWeekLine } from '../days/day-status.js';
 import { unlockAchievement } from '../days/achievements.js';
-import { takeNotices } from '../days/notices.js';
+import { overuseCareReply, takeNotices } from '../days/notices.js';
 import { grantXp } from '../days/xp.js';
 import { button, plain, type Reply } from '../onboarding/replies.js';
 import { ensureWeek } from '../plans/weekly-plan.js';
@@ -94,8 +96,30 @@ export async function finishSession(
   if (template === 'SE-01') variables['record_txt'] = await extras(updated);
   return [
     { ...withWeekLine(plain(template, variables), result), edit: true },
+    ...(await overuseCare(user, session.date, deps)),
     ...(await takeNotices(user, deps)),
   ];
+}
+
+/**
+ * T-065 · RN-SEG-008 (HU-009-5): al pasar de P-063 sesiones completadas en el
+ * día, la respuesta de cuidado CU-06 y `overuse_signal`, una sola vez ese día.
+ */
+async function overuseCare(
+  user: UserRecord,
+  date: LocalDate,
+  deps: TrainingDeps,
+): Promise<Reply[]> {
+  const sessions = await deps.workouts.onDate(user.id, date);
+  const done = sessions.filter((s) => s.status === 'completed').length;
+  if (done !== PARAMETERS.safety.maxSessionsPerDay + 1) return [];
+  if (!overuseSignal({ sessionsToday: done, recentWeeks: [] })) return [];
+  await deps.events.emit(
+    'overuse_signal',
+    { userId: user.id, timezone: user.timezone },
+    { reason: 'sessions_per_day' },
+  );
+  return [overuseCareReply()];
 }
 
 /** HU-003-2: "La hice tal cual" registra todas las series como estaban planeadas, en 1 toque. */

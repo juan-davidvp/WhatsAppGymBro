@@ -64,6 +64,8 @@ describe('RN-GAM-008 · T-063 · misiones semanales (HU-005-6)', () => {
       fulfilled: true,
       countedDays: 6,
       nutritionHalfDays: 5,
+      restDaysPlanned: 4,
+      restDaysTrained: 0,
     });
     t.goTo('2026-10-20T17:00:00Z');
     await closeDueDays(t.deps);

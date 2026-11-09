@@ -553,3 +553,20 @@ relacionados: [index, inicio]
   - No existe ninguna comparación entre usuarios.
 - **Temporadas (RN-GAM-010):** no se implementan. Quedan como `[NEEDS CLARIFICATION]` en [[spec-005-dia-que-cuenta-y-gamificacion]] §10 hasta que el PO defina temas, metas e insignias. `seasonOf` sigue en el dominio con sus pruebas.
 - **Pruebas:** `scheduler/league.test.ts` (nueva mejor semana, segunda mejor semana sin repetir el logro, semana que no supera, primera semana).
+
+## [2026-11-09] implementar | T-065 Señal de sobreuso y respuesta de cuidado CU-06 (Should)
+- **Más de P-063 sesiones en un día** (`sessions/finish.ts`, RN-SEG-008, HU-009-5): al completar la sesión n.º P-063 + 1 del día se responde CU-06 y se emite `overuse_signal` (`sessions_per_day`), una sola vez ese día.
+- **Todos los descansos entrenados durante P-064 semanas** (`scheduler/close-week.ts`): `weeks` guarda los descansos del plan y en cuántos se completó una sesión ([[modelo-de-datos]] v0.5.0). Al cerrar la semana, `overuseSignal` del dominio decide; si hay señal, CU-06 queda para la próxima interacción y se emite `overuse_signal` (`rest_days`).
+- CU-06 es una respuesta de cuidado: sale aunque el juego esté desactivado.
+- **Botones de CU-06** (decisión del PO, 2026-11-09): [Sí, descanso] responde HN-02; [Ajustar plan] muestra el plan de la semana (PN-01) hasta que exista T-045.
+- **Para revisión del PO** (CU-06 está marcada `[VALIDAR-PROFESIONAL]`): el texto dice "vienes entrenando también en tus descansos", que encaja con la señal semanal pero no del todo con la de varias sesiones en un mismo día. No se cambió; si se quiere, una variante para ese caso necesita revisión profesional.
+- **Pruebas:** `scheduler/overuse.test.ts` (tercera sesión del día, dos sesiones sin señal, botones de CU-06, dos semanas entrenando todos los descansos, una semana con descanso).
+
+## [2026-11-09] hito | M6 · Día que cuenta y juego (SPEC-005): T-060 a T-065 hechas
+- [[spec-005-dia-que-cuenta-y-gamificacion]] sigue en `borrador`: falta HU-005-8 escenario 2 (temporadas), fuera de la Fase 0 por decisión del PO, y los nombres de los niveles se validan en H1.
+- **Pendientes que quedan:**
+  - Temporadas (RN-GAM-010).
+  - Días en pausa con `/pausa` (T-073).
+  - Envío proactivo de los avisos del cierre con la bandeja (T-070/T-071).
+  - [Ver progreso] y [Ver bitácora] con `/progreso` y `/logros` (M8).
+  - T-045 (ajustar días) para [Ajustar plan] de CU-06.

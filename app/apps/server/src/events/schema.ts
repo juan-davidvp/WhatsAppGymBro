@@ -162,6 +162,8 @@ export const EVENT_PROPS_SCHEMAS = {
     consistency: z.number().int().positive(),
   }),
   quest_completed: z.strictObject({ kind: z.enum(['TRAINING', 'NUTRITION', 'CONSISTENCY']) }),
+  /** SPEC-009 (T-065, RN-SEG-008): qué disparó la señal de sobreuso. */
+  overuse_signal: z.strictObject({ reason: z.enum(['sessions_per_day', 'rest_days']) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

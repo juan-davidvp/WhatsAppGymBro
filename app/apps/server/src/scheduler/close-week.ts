@@ -2,6 +2,7 @@ import {
   addDays,
   compareWithOwnHistory,
   evaluateWeek,
+  overuseSignal,
   weekStartOf,
   type LocalDate,
   type WeekAchieved,
@@ -49,10 +50,16 @@ export async function evaluateClosedWeek(
 ): Promise<ClosedWeek | null> {
   const weekStart = weekStartOf(date);
   if (addDays(weekStart, WEEK_LENGTH - 1) !== date) return null;
-  const planned = (await plannedWeekDays(user, weekStart, deps)).filter(
-    (d) => d.type === 'TRAINING',
-  ).length;
+  const days = await plannedWeekDays(user, weekStart, deps);
+  const planned = days.filter((d) => d.type === 'TRAINING').length;
   const achieved = await weekAchieved(user, weekStart, date, deps);
+  // RN-SEG-008: en cuántos descansos del plan se completó una sesión.
+  const restDays = days.filter((d) => d.type === 'REST').map((d) => d.date);
+  let restDaysTrained = 0;
+  for (const rest of restDays) {
+    const sessions = await deps.workouts.onDate(user.id, rest);
+    if (sessions.some((s) => s.status === 'completed')) restDaysTrained += 1;
+  }
   // Solo se cierran días de usuarios activos: un usuario en pausa no llega aquí (T-073).
   const result = evaluateWeek({ planned, completed: achieved.sessions, paused: false });
   return {
@@ -64,6 +71,8 @@ export async function evaluateClosedWeek(
       fulfilled: result.evaluated && result.fulfilled,
       countedDays: achieved.countedDays,
       nutritionHalfDays: achieved.nutritionHalfDays,
+      restDaysPlanned: restDays.length,
+      restDaysTrained,
     },
     result,
   };
@@ -137,6 +146,35 @@ async function announceBestWeek(
   });
 }
 
+/**
+ * T-065 · RN-SEG-008 (HU-009-5): si en las últimas P-064 semanas entrenó en
+ * todos sus descansos, CU-06 en la próxima interacción y `overuse_signal`. Es una
+ * respuesta de cuidado: no depende de que el juego esté activo.
+ */
+async function checkRestOveruse(
+  user: UserRecord,
+  current: WeekRecord,
+  earlier: readonly WeekRecord[],
+  deps: CloseWeekDeps,
+): Promise<void> {
+  const recentWeeks = [...earlier, current].map((w) => ({
+    restDaysPlanned: w.restDaysPlanned,
+    restDaysTrained: w.restDaysTrained,
+  }));
+  if (!overuseSignal({ sessionsToday: 0, recentWeeks })) return;
+  await deps.events.emit(
+    'overuse_signal',
+    { userId: user.id, timezone: user.timezone },
+    { reason: 'rest_days' },
+  );
+  await deps.notices.add(user.id, {
+    key: `CU-06:${current.weekStart}`,
+    templateId: 'CU-06',
+    variables: {},
+    createdAt: deps.clock(),
+  });
+}
+
 /** Guarda la semana, emite `week_closed` y, si se cumplió, su XP y SM-01. */
 export async function announceWeek(
   user: UserRecord,
@@ -150,6 +188,7 @@ export async function announceWeek(
   );
   await deps.weeks.save(user.id, week.record);
   await announceBestWeek(user, date, week.record, earlier, deps);
+  await checkRestOveruse(user, week.record, earlier, deps);
   if (!week.result.evaluated) return;
   const { record } = week;
   await deps.events.emit(

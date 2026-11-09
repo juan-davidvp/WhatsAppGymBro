@@ -67,6 +67,8 @@ const BUTTON_VALUES: Readonly<Record<string, Readonly<Record<string, string>>>> 
   'HY-01': { 'Hice la movilidad': 'mobility', 'Registrar comida': 'food' },
   // RN-GAM-003: la misión de regreso abre la exprés (en descanso, la de la sesión que faltó).
   'RA-02': { "Exprés 15'": 'repair' },
+  // RN-SEG-008 (decisión del PO, 2026-11-09): [Ajustar plan] muestra el plan mientras no exista T-045.
+  'CU-06': { 'Sí, descanso': 'care_rest', 'Ajustar plan': 'care_plan' },
   'BD-01': { 'Sí, borrar': 'confirm', Cancelar: 'cancel' },
   'BD-02': { 'Borrar todo': 'erase', Cancelar: 'cancel' },
 };

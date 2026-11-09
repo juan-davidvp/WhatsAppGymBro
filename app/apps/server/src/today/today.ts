@@ -9,7 +9,7 @@ import {
 } from '../days/day-status.js';
 import { takeNotices } from '../days/notices.js';
 import { plain, templateReply, button, type Reply } from '../onboarding/replies.js';
-import { dayLabel } from '../plans/plan-view.js';
+import { dayLabel, planView } from '../plans/plan-view.js';
 import { currentWeek } from '../plans/weekly-plan.js';
 import type { UserRecord } from '../ports/repositories.js';
 import type { TrainingDeps } from '../sessions/deps.js';
@@ -116,6 +116,11 @@ export async function answerToday(
   switch (value) {
     case 'resume':
       return resumeSession(user, deps);
+    // T-065 · botones de CU-06 (RN-SEG-008).
+    case 'care_rest':
+      return [plain('HN-02')];
+    case 'care_plan':
+      return planView(user, deps);
     case 'repair': {
       // RN-GAM-003: [Exprés 15'] de RA-02, también en un día de descanso.
       const planned = await repairSessionFor(user, deps);

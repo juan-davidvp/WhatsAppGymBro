@@ -24,6 +24,8 @@ async function setup(earlierCounted: readonly number[]) {
       fulfilled: true,
       countedDays,
       nutritionHalfDays: 0,
+      restDaysPlanned: 4,
+      restDaysTrained: 0,
     };
     flow.weekRecords.push({ ...week, userId });
   });
