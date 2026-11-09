@@ -7,6 +7,7 @@ import {
   generateWeeklyPlan,
   repRangeFor,
   suggestProgression,
+  type DayType,
   type GoalType,
   type LoggedSet,
   operationalDate,
@@ -148,6 +149,24 @@ export async function ensureWeek(
     await deps.events.emit('progression_suggested', subject, { exercises: increased });
   }
   return stored;
+}
+
+/**
+ * RN-DQC-001: tipo del día según el plan guardado. Si esa semana nunca se
+ * guardó (no abrió el bot), el tipo que el plan le habría dado, sin guardarlo
+ * ni emitir `plan_generated`: el cierre de un día pasado no crea planes.
+ */
+export async function plannedDayType(
+  user: UserRecord,
+  date: LocalDate,
+  deps: { plans: PlansRepository },
+): Promise<DayType> {
+  const weekStart = weekStartOf(date);
+  const stored = await deps.plans.week(user.id, weekStart);
+  if (stored) return stored.days.find((d) => d.date === date)?.type ?? 'REST';
+  const inputs = planInputsFor(user, weekStart, 0, {});
+  if (!inputs) return 'REST';
+  return generateWeeklyPlan(inputs).days.find((d) => d.date === date)?.type ?? 'REST';
 }
 
 /** Semana actual (según el día operativo del usuario). */

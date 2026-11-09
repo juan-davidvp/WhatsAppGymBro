@@ -6,6 +6,7 @@ import {
   evaluateDay,
   initialCountedDaysState,
   isDayClosable,
+  lastClosableDate,
   loggingGraceEnd,
   operationalDate,
   zonedTimeToInstant,
@@ -149,6 +150,13 @@ describe('RN-DQC-005 · gracia de registro hasta P-030 del día siguiente', () =
   it('el día se puede cerrar solo cuando termina la gracia', () => {
     expect(isDayClosable('2026-10-19', at('2026-10-20T16:59:59Z'), BOGOTA)).toBe(false);
     expect(isDayClosable('2026-10-19', at('2026-10-20T17:00:00Z'), BOGOTA)).toBe(true);
+  });
+
+  it('el último día que se puede cerrar es anteayer antes de las 12:00 y ayer después', () => {
+    expect(lastClosableDate(at('2026-10-20T16:59:59Z'), BOGOTA)).toBe('2026-10-18');
+    expect(lastClosableDate(at('2026-10-20T17:00:00Z'), BOGOTA)).toBe('2026-10-19');
+    // Entre las 00:00 y las 03:00 sigue siendo el día operativo anterior.
+    expect(lastClosableDate(at('2026-10-21T07:00:00Z'), BOGOTA)).toBe('2026-10-19');
   });
 
   it('dentro de la gracia el estado se recalcula: registrar tarde hace contar el día', () => {

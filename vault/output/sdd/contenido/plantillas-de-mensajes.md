@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.11.0
+version: 0.12.0
 creado: 2026-10-18
-actualizado: 2026-10-20
+actualizado: 2026-11-08
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -108,6 +108,8 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | ES-05 | Sin otra variante | No tengo otra variante de {ejercicio} en el catálogo. Prueba con el rango o la semana suave. |
 | DL-01 | [⚠️ Dolor] | ¿Dónde te duele? [Hombro] [Codo] [Muñeca] [Espalda] [Cadera] [Rodilla] [Tobillo] [Otra zona] |
 | DL-02 | Sin variante sin dolor | No tengo otra variante para ese ejercicio en esta versión: pasamos al siguiente. |
+
+> - **DC-03:** cada variable es la letra del día seguida de su marca, sin espacio (`L✅`). Marcas: `⭐` completo · `✅` cuenta · `⬜` pendiente (hoy, o un día anterior mientras dura su gracia) · `–` cerrado sin contar o salvado con un comodín · `·` todavía no llega. La raya es neutra: nunca una ✗ (constitución I). La línea va en su propio renglón debajo de SE-01, SE-02, SE-03, DC-01 y HY-02, y al final de 🏋️ Hoy (V2 de [[cada-dia-cuenta]]).
 
 
 ### 2.1 Plan de la semana (`/plan`, T-040)

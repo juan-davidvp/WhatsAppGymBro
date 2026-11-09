@@ -144,14 +144,17 @@ describe('SC-003-2 · un toque repetido no duplica una serie, una comida ni un d
       mobilityMinutes: 0,
     };
     await days.saveStatus('u1', '2026-10-19', 'TRAINING', evaluateDay(inputs));
+    const status = evaluateDay(inputs);
     const closes = await Promise.all([
-      days.close('u1', '2026-10-19', now),
-      days.close('u1', '2026-10-19', now),
+      days.close('u1', '2026-10-19', 'TRAINING', status, now),
+      days.close('u1', '2026-10-19', 'TRAINING', status, now),
     ]);
     expect(closes.filter((c) => c.closedNow)).toHaveLength(1);
-    await streaks.applyDayClose('u1', { date: '2026-10-19', counted: true });
+    const first = await streaks.applyDayClose('u1', { date: '2026-10-19', counted: true });
     const again = await streaks.applyDayClose('u1', { date: '2026-10-19', counted: true });
-    expect(again.totalCountedDays).toBe(1);
+    expect(first).toEqual({ applied: true, totalCountedDays: 1 });
+    expect(again).toEqual({ applied: false, totalCountedDays: 1 });
+    expect(await streaks.lastClosedDate('u1')).toBe('2026-10-19');
   });
 
   it('un día cerrado ya no cambia aunque llegue un registro tarde', async () => {
@@ -165,7 +168,7 @@ describe('SC-003-2 · un toque repetido no duplica una serie, una comida ni un d
       mobilityMinutes: 0,
     };
     await days.saveStatus('u1', '2026-10-19', 'TRAINING', evaluateDay(off));
-    await days.close('u1', '2026-10-19', now);
+    await days.close('u1', '2026-10-19', 'TRAINING', evaluateDay(off), now);
     await days.saveStatus(
       'u1',
       '2026-10-19',
@@ -456,9 +459,40 @@ describe('RN-DQC-005 · T-041 · fuentes del día abierto', () => {
     const days = daysRepository(db);
     expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
     expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
-    await days.close('u13', '2026-10-20', now);
+    const rest: DayInputs = {
+      type: 'REST',
+      sessionsCompleted: 0,
+      importedActivityMinutes: [],
+      nutritionHalf: false,
+      importedSteps: 0,
+      mobilityMinutes: 0,
+    };
+    await days.close('u13', '2026-10-20', 'REST', evaluateDay(rest), now);
     expect(await days.addSource('u13', '2026-10-20', 'REST', 'session:x')).toEqual(['mobility']);
-    expect(await days.history('u13')).toEqual([{ date: '2026-10-20', counted: false }]);
+    expect(await days.history('u13')).toEqual([
+      { date: '2026-10-20', counted: false, complete: false },
+    ]);
+    expect(await days.dayType('u13', '2026-10-20')).toBe('REST');
+  });
+
+  it('T-060 · cerrar un día sin registros lo crea cerrado y no se puede abrir de nuevo', async () => {
+    const days = daysRepository(db);
+    const off: DayInputs = {
+      type: 'TRAINING',
+      sessionsCompleted: 0,
+      importedActivityMinutes: [],
+      nutritionHalf: false,
+      importedSteps: 0,
+      mobilityMinutes: 0,
+    };
+    expect(await days.close('u13', '2026-10-21', 'TRAINING', evaluateDay(off), now)).toEqual({
+      closedNow: true,
+    });
+    expect(await days.close('u13', '2026-10-21', 'TRAINING', evaluateDay(off), now)).toEqual({
+      closedNow: false,
+    });
+    expect(await days.addSource('u13', '2026-10-21', 'TRAINING', 'session:y')).toEqual([]);
+    expect(await days.dayType('u13', '2026-10-22')).toBeNull();
   });
 });
 

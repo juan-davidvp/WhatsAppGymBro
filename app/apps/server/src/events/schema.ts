@@ -3,6 +3,10 @@ import { CONSENT_CATEGORIES, ONBOARDING_STEPS, WEEK_DAYS } from '@gymbro/domain'
 import { z } from 'zod';
 import { EVENT_NAMES, STUDY_PHASES, type EventName } from './catalog.js';
 
+/** Qué hizo contar el día cerrado (`day_closed.source`). */
+export const DAY_SOURCES = ['session', 'nutrition', 'mobility', 'none'] as const;
+export type DaySource = (typeof DAY_SOURCES)[number];
+
 /**
  * Esquemas de los eventos de medición (RN-DAT-005, SC-009-3): un evento solo
  * lleva categorías, identificadores y métricas. Se valida cada evento antes de
@@ -120,6 +124,14 @@ export const EVENT_PROPS_SCHEMAS = {
   onboarding_completed: z.strictObject({
     durationMs: z.number().int().nonnegative(),
     taps: z.number().int().nonnegative(),
+  }),
+  /** SPEC-005 §7: tipo, cuenta, completo y fuente del día cerrado (T-060). */
+  day_closed: z.strictObject({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    dayType: z.enum(['TRAINING', 'REST']),
+    counted: z.boolean(),
+    complete: z.boolean(),
+    source: z.enum(DAY_SOURCES),
   }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 

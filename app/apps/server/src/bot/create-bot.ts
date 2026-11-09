@@ -19,6 +19,7 @@ import type {
   BodyMeasurementsRepository,
   GoalsRepository,
   DaysRepository,
+  StreakStatesRepository,
   AchievementsRepository,
   ExerciseAdjustmentsRepository,
   FavoriteMealsRepository,
@@ -68,6 +69,8 @@ export interface BotDependencies {
   plans: PlansRepository;
   setEntries: SetEntriesRepository;
   days: DaysRepository;
+  /** Estado del cierre de días: total acumulado y último día cerrado (T-060). */
+  streaks: StreakStatesRepository;
   workouts: WorkoutSessionsRepository;
   records: PersonalRecordsRepository;
   achievements: AchievementsRepository;

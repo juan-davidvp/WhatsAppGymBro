@@ -1,4 +1,4 @@
-import { SESSION_NAMES, renderTemplate, templateById } from '@gymbro/content';
+import { SESSION_NAMES, renderTemplate, renderWeekLine, templateById } from '@gymbro/content';
 import { PARAMETERS, plannedSetCount } from '@gymbro/domain';
 import { describe, expect, it } from 'vitest';
 import { ONBOARDED_GYM_LXV, runFlow, type FlowStep } from '../testing/onboarding.js';
@@ -16,6 +16,17 @@ async function withClock(steps: readonly FlowStep[] = []) {
     },
   };
 }
+
+/** DC-03 del lunes 2026-10-19 con ese día ya contando y el resto por llegar. */
+const MONDAY_COUNTED = renderWeekLine([
+  'COUNTED',
+  'FUTURE',
+  'FUTURE',
+  'FUTURE',
+  'FUTURE',
+  'FUTURE',
+  'FUTURE',
+]);
 
 /** Series planeadas de la última sesión. */
 function totalSets(flow: Awaited<ReturnType<typeof withClock>>): number {
@@ -40,8 +51,9 @@ describe('HU-003-3 · RN-ENT-004 · T-043 · terminar la sesión', () => {
     );
     await confirmSets(flow, total);
     await flow.act('🏁 Terminar');
+    // HU-005-1 escenario 1: "Día que cuenta n.º N" con la semana en una línea.
     expect(flow.last()?.text).toBe(
-      renderTemplate('SE-01', { series: total, record_txt: '', n: 1, racha: 1 }),
+      `${renderTemplate('SE-01', { series: total, record_txt: '', n: 1, racha: 1 })}\n${MONDAY_COUNTED}`,
     );
     expect(flow.calls.at(-1)?.method).toBe('editMessageText');
     expect(flow.session()?.status).toBe('completed');
@@ -86,7 +98,9 @@ describe('HU-003-3 · RN-ENT-004 · T-043 · terminar la sesión', () => {
     const total = totalSets(flow);
     await confirmSets(flow, total);
     await flow.act('🏁 Terminar');
-    expect(flow.last()?.text).toBe(renderTemplate('SE-02', { series: total, n: 1, racha: 1 }));
+    expect(flow.last()?.text).toBe(
+      `${renderTemplate('SE-02', { series: total, n: 1, racha: 1 })}\n${MONDAY_COUNTED}`,
+    );
   });
 
   it('después de terminar, un botón de esa tarjeta responde SC-03 sin cambiar datos', async () => {
@@ -145,6 +159,10 @@ describe('RN-GAM-001 · T-043 · n.º y racha en vivo a lo largo de la semana', 
     await flow.act({ text: '🏋️ Hoy' });
     await flow.act('Gym');
     await flow.act('La hice tal cual');
-    expect(flow.last()?.text.endsWith('Día que cuenta n.º 3 · 🔥 3')).toBe(true);
+    const [summary, weekLine] = flow.last()?.text.split('\n') ?? [];
+    expect(summary?.endsWith('Día que cuenta n.º 3 · 🔥 3')).toBe(true);
+    expect(weekLine).toBe(
+      renderWeekLine(['COUNTED', 'COUNTED', 'COUNTED', 'FUTURE', 'FUTURE', 'FUTURE', 'FUTURE']),
+    );
   });
 });

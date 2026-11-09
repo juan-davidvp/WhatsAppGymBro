@@ -9,6 +9,7 @@ import {
   MESSAGE_TEMPLATES,
   PROHIBITED_EXPRESSIONS,
   WEEKLY_PHRASES,
+  WEEK_LINE_SYMBOLS,
   type Amount,
   type HandEquivalence,
   type HandPortion,
@@ -77,6 +78,13 @@ describe('T-003 · plantillas de mensajes', () => {
   it('las frases de {frase_semana} coinciden', () => {
     const line = templatesMd.split('\n').find((l) => l.startsWith('`{frase_semana}`')) ?? '';
     expect(WEEKLY_PHRASES).toEqual([...line.matchAll(/"([^"]+)"/g)].map((m) => m[1]));
+  });
+
+  it('los símbolos de la línea de la semana (DC-03) coinciden con su nota', () => {
+    const line = templatesMd.split('\n').find((l) => l.startsWith('> - **DC-03:**')) ?? '';
+    const marks = line.slice(line.indexOf('Marcas:'));
+    const symbols = [...marks.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+    expect(symbols).toEqual(Object.values(WEEK_LINE_SYMBOLS));
   });
 
   it('las expresiones prohibidas coinciden con voz-y-marca', () => {

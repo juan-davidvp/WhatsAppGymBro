@@ -116,6 +116,15 @@ export function isDayClosable(date: LocalDate, now: Date, timeZone: string): boo
   return now.getTime() >= loggingGraceEnd(date, timeZone).getTime();
 }
 
+/**
+ * RN-DQC-005: último día operativo cuya gracia ya terminó en `now` (el más
+ * reciente que el cierre programado puede cerrar).
+ */
+export function lastClosableDate(now: Date, timeZone: string): LocalDate {
+  const yesterday = addDays(operationalDate(now, timeZone), -1);
+  return isDayClosable(yesterday, now, timeZone) ? yesterday : addDays(yesterday, -1);
+}
+
 export interface ClosedDay {
   readonly date: LocalDate;
   readonly counted: boolean;

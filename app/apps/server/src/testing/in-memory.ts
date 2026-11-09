@@ -1,4 +1,10 @@
-import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
+import {
+  PARAMETERS,
+  closeDay,
+  initialCountedDaysState,
+  type ConsentCategory,
+  type CountedDaysState,
+} from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
@@ -72,6 +78,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     sources: string[];
     dayStatus: DayStatus | null;
   }[] = [];
+  const streakStates = new Map<string, CountedDaysState>();
   const workouts: WorkoutSessionRecord[] = [];
   const records: {
     userId: string;
@@ -196,6 +203,11 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           onboarding: { ...user.onboarding, completedAt: at, step: 'summary' },
         }));
         return Promise.resolve();
+      },
+      listActive() {
+        return Promise.resolve(
+          [...users.values()].filter((u) => u.status === 'active' && u.onboarding.completedAt),
+        );
       },
       restartOnboarding(userId, step) {
         updateUser(userId, (user) => ({
@@ -359,10 +371,28 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         }
         return Promise.resolve();
       },
-      close(userId, date) {
-        const day = days.find((d) => d.userId === userId && d.date === date && d.status === 'open');
-        if (day) day.status = 'closed';
-        return Promise.resolve({ closedNow: day !== undefined });
+      close(userId, date, dayType, status) {
+        const day = days.find((d) => d.userId === userId && d.date === date);
+        if (day?.status === 'closed') return Promise.resolve({ closedNow: false });
+        if (day) {
+          Object.assign(day, {
+            dayType,
+            status: 'closed',
+            counted: status.counts,
+            dayStatus: status,
+          });
+        } else {
+          days.push({
+            userId,
+            date,
+            dayType,
+            status: 'closed',
+            counted: status.counts,
+            sources: [],
+            dayStatus: status,
+          });
+        }
+        return Promise.resolve({ closedNow: true });
       },
       addSource(userId, date, dayType, source) {
         let day = days.find((d) => d.userId === userId && d.date === date);
@@ -386,12 +416,35 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           ...(days.find((d) => d.userId === userId && d.date === date)?.sources ?? []),
         ]);
       },
+      dayType(userId, date) {
+        return Promise.resolve(
+          days.find((d) => d.userId === userId && d.date === date)?.dayType ?? null,
+        );
+      },
       history(userId) {
         return Promise.resolve(
           days
             .filter((d) => d.userId === userId)
-            .map((d) => ({ date: d.date, counted: d.counted })),
+            .map((d) => ({
+              date: d.date,
+              counted: d.counted,
+              complete: d.dayStatus?.complete ?? false,
+            })),
         );
+      },
+    },
+    streaks: {
+      applyDayClose(userId, day) {
+        const current = streakStates.get(userId) ?? initialCountedDaysState();
+        const next = closeDay(current, day);
+        streakStates.set(userId, next);
+        return Promise.resolve({
+          applied: next.lastClosedDate !== current.lastClosedDate,
+          totalCountedDays: next.total,
+        });
+      },
+      lastClosedDate(userId) {
+        return Promise.resolve(streakStates.get(userId)?.lastClosedDate ?? null);
       },
     },
     workouts: {
@@ -555,6 +608,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(weeks, userId);
         removeRows(setEntries, userId);
         removeRows(days, userId);
+        streakStates.delete(userId);
         removeRows(workouts, userId);
         removeRows(records, userId);
         removeRows(achievements, userId);
@@ -596,6 +650,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     weeks,
     setEntries,
     days,
+    streakStates,
     workouts,
     records,
     achievements,

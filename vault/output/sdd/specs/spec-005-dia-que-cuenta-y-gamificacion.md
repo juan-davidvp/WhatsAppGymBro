@@ -4,12 +4,12 @@ tipo: sdd-spec
 id: SPEC-005
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.2.0
 fase: 0
 prioridad: P1
 depende_de: [SPEC-003, SPEC-004]
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-11-08
 deriva_de: [cada-dia-cuenta, sistema-de-gamificacion, estrategia-anti-novedad, gamificacion-y-habitos]
 fuentes: [F45, F46]
 relacionados: [spec-006-progreso-logros-y-mantenimiento, spec-007-proactividad-y-mensajes, catalogo-de-logros-y-niveles, parametros]
@@ -85,13 +85,16 @@ RN-DQC-001 a RN-DQC-007 · RN-GAM-001 a RN-GAM-014 · RN-SEG-007.
 
 ## 7. Eventos
 
-`day_closed` (tipo, cuenta, completo, fuente) · `streak_extended` · `freeze_earned` · `freeze_used` · `streak_reset` · `streak_repair_offered` · `streak_repaired` · `xp_awarded` (evento, monto) · `level_up` (nivel) · `week_closed` (cumplida, sesiones, compromiso) · `quest_generated` · `quest_completed` · `achievement_unlocked` (código) · `season_started` · `season_closed`.
+`day_closed` (fecha, tipo, cuenta, completo, fuente) · `streak_extended` · `freeze_earned` · `freeze_used` · `streak_reset` · `streak_repair_offered` · `streak_repaired` · `xp_awarded` (evento, monto) · `level_up` (nivel) · `week_closed` (cumplida, sesiones, compromiso) · `quest_generated` · `quest_completed` · `achievement_unlocked` (código) · `season_started` · `season_closed`.
 
 ## 8. Casos límite
 
 - Cambio de zona horaria (viaje): el día operativo usa la zona vigente al inicio del día.
 - Sesión registrada con "La hice tal cual" dentro de la gracia: el día anterior pasa a contar y la racha se recalcula.
 - Semana con 0 sesiones planificadas (vacaciones): la semana no se evalúa (ni cumplida ni rota) si el usuario usó `/pausa` o pausó el objetivo.
+- Día con señal de riesgo (FR-005-07; decisión del PO, 2026-11-08): el día que cuenta suma al total; la racha puede sumar pero no romperse (no gasta comodín); no hay XP, comodín ganado, logros ni mensajes de juego ese día.
+- Avisos del cierre (comodín usado, racha reiniciada, reparación, regreso): mientras no exista la bandeja de salida (T-070) se muestran en la próxima interacción del usuario, no como mensaje proactivo (constitución III; decisión del PO, 2026-11-08).
+- Día que nunca se abrió: se cierra igual con el tipo del plan; no cuenta y no resta. Cerrarlo no guarda planes de semanas pasadas.
 
 ## 9. Fuera de alcance
 
@@ -100,4 +103,4 @@ Rankings entre usuarios, tienda de recompensas, monedas canjeables, desafíos en
 ## 10. Aclaraciones pendientes
 
 - `[NEEDS CLARIFICATION]` Nombres de los niveles: validar con usuarios en H1.
-- `[NEEDS CLARIFICATION]` ¿Mostrar la racha diaria y la de semanas a la vez desde el día 1? Propuesta: la diaria desde el día 1; la de semanas desde la segunda semana.
+- ~~¿Mostrar la racha diaria y la de semanas a la vez desde el día 1?~~ **Resuelto (PO, 2026-11-08):** la diaria desde el día 1; la de semanas desde que se cierra la primera semana cumplida.

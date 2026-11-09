@@ -93,6 +93,8 @@ export interface UsersRepository {
   /** Cuenta una interacción del onboarding; la primera fija `startedAt`. */
   recordOnboardingInteraction(userId: string, at: Date): Promise<void>;
   completeOnboarding(userId: string, at: Date): Promise<void>;
+  /** Usuarios activos que terminaron el onboarding (para el cierre programado, T-060). */
+  listActive(): Promise<UserRecord[]>;
   /** "Empezar de nuevo" (SPEC-001 §8): borra lo declarado y vuelve a `step`. */
   restartOnboarding(userId: string, step: OnboardingStep): Promise<void>;
 }
@@ -252,16 +254,27 @@ export interface FavoriteMealsRepository {
 export interface DaysRepository {
   /** Guarda el estado del día mientras está abierto (RN-DQC-005); uno cerrado no cambia. */
   saveStatus(userId: string, date: LocalDate, dayType: DayType, status: DayStatus): Promise<void>;
-  /** Cierra el día una sola vez (FR-005-02). */
-  close(userId: string, date: LocalDate, at: Date): Promise<{ closedNow: boolean }>;
+  /**
+   * Cierra el día una sola vez con su estado final (FR-005-02); lo crea si no
+   * tenía registros. Un día ya cerrado no cambia.
+   */
+  close(
+    userId: string,
+    date: LocalDate,
+    dayType: DayType,
+    status: DayStatus,
+    at: Date,
+  ): Promise<{ closedNow: boolean }>;
   /**
    * Añade una fuente al día abierto (`session:<id>`, `mobility`) sin repetirla y
    * devuelve todas sus fuentes; en un día cerrado no cambia nada (RN-DQC-005).
    */
   addSource(userId: string, date: LocalDate, dayType: DayType, source: string): Promise<string[]>;
   sources(userId: string, date: LocalDate): Promise<string[]>;
-  /** Días guardados con si cuentan (para el total y la racha en vivo). */
-  history(userId: string): Promise<{ date: LocalDate; counted: boolean }[]>;
+  /** Tipo con el que se registró el día (null si no tiene registros). */
+  dayType(userId: string, date: LocalDate): Promise<DayType | null>;
+  /** Días guardados con si cuentan y si son completos (total, racha y línea de la semana). */
+  history(userId: string): Promise<{ date: LocalDate; counted: boolean; complete: boolean }[]>;
 }
 
 export type WorkoutStatus = 'active' | 'completed' | 'partial' | 'abandoned';
@@ -301,11 +314,16 @@ export interface WorkoutSessionsRepository {
 }
 
 export interface StreakStatesRepository {
-  /** RN-DQC-007: suma el día cerrado al total una sola vez; el total nunca baja. */
+  /**
+   * RN-DQC-007: suma el día cerrado al total una sola vez; el total nunca baja.
+   * `applied` es false si ese día (o uno posterior) ya estaba cerrado.
+   */
   applyDayClose(
     userId: string,
     day: { date: LocalDate; counted: boolean },
-  ): Promise<{ totalCountedDays: number }>;
+  ): Promise<{ applied: boolean; totalCountedDays: number }>;
+  /** Último día cerrado del usuario (null si nunca se cerró uno). */
+  lastClosedDate(userId: string): Promise<LocalDate | null>;
 }
 
 export interface RiskSignalsRepository {

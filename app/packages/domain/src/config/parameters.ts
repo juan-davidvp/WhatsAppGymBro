@@ -244,6 +244,10 @@ export const PARAMETERS = {
     /** P-073 · RN-MSJ-016 · toques máximos de la acción que falta */
     dayClosingMaxTaps: 2,
   },
+  scheduler: {
+    /** P-096 · FR-005-02 · segundos entre ciclos del planificador (plan técnico §6) */
+    intervalSeconds: 60,
+  },
   metrics: {
     /** P-067 · plan de medición · duro · horas */
     actionWindowHours: 2,

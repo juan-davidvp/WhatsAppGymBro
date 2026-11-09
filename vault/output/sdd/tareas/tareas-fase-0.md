@@ -85,7 +85,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-060 | Cierre de día programado e idempotente; mensajes de día que cuenta y línea de la semana | HU-005-1 | T-043, T-050 | Escenarios pasan |
+| T-060 ✅ | Cierre de día programado e idempotente; mensajes de día que cuenta y línea de la semana | HU-005-1 | T-043, T-050 | Escenarios pasan |
 | T-061 | Racha, comodines, reparación y bonificación de regreso | HU-005-2/4 | T-060 | Escenarios pasan |
 | T-062 | XP, niveles y semana cumplida | HU-005-3/5 | T-060 | Escenarios pasan |
 | T-063 | *Should:* misiones semanales, Reto 66 y logros | HU-005-6/7 | T-062 | Escenarios pasan |

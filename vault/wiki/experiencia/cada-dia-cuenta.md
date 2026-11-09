@@ -4,7 +4,7 @@ tipo: diseno
 hito: H2
 estado: en-revision
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-11-08
 fuentes: [F45, F46, F56, F69]
 relacionados: [relacion-comida-entreno, sistema-de-gamificacion, objetivos-y-progreso, constancia-en-cualquier-lugar, registro-sin-friccion, spec-005-dia-que-cuenta-y-gamificacion, spec-006-progreso-logros-y-mantenimiento]
 ---
@@ -49,7 +49,7 @@ Cada día tiene **dos mitades**: **entreno** y **comida**. El tipo de día lo de
 | ID | Visualización | Dónde aparece | Fase |
 |---|---|---|---|
 | V1 | **Contador acumulado:** "Día que cuenta n.º 47" | Mensaje al cerrar la sesión o la misión del día | 0 · Must |
-| V2 | **Semana en una línea:** `L ✅ M ✅ X ⭐ J ⬜ V · S · D ·` (✅ cuenta, ⭐ completo, ⬜ pendiente, · futuro) | `/hoy`, cierre del día | 0 · Must |
+| V2 | **Semana en una línea:** `L ✅ M ✅ X ⭐ J ⬜ V · S · D ·` (✅ cuenta, ⭐ completo, ⬜ pendiente, – cerrado sin contar o salvado con comodín, · futuro) | `/hoy`, cierre del día | 0 · Must |
 | V3 | **Barra de proteína:** `▓▓▓▓▓▓▓▓░░ 104/130 g` | Tras registrar comida; `/hoy` | 0 · Must |
 | V4 | **Muro de constancia:** imagen tipo mapa de calor de las últimas 12–16 semanas | Resumen semanal (domingo); `/progreso` | 0 · Must |
 | V5 | **Reto 66:** "Día 23 de 66" con capítulos en 7, 21, 45 y 66 | `/progreso`; mensaje de logro al cerrar cada capítulo | 0 · Should |

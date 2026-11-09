@@ -81,6 +81,16 @@ interface UserDocument extends Omit<UserRecord, 'id'> {
   _id: ObjectId;
 }
 
+/** Documentos anteriores a T-032 no tienen `profile` ni los contadores del onboarding. */
+function toUserRecord({ _id, ...rest }: UserDocument): UserRecord {
+  return {
+    id: _id.toHexString(),
+    ...rest,
+    profile: { ...EMPTY_PROFILE, ...(rest.profile as Partial<UserProfile> | undefined) },
+    onboarding: { ...ONBOARDING_COUNTERS, ...rest.onboarding },
+  };
+}
+
 export function usersRepository(db: Db): UsersRepository {
   const collection = db.collection<UserDocument>('users');
   /** `$set` de los campos dados dentro de un subdocumento (`settings.x`, `profile.y`). */
@@ -121,14 +131,7 @@ export function usersRepository(db: Db): UsersRepository {
       );
       if (!document) document = await collection.findOne({ telegramUserId });
       if (!document) throw new Error('No se pudo crear el usuario');
-      const { _id, ...rest } = document;
-      // Documentos anteriores a T-032 no tienen `profile` ni los contadores del onboarding.
-      return {
-        id: _id.toHexString(),
-        ...rest,
-        profile: { ...EMPTY_PROFILE, ...(rest.profile as Partial<UserProfile> | undefined) },
-        onboarding: { ...ONBOARDING_COUNTERS, ...rest.onboarding },
-      };
+      return toUserRecord(document);
     },
     async confirmAdult(userId, at) {
       await collection.updateOne(
@@ -155,6 +158,12 @@ export function usersRepository(db: Db): UsersRepository {
         { _id: new ObjectId(userId), 'onboarding.completedAt': null },
         { $set: { 'onboarding.completedAt': at, 'onboarding.step': 'summary' } },
       );
+    },
+    async listActive() {
+      const docs = await collection
+        .find({ status: 'active', 'onboarding.completedAt': { $ne: null } })
+        .toArray();
+      return docs.map(toUserRecord);
     },
     async restartOnboarding(userId, step) {
       await collection.updateOne(
@@ -303,18 +312,45 @@ export function daysRepository(db: Db): DaysRepository {
       const doc = await collection.findOne({ userId, date });
       return (doc?.['sources'] as string[] | undefined) ?? [];
     },
+    async dayType(userId, date) {
+      const doc = await collection.findOne({ userId, date }, { projection: { dayType: 1 } });
+      return (doc?.['dayType'] as DayType | undefined) ?? null;
+    },
     async history(userId) {
       const docs = await collection
-        .find({ userId }, { projection: { _id: 0, date: 1, counted: 1 } })
+        .find({ userId }, { projection: { _id: 0, date: 1, counted: 1, complete: 1 } })
         .toArray();
-      return docs.map((d) => ({ date: d['date'] as LocalDate, counted: d['counted'] === true }));
+      return docs.map((d) => ({
+        date: d['date'] as LocalDate,
+        counted: d['counted'] === true,
+        complete: d['complete'] === true,
+      }));
     },
-    async close(userId: string, date: LocalDate, at: Date) {
-      const result = await collection.updateOne(
-        { userId, date, status: 'open' },
-        { $set: { status: 'closed', closedAt: at } },
-      );
-      return { closedNow: result.modifiedCount === 1 };
+    async close(userId, date, dayType, status, at) {
+      try {
+        const result = await collection.updateOne(
+          { userId, date, status: { $ne: 'closed' } },
+          {
+            $set: {
+              dayType,
+              trainingHalf: status.trainingHalf,
+              nutritionHalf: status.nutritionHalf,
+              restMissionMet: status.nutritionHalf || status.activeRecovery,
+              counted: status.counts,
+              complete: status.complete,
+              status: 'closed',
+              closedAt: at,
+            },
+            $setOnInsert: { userId, date, sources: [] },
+          },
+          { upsert: true },
+        );
+        return { closedNow: result.modifiedCount === 1 || result.upsertedCount === 1 };
+      } catch (error) {
+        // Ya estaba cerrado: el upsert choca con el índice único y el día no cambia.
+        if (isDuplicateKey(error)) return { closedNow: false };
+        throw error;
+      }
     },
   };
   return repository;
@@ -338,13 +374,22 @@ export function streakStatesRepository(db: Db): StreakStatesRepository {
         { total: current?.totalCountedDays ?? 0, lastClosedDate: current?.lastClosedDate ?? null },
         day,
       );
+      if (next.lastClosedDate === (current?.lastClosedDate ?? null)) {
+        return { applied: false, totalCountedDays: current?.totalCountedDays ?? 0 };
+      }
       // Actualización condicional: si otro proceso cerró este día antes, no se suma dos veces.
-      await collection.updateOne(
+      const result = await collection.updateOne(
         { userId, lastClosedDate: current?.lastClosedDate ?? null },
         { $set: { totalCountedDays: next.total, lastClosedDate: next.lastClosedDate } },
       );
       const after = await collection.findOne({ userId });
-      return { totalCountedDays: after?.totalCountedDays ?? 0 };
+      return {
+        applied: result.modifiedCount === 1,
+        totalCountedDays: after?.totalCountedDays ?? 0,
+      };
+    },
+    async lastClosedDate(userId) {
+      return (await collection.findOne({ userId }))?.lastClosedDate ?? null;
     },
   };
 }

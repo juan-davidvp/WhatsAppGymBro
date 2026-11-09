@@ -1,6 +1,12 @@
 import { PARAMETERS, rescheduleSession, type LocalDate } from '@gymbro/domain';
 import { SESSION_NAMES, renderTemplate } from '@gymbro/content';
-import { MOBILITY_SOURCE, dayCounts, recordDayActivity } from '../days/day-status.js';
+import {
+  MOBILITY_SOURCE,
+  dayCounts,
+  recordDayActivity,
+  weekLineFor,
+  withWeekLine,
+} from '../days/day-status.js';
 import { plain, templateReply, button, type Reply } from '../onboarding/replies.js';
 import { dayLabel } from '../plans/plan-view.js';
 import { currentWeek } from '../plans/weekly-plan.js';
@@ -31,7 +37,12 @@ export async function todayScreen(user: UserRecord, deps: TrainingDeps): Promise
   if (!day) return [plain('PN-04')];
   // HU-003-2: ayer sin registrar, dentro de la gracia → [La hice tal cual] antes que hoy.
   const yesterday = await yesterdayPrompt(user, deps);
-  return [...yesterday, ...(await todayFor(user, day, deps))];
+  const replies = [...yesterday, ...(await todayFor(user, day, deps))];
+  // HU-005-1 (V2): la semana en una línea al final de Hoy.
+  const last = replies.at(-1);
+  if (!last) return replies;
+  const weekLine = await weekLineFor(user, deps);
+  return [...replies.slice(0, -1), withWeekLine(last, { weekLine })];
 }
 
 async function todayFor(
@@ -124,7 +135,7 @@ export async function answerToday(
       const day = await planDayToday(user, deps);
       if (!day || day.session) return todayScreen(user, deps);
       const result = await recordDayActivity(user, day.date, 'REST', MOBILITY_SOURCE, deps);
-      return [plain('HY-02', { n: result.total, racha: result.streak })];
+      return [withWeekLine(plain('HY-02', { n: result.total, racha: result.streak }), result)];
     }
     default: {
       const to = fromCompact(value);

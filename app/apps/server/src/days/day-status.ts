@@ -1,11 +1,16 @@
+import { renderWeekLine } from '@gymbro/content';
 import {
   PARAMETERS,
   evaluateDay,
   liveCountedDays,
+  operationalDate,
+  weekMarks,
+  weekStartOf,
   type DayStatus,
   type DayType,
   type LocalDate,
 } from '@gymbro/domain';
+import type { Reply } from '../onboarding/replies.js';
 import type { DaysRepository, UserRecord } from '../ports/repositories.js';
 
 /**
@@ -25,6 +30,36 @@ export interface DayResult {
   /** N.º del día que cuenta (total con hoy) y racha en vivo. */
   readonly total: number;
   readonly streak: number;
+  /** HU-005-1: la semana del día en una línea (DC-03). */
+  readonly weekLine: string;
+}
+
+type HistoryDay = Awaited<ReturnType<DaysRepository['history']>>[number];
+
+/** HU-005-1 y RN-DQC-002 a 005: DC-03 de la semana de `date`, vista en `now`. */
+function weekLineOf(
+  history: readonly HistoryDay[],
+  date: LocalDate,
+  now: Date,
+  timeZone: string,
+): string {
+  const today = operationalDate(now, timeZone);
+  return renderWeekLine(weekMarks(weekStartOf(date), history, today, now, timeZone));
+}
+
+/** DC-03 de la semana de hoy (🏋️ Hoy). */
+export async function weekLineFor(
+  user: UserRecord,
+  deps: { days: DaysRepository; clock: () => Date },
+): Promise<string> {
+  const now = deps.clock();
+  const history = await deps.days.history(user.id);
+  return weekLineOf(history, operationalDate(now, user.timezone), now, user.timezone);
+}
+
+/** Respuesta de "día que cuenta" con la semana en una línea en su propio renglón. */
+export function withWeekLine(reply: Reply, result: Pick<DayResult, 'weekLine'>): Reply {
+  return { ...reply, text: `${reply.text}\n${result.weekLine}` };
 }
 
 /** RN-DQC-002 y RN-DQC-003: entradas del día a partir de sus fuentes. */
@@ -45,13 +80,19 @@ export async function recordDayActivity(
   date: LocalDate,
   type: DayType,
   source: string,
-  deps: { days: DaysRepository },
+  deps: { days: DaysRepository; clock: () => Date },
 ): Promise<DayResult> {
   const sources = await deps.days.addSource(user.id, date, type, source);
   const status = evaluateDay(dayInputsFrom(type, sources));
   await deps.days.saveStatus(user.id, date, type, status);
-  const live = liveCountedDays(await deps.days.history(user.id), date, user.timezone);
-  return { status, total: live.total, streak: live.current };
+  const history = await deps.days.history(user.id);
+  const live = liveCountedDays(history, date, user.timezone);
+  return {
+    status,
+    total: live.total,
+    streak: live.current,
+    weekLine: weekLineOf(history, date, deps.clock(), user.timezone),
+  };
 }
 
 /** ¿El día ya cuenta? (para no ofrecer otra vez lo que ya se hizo). */

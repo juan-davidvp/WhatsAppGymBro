@@ -22,8 +22,11 @@ import {
   eventsRepository,
   processedUpdatesRepository,
   riskSignalsRepository,
+  streakStatesRepository,
   usersRepository,
 } from './adapters/mongo/repositories.js';
+import { closeDueDays } from './scheduler/close-days.js';
+import { startScheduler } from './scheduler/loop.js';
 import { createBot } from './bot/create-bot.js';
 import { loadConfig } from './config.js';
 import { createEventEmitter } from './events/emitter.js';
@@ -61,13 +64,25 @@ async function main(): Promise<void> {
     await ensureIndexes(db);
     logger.info('db_connected', { database: config.mongoDatabase });
 
+    const events = createEventEmitter({
+      repository: eventsRepository(db),
+      logger,
+      appVersion: APP_VERSION,
+      phase: config.studyPhase,
+      clock,
+    });
+    const users = usersRepository(db);
+    const days = daysRepository(db);
+    const streaks = streakStatesRepository(db);
+    const plans = plansRepository(db);
+
     const bot = createBot({
       token: config.telegramBotToken,
       logger,
       clock,
       deps: {
         processedUpdates: processedUpdatesRepository(db),
-        users: usersRepository(db),
+        users,
         riskSignals: riskSignalsRepository(db),
         consents: consentsRepository(db),
         screenings: screeningsRepository(db),
@@ -75,9 +90,10 @@ async function main(): Promise<void> {
         bodyMeasurements: bodyMeasurementsRepository(db),
         habits: trainingHabitsRepository(db),
         goals: goalsRepository(db),
-        plans: plansRepository(db),
+        plans,
         setEntries: setEntriesRepository(db),
-        days: daysRepository(db),
+        days,
+        streaks,
         workouts: workoutSessionsRepository(db),
         records: personalRecordsRepository(db),
         achievements: achievementsRepository(db),
@@ -85,18 +101,22 @@ async function main(): Promise<void> {
         adjustments: exerciseAdjustmentsRepository(db),
         meals: mealsRepository(db),
         favorites: favoriteMealsRepository(db),
-        events: createEventEmitter({
-          repository: eventsRepository(db),
-          logger,
-          appVersion: APP_VERSION,
-          phase: config.studyPhase,
-          clock,
-        }),
+        events,
+      },
+    });
+
+    // T-060 · cierre programado de los días (FR-005-02).
+    const scheduler = startScheduler({
+      logger,
+      tick: async () => {
+        const closed = await closeDueDays({ users, days, streaks, plans, events, clock });
+        if (closed > 0) logger.info('days_closed', { count: closed });
       },
     });
 
     const stop = (signal: string) => {
       logger.info('bot_stopping', { signal });
+      scheduler.stop();
       void bot.stop();
     };
     process.once('SIGINT', () => stop('SIGINT'));

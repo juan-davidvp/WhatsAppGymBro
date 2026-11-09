@@ -455,3 +455,26 @@ relacionados: [index, inicio]
   - T-053 y T-054 (IA), por decisión del PO.
   - Pedir el peso en `/progreso` (SPEC-004 §8) llega con M8.
   - SPEC-004 sigue en `borrador` mientras falten HU-004-4/5.
+
+## [2026-11-08] decision | M6 · día que cuenta y juego: lecturas aprobadas por el PO
+- **Avisos del cierre** (comodín usado, racha reiniciada con oferta de reparar, bonificación de regreso): se muestran en la **próxima interacción** (🏋️ Hoy o al registrar algo). El cierre corre a las 12:00 del día siguiente y la bandeja de salida es de T-070. Así ningún módulo envía proactivos por fuera del motor (constitución III). RA-01 a RA-03 ya estaban en la §2 de [[plantillas-de-mensajes]] como respuestas no proactivas. El envío proactivo llega con T-071.
+- **Día con señal de riesgo** (FR-005-07, RN-SEG-007): el día que cuenta sigue sumando al total, porque no es una mecánica (FR-005-06). La racha **puede sumar, nunca romperse**: si el día cuenta, sube en silencio; si no, no se rompe ni gasta comodín. Ese día no hay XP, ni comodín ganado, ni logros, ni mensajes de juego. Aplica desde T-061.
+- **Línea de la semana (DC-03):** un día cerrado que no contó, o que salvó un comodín, se marca con `–`. Es una raya neutra: nunca una ✗ y sin emoji nuevo. Actualizado V2 de [[cada-dia-cuenta]] y la nota de DC-03.
+- **Racha de semanas** ([[spec-005-dia-que-cuenta-y-gamificacion]] §10): se adopta la propuesta de la spec. La racha diaria se muestra desde el día 1 y la de semanas desde que se cierra la primera semana cumplida (T-062).
+- **Parámetro nuevo P-096** (`scheduler.intervalSeconds` = 60 s): el ciclo del planificador del [[plan-tecnico]] §6 ("cada minuto"), para no dejar el número en el código ([[parametros]] v0.9.0).
+
+## [2026-11-08] implementar | T-060 Cierre de día programado e idempotente; día que cuenta y línea de la semana
+- **Cierre programado** (`app/apps/server/src/scheduler/close-days.ts`, FR-005-02): cada ciclo (P-096) cierra, en orden, los días de cada usuario activo con el onboarding hecho cuya gracia terminó (RN-DQC-005, `lastClosableDate`).
+  - Evalúa el día con sus fuentes, lo guarda cerrado y lo suma al total (RN-DQC-007).
+  - Un día sin registros también se cierra: no cuenta, pero no resta.
+  - Es idempotente: el estado guarda el último día cerrado; cerrar otra vez no cambia nada ni repite el evento.
+  - El tipo del día es el que tenía al registrarse. Sin registros, es el del plan guardado o, si esa semana nunca se guardó, el que el plan le habría dado, sin guardarlo ni emitir `plan_generated` (`plannedDayType`).
+- **Ciclo** (`scheduler/loop.ts`): un tic al arrancar y uno cada P-096. Un tic no se solapa con otro y un error se registra (`scheduler_tick_failed`) sin detener el ciclo. Se arranca y se detiene con el bot en `main.ts`.
+- **Semana en una línea** (HU-005-1, DC-03): `weekMarks` en el dominio y `renderWeekLine` en el contenido. Va debajo de SE-01/02/03, DC-01/DC-02, HY-02 y al final de 🏋️ Hoy. Un día anterior sigue ⬜ mientras dura su gracia.
+- **Evento:** `day_closed` (fecha, tipo, cuenta, completo, fuente: `session`·`nutrition`·`mobility`·`none`), con esquema estricto.
+- **Repositorios:** `days.close` crea el día cerrado si no tenía registros; `days.dayType`; `history` con `complete`; `streak_states.applyDayClose` dice si aplicó; `lastClosedDate`; `users.listActive`.
+- **HU-005-1 escenario 4** ya lo cubrían HY-01 y PL-01 con su botón; ahora también muestran la semana.
+- **Pruebas:** `scheduler/close-days.test.ts` (gracia, "La hice tal cual" dentro de la gracia, idempotencia, registro tardío, días sin abrir el bot, usuario en pausa), `scheduler/loop.test.ts`, `day/week-line.test.ts` y la prueba de `lastClosableDate`.
+- **Pendiente:**
+  - Con `/pausa` (T-073), decidir si los días en pausa se cierran al volver o se saltan. Hoy un usuario en pausa no se cierra.
+  - La racha, la reparación y los avisos llegan en T-061.
