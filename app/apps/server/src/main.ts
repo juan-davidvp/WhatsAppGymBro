@@ -138,6 +138,7 @@ async function main(): Promise<void> {
           quests,
           events,
           clock,
+          logger,
         });
         if (closed > 0) logger.info('days_closed', { count: closed });
       },

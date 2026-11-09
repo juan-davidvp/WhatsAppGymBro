@@ -14,7 +14,13 @@ import {
   type PlayerDayResult,
   type PlayerState,
 } from '@gymbro/domain';
-import { MOBILITY_SOURCE, NUTRITION_HALF_SOURCE, dayInputsFrom } from '../days/day-status.js';
+import {
+  MOBILITY_SOURCE,
+  NUTRITION_HALF_SOURCE,
+  attemptRepair,
+  dayInputsFrom,
+} from '../days/day-status.js';
+import type { Logger } from '../logger.js';
 import { hadRiskSignal } from '../days/risk.js';
 import { grantXp } from '../days/xp.js';
 import type { DaySource } from '../events/schema.js';
@@ -36,14 +42,23 @@ import { ensureWeekQuests, evaluateQuests, type QuestDeps } from './quests.js';
 export interface CloseDaysDeps extends QuestDeps {
   users: UsersRepository;
   streaks: StreakStatesRepository;
+  /** En producción, para registrar el error de un usuario sin detener a los demás. */
+  logger?: Logger;
 }
 
-/** Cierra los días vencidos de todos los usuarios activos; devuelve cuántos cerró. */
+/**
+ * Cierra los días vencidos de todos los usuarios activos; devuelve cuántos cerró.
+ * Un error con un usuario se registra y no detiene el cierre de los demás.
+ */
 export async function closeDueDays(deps: CloseDaysDeps): Promise<number> {
   const now = deps.clock();
   let closed = 0;
   for (const user of await deps.users.listActive()) {
-    closed += await closeUserDays(user, now, deps);
+    try {
+      closed += await closeUserDays(user, now, deps);
+    } catch (error) {
+      deps.logger?.error('day_close_failed', { userId: user.id, error });
+    }
   }
   return closed;
 }
@@ -81,18 +96,28 @@ export async function closeUserDays(
           weekStreak: nextWeekStreak(result.state.weekStreak, week.result, day.riskPaused),
         }
       : result.state;
-    // Si otro proceso guardó antes (cambió `rev`), este ciclo se detiene; el siguiente sigue.
-    if (!(await deps.streaks.save(user.id, rev, next))) return closed;
-    const before = state;
-    state = next;
-    rev += 1;
-    closed += 1;
+    // Los efectos van antes de guardar el estado: todos tienen clave (XP por `refId`,
+    // avisos por `key`, semana y misiones únicas, bitácora una vez), así que si algo
+    // falla, el ciclo siguiente repite el día sin duplicar ni perder nada. Los eventos
+    // de medición pueden repetirse en ese caso (al menos una vez).
     await announce(user, date, day, result, now, deps);
     // T-063: misiones de la semana del día, cierre de la semana, logros y misiones de la siguiente.
     await evaluateQuests(user, date, deps);
     if (week) await announceWeek(user, date, week, day.riskPaused, deps);
-    await closeDayAchievements(user, date, before, next, deps);
+    await closeDayAchievements(user, date, state, next, deps);
     await ensureWeekQuests(user, weekStartOf(addDays(date, 1)), deps);
+    // Si otro proceso guardó antes (cambió `rev`), este ciclo se detiene; el siguiente sigue.
+    if (!(await deps.streaks.save(user.id, rev, next))) return closed;
+    state = next;
+    rev += 1;
+    closed += 1;
+  }
+  // RN-GAM-003: la misión de regreso pudo cumplirse antes de que existiera la oferta.
+  if (state.streak.repair) {
+    for (let date = addDays(until, 1); date <= operationalDate(now, user.timezone);) {
+      await attemptRepair(user, date, deps);
+      date = addDays(date, 1);
+    }
   }
   return closed;
 }

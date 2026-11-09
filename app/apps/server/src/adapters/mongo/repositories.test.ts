@@ -69,6 +69,15 @@ describe('T-020 · índices', () => {
     const ttl = (await db.collection('processed_updates').indexes()).find((i) => i.key['at'] === 1);
     expect(ttl?.expireAfterSeconds).toBeGreaterThan(0);
   });
+
+  it('T-063 · un índice que cambió de opciones en una base existente se recrea sin fallar', async () => {
+    const quests = db.collection('quests');
+    await quests.dropIndex('userId_1_weekStart_1').catch(() => undefined);
+    await quests.createIndex({ userId: 1, weekStart: 1 }); // como antes de T-063: no único
+    await ensureIndexes(db);
+    const index = (await quests.indexes()).find((i) => i.name === 'userId_1_weekStart_1');
+    expect(index?.unique).toBe(true);
+  });
 });
 
 describe('T-020 · cada update de Telegram se procesa una vez', () => {

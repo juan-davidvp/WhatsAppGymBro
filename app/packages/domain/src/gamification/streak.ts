@@ -114,17 +114,26 @@ export function closeStreakDay(
   }
 
   // RN-GAM-003: sin comodín la racha vuelve a 0 y, si se puede, se ofrece reparar.
-  const offer =
-    state.current > 0 && repairAllowed(state, day.date)
-      ? {
-          offeredUntil: new Date(
-            day.closedAt.getTime() + PARAMETERS.streak.repairWindowHours * HOUR_MS,
-          ).toISOString(),
-          restoreTo: state.current,
-        }
-      : null;
+  // Si ya estaba en 0, no se reinicia de nuevo ni se borra una oferta que sigue vigente.
+  if (state.current === 0) {
+    return { state: { ...state, countedRun: 0, lastClosedDate: day.date }, events: [] };
+  }
+  const offer = repairAllowed(state, day.date)
+    ? {
+        offeredUntil: new Date(
+          day.closedAt.getTime() + PARAMETERS.streak.repairWindowHours * HOUR_MS,
+        ).toISOString(),
+        restoreTo: state.current,
+      }
+    : null;
   return {
-    state: { ...state, current: 0, countedRun: 0, repair: offer, lastClosedDate: day.date },
+    state: {
+      ...state,
+      current: 0,
+      countedRun: 0,
+      repair: offer ?? state.repair,
+      lastClosedDate: day.date,
+    },
     events: offer ? ['streak_reset', 'streak_repair_offered'] : ['streak_reset'],
   };
 }
