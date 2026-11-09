@@ -525,3 +525,23 @@ relacionados: [index, inicio]
   - SM-01 "Semana cumplida: {sesiones} de {compromiso} sesiones.", sin mencionar puntos porque el tope del domingo puede dejarlos en 0.
 - **Eventos con esquema estricto:** `xp_awarded` (evento, monto), `level_up` (nivel), `week_closed` (cumplida, sesiones, compromiso) y `achievement_unlocked` (código).
 - **Pruebas:** `scheduler/xp-week.test.ts` (HU-005-3 escenarios 1 y 2, tope diario, idempotencia, señal de riesgo, HU-005-4, HU-005-5 cumplida y no cumplida) y `weekly.test.ts` (`nextWeekStreak`).
+
+## [2026-11-09] decision | M6 · misiones, logros, liga, temporadas y sobreuso
+- **Misiones semanales (T-063):** se avisan al generarse (MI-01) y al cumplirse (MI-02, con su XP), en la próxima interacción. Sin comando nuevo.
+- **Logros (T-063):** cada logro del catálogo se anuncia con un texto genérico (LG-01). El Reto 66 conserva RE-01 y RE-05.
+- **Liga personal y temporadas (T-064, *Could*):** se hace la liga personal (mejor semana propia, RE-03). Las **temporadas quedan fuera de la Fase 0** hasta que el PO defina temas, metas e insignias (RN-GAM-010 sigue en la bóveda; HU-005-8 escenario 2 queda pendiente).
+- **Sobreuso (T-065):** [Ajustar plan] de CU-06 muestra el plan de la semana (PN-01) mientras no exista T-045. [Sí, descanso] responde HN-02. CU-06 no cambia.
+
+## [2026-11-09] implementar | T-063 Misiones semanales, Reto 66 y logros (Should)
+- **Misiones** (`scheduler/quests.ts`, RN-GAM-008, HU-005-6):
+  - Al cerrar un día se asegura que la semana del día siguiente tenga sus 3 misiones (colección `quests`, una por semana, [[modelo-de-datos]] v0.4.0). La primera semana van con el mínimo; después, P-041 × lo logrado la semana anterior (`weeks` guarda ahora `nutritionHalfDays`).
+  - Con cada cierre se revisan las misiones de la semana del día cerrado (`questsReached`). Una cumplida suma su XP una vez (P-038).
+  - Eventos `quest_generated` (metas) y `quest_completed` (tipo).
+- **Logros** (`days/achievements.ts`, RN-GAM-011, RN-GAM-012, HU-005-7): cada logro se guarda una vez en la bitácora y se anuncia en la próxima interacción.
+  - Reto 66 con RE-01 por capítulo (P-044) y RE-05 al llegar a P-043.
+  - El resto con LG-01: primera sesión, primera en casa o exprés, primer día completo, 100/200/365 días, primera semana cumplida, 4 y 12 semanas seguidas, semana de proteína, regreso tras 7+ días, racha reparada, primer récord y 10 récords.
+  - Los números salen del catálogo ([[catalogo-de-logros-y-niveles]]): los códigos (`DQC_100`, `WEEKS_4`) y las condiciones ("7 días seguidos", "7+ días").
+- **Lectura propia, para revisión del PO:** con el juego desactivado o una señal de riesgo ese día, el logro **se guarda pero no se anuncia**. La decisión del 2026-11-08 dice "ni logros" ese día, pero los logros por umbral (Reto 66, 100 días) no se repiten, así que no guardarlos sería perderlos (constitución I).
+- **Corrección:** de los avisos pendientes solo se resumen los que se reemplazan (RA-01, RA-02, MI-01). Antes también se resumían los logros, y si caían dos el mismo día se perdía uno.
+- **Textos nuevos** (redactados por Claude, [[plantillas-de-mensajes]] v0.15.0), pendientes de revisión del PO: MI-01, MI-02 (con los rótulos de su nota) y LG-01.
+- **Pruebas:** `scheduler/quests-achievements.test.ts` (generación, dificultad, misión cumplida una vez, Reto 66 capítulo 1 y hábito forjado, LG-01 una vez, señal de riesgo) y `weekly.test.ts` (`questsReached`). Además, las pruebas de fin de sesión y de comida buscan su mensaje entre los avisos de logros que ahora lo siguen.

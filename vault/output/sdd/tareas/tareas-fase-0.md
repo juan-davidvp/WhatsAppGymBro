@@ -88,7 +88,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | T-060 ✅ | Cierre de día programado e idempotente; mensajes de día que cuenta y línea de la semana | HU-005-1 | T-043, T-050 | Escenarios pasan |
 | T-061 ✅ | Racha, comodines, reparación y bonificación de regreso | HU-005-2/4 | T-060 | Escenarios pasan |
 | T-062 ✅ | XP, niveles y semana cumplida | HU-005-3/5 | T-060 | Escenarios pasan |
-| T-063 | *Should:* misiones semanales, Reto 66 y logros | HU-005-6/7 | T-062 | Escenarios pasan |
+| T-063 ✅ | *Should:* misiones semanales, Reto 66 y logros | HU-005-6/7 | T-062 | Escenarios pasan |
 | T-064 | *Could:* liga personal y temporadas | HU-005-8 | T-063 | Escenarios pasan |
 | T-065 | *Should:* señal de sobreuso y respuesta de cuidado `CU-06` | HU-009-5, RN-SEG-008 | T-017, T-060 | Escenarios pasan; evento `overuse_signal` emitido |
 

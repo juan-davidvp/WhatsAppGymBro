@@ -28,18 +28,22 @@ export async function takeNotices(user: UserRecord, deps: NoticeDeps): Promise<R
   const now = deps.clock();
   const pending = await deps.notices.takePending(user.id, now);
   if (pending.length === 0) return [];
-  // Tras varios días sin abrir el bot, solo el más reciente de cada plantilla.
-  const latest = new Map<string, NoticeRecord>();
-  for (const notice of pending) {
-    latest.delete(notice.templateId);
-    latest.set(notice.templateId, notice);
-  }
+  // Tras varios días sin abrir el bot, de los avisos que se reemplazan (racha y
+  // misiones de la semana) solo queda el más reciente; los logros se muestran todos.
+  const shown = pending.filter(
+    (notice, i) =>
+      !LATEST_ONLY.has(notice.templateId) ||
+      !pending.slice(i + 1).some((later) => later.templateId === notice.templateId),
+  );
   const repair = (await deps.streaks.get(user.id))?.state.streak.repair ?? null;
   const repairOpen = repair !== null && now.getTime() <= Date.parse(repair.offeredUntil);
-  return [...latest.values()]
+  return shown
     .filter((notice) => notice.templateId !== REPAIR_OFFER || repairOpen)
     .map(noticeReply);
 }
+
+/** Avisos que un aviso posterior de la misma plantilla deja sin vigencia. */
+const LATEST_ONLY: ReadonlySet<string> = new Set(['RA-01', 'RA-02', 'MI-01']);
 
 function noticeReply(notice: NoticeRecord): Reply {
   if (notice.templateId === REPAIR_OFFER) {

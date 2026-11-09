@@ -110,10 +110,10 @@ describe('RN-GAM-003 · RN-DQC-007 · T-061 · racha reiniciada y reparación (H
       repair: null,
       lastRepairDate: '2026-10-20',
     });
-    const [finish, repaired] = sent(t.calls).slice(-2);
+    const finish = sent(t.calls.filter((c) => c.method === 'editMessageText')).at(-1);
     // 5 cerrados + hoy; la racha recupera los 5 y suma hoy.
     expect(finish?.text.split('\n')[0]).toBe(renderTemplate('SE-03', { n: 6, racha: 6 }));
-    expect(repaired?.text).toBe(templateById('RA-03').text);
+    expect(t.texts()).toContain(templateById('RA-03').text);
   });
 
   it('una sesión completa del gym más la mitad de comida también repara (decisión del PO, 2026-11-09)', async () => {
@@ -136,7 +136,7 @@ describe('RN-GAM-003 · RN-DQC-007 · T-061 · racha reiniciada y reparación (H
     await t.act('Gym');
     await t.act('La hice tal cual');
     expect(t.eventsNamed('streak_repaired')).toEqual([{ streak: 5 }]);
-    expect(t.texts().at(-1)).toBe(templateById('RA-03').text);
+    expect(t.texts()).toContain(templateById('RA-03').text);
   });
 
   it('pasado el plazo de P-035 horas, la oferta ya no se muestra', async () => {
@@ -157,7 +157,7 @@ describe('RN-SEG-007 · FR-005-07 · T-061 · día con señal de riesgo', () => 
     await closeDueDays(t.deps);
     expect(t.state()?.streak.current).toBe(5);
     expect(t.eventsNamed('streak_reset')).toEqual([]);
-    expect(t.notices).toEqual([]);
+    expect(t.notices.filter((n) => n.templateId.startsWith('RA-'))).toEqual([]);
   });
 });
 
@@ -169,5 +169,6 @@ describe('FR-005-06 · T-061 · con el juego desactivado no hay avisos de racha'
     await closeDueDays(t.deps);
     expect(t.eventsNamed('streak_reset')).toEqual([{}]);
     expect(t.notices).toEqual([]);
+    expect(t.eventsNamed('quest_generated')).toHaveLength(1);
   });
 });

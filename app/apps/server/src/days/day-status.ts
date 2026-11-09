@@ -18,6 +18,7 @@ import type {
   UserRecord,
   WorkoutSessionsRepository,
 } from '../ports/repositories.js';
+import { unlockAchievement } from './achievements.js';
 import { hadRiskSignal } from './risk.js';
 import { grantXp, type XpDeps } from './xp.js';
 
@@ -145,6 +146,7 @@ async function grantDayXp(
   }
   if (status.complete) {
     await grantXp(user, date, { type: 'COMPLETE_DAY_BONUS' }, `complete:${date}`, deps);
+    await unlockAchievement(user, 'FIRST_COMPLETE_DAY', date, null, deps);
   }
 }
 
@@ -181,6 +183,7 @@ async function attemptRepair(
     { userId: user.id, timezone: user.timezone },
     { streak: result.state.current },
   );
+  await unlockAchievement(user, 'STREAK_REPAIRED', date, result.state.current, deps);
   if (user.settings.gamificationEnabled) {
     await deps.notices.add(user.id, {
       key: `streak_repaired:${date}`,

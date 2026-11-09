@@ -3,6 +3,7 @@ import {
   evaluateWeek,
   weekStartOf,
   type LocalDate,
+  type WeekAchieved,
   type WeekResult,
 } from '@gymbro/domain';
 import { grantXp, type XpDeps } from '../days/xp.js';
@@ -45,30 +46,49 @@ export async function evaluateClosedWeek(
 ): Promise<ClosedWeek | null> {
   const weekStart = weekStartOf(date);
   if (addDays(weekStart, WEEK_LENGTH - 1) !== date) return null;
-  const dates = Array.from({ length: WEEK_LENGTH }, (_, i) => addDays(weekStart, i));
   const planned = (await plannedWeekDays(user, weekStart, deps)).filter(
     (d) => d.type === 'TRAINING',
   ).length;
-  let completed = 0;
-  for (const day of dates) {
-    const sessions = await deps.workouts.onDate(user.id, day);
-    completed += sessions.filter((s) => s.status === 'completed').length;
-  }
-  const countedDays = (await deps.days.history(user.id)).filter(
-    (d) => d.counted && dates.includes(d.date),
-  ).length;
+  const achieved = await weekAchieved(user, weekStart, date, deps);
   // Solo se cierran días de usuarios activos: un usuario en pausa no llega aquí (T-073).
-  const result = evaluateWeek({ planned, completed, paused: false });
+  const result = evaluateWeek({ planned, completed: achieved.sessions, paused: false });
   return {
     record: {
       weekStart,
       planned,
-      completed,
+      completed: achieved.sessions,
       commitment: result.evaluated ? result.commitment : 0,
       fulfilled: result.evaluated && result.fulfilled,
-      countedDays,
+      countedDays: achieved.countedDays,
+      nutritionHalfDays: achieved.nutritionHalfDays,
     },
     result,
+  };
+}
+
+/**
+ * Lo logrado en la semana de `weekStart` hasta `until` (incluido): sesiones
+ * completadas, días con la mitad de comida y días que cuentan (RN-GAM-004/008).
+ */
+export async function weekAchieved(
+  user: UserRecord,
+  weekStart: LocalDate,
+  until: LocalDate,
+  deps: Pick<CloseWeekDeps, 'days' | 'workouts'>,
+): Promise<WeekAchieved> {
+  const dates = Array.from({ length: WEEK_LENGTH }, (_, i) => addDays(weekStart, i)).filter(
+    (d) => d <= until,
+  );
+  let sessions = 0;
+  for (const day of dates) {
+    const done = await deps.workouts.onDate(user.id, day);
+    sessions += done.filter((s) => s.status === 'completed').length;
+  }
+  const week = (await deps.days.history(user.id)).filter((d) => dates.includes(d.date));
+  return {
+    sessions,
+    nutritionHalfDays: week.filter((d) => d.nutritionHalf).length,
+    countedDays: week.filter((d) => d.counted).length,
   };
 }
 

@@ -13,6 +13,7 @@ import {
   type SessionVariant,
 } from '@gymbro/domain';
 import { recordDayActivity, sessionSource, withWeekLine } from '../days/day-status.js';
+import { unlockAchievement } from '../days/achievements.js';
 import { takeNotices } from '../days/notices.js';
 import { grantXp } from '../days/xp.js';
 import { button, plain, type Reply } from '../onboarding/replies.js';
@@ -77,6 +78,11 @@ export async function finishSession(
     `session:${session.id}`,
     deps,
   );
+  // RN-GAM-011: primera sesión y primera en casa o exprés (versión B o C).
+  await unlockAchievement(user, 'FIRST_SESSION', session.date, session.variant, deps);
+  if (session.variant !== 'GYM') {
+    await unlockAchievement(user, 'FIRST_HOME', session.date, session.variant, deps);
+  }
   await deps.events.emit('session_completed', subject, {
     variant: session.variant,
     sets: logged,

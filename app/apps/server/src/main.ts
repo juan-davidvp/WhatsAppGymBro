@@ -25,6 +25,7 @@ import {
   riskSignalsRepository,
   streakStatesRepository,
   usersRepository,
+  questsRepository,
   weeksRepository,
   xpLedgerRepository,
 } from './adapters/mongo/repositories.js';
@@ -84,6 +85,7 @@ async function main(): Promise<void> {
     const achievements = achievementsRepository(db);
     const xp = xpLedgerRepository(db);
     const weeks = weeksRepository(db);
+    const quests = questsRepository(db);
 
     const bot = createBot({
       token: config.telegramBotToken,
@@ -106,6 +108,7 @@ async function main(): Promise<void> {
         notices,
         xp,
         weeks,
+        quests,
         workouts,
         records: personalRecordsRepository(db),
         achievements,
@@ -132,6 +135,7 @@ async function main(): Promise<void> {
           achievements,
           xp,
           weeks,
+          quests,
           events,
           clock,
         });

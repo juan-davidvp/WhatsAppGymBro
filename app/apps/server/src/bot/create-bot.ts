@@ -20,6 +20,7 @@ import type {
   GoalsRepository,
   DaysRepository,
   NoticesRepository,
+  QuestsRepository,
   StreakStatesRepository,
   WeeksRepository,
   XpLedgerRepository,
@@ -80,6 +81,8 @@ export interface BotDependencies {
   xp: XpLedgerRepository;
   /** Semanas cerradas (T-062, RN-GAM-004). */
   weeks: WeeksRepository;
+  /** Misiones semanales (T-063, RN-GAM-008). */
+  quests: QuestsRepository;
   workouts: WorkoutSessionsRepository;
   records: PersonalRecordsRepository;
   achievements: AchievementsRepository;

@@ -1,4 +1,4 @@
-import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
+import { PARAMETERS, type ConsentCategory, type QuestKind } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
@@ -80,6 +80,11 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const notices: (NoticeRecord & { userId: string; shownAt: Date | null })[] = [];
   const xpLedger: (XpLedgerRecord & { userId: string })[] = [];
   const weekRecords: (WeekRecord & { userId: string })[] = [];
+  const questRows: {
+    userId: string;
+    weekStart: string;
+    items: { kind: QuestKind; target: number; done: boolean }[];
+  }[] = [];
   const workouts: WorkoutSessionRecord[] = [];
   const records: {
     userId: string;
@@ -430,6 +435,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
               date: d.date,
               counted: d.counted,
               complete: d.dayStatus?.complete ?? false,
+              nutritionHalf: d.dayStatus?.nutritionHalf ?? false,
             })),
         );
       },
@@ -484,16 +490,37 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve(
           weekRecords
             .filter((w) => w.userId === userId)
-            .map(({ weekStart, planned, completed, commitment, fulfilled, countedDays }) => ({
-              weekStart,
-              planned,
-              completed,
-              commitment,
-              fulfilled,
-              countedDays,
+            .map((w) => ({
+              weekStart: w.weekStart,
+              planned: w.planned,
+              completed: w.completed,
+              commitment: w.commitment,
+              fulfilled: w.fulfilled,
+              countedDays: w.countedDays,
+              nutritionHalfDays: w.nutritionHalfDays,
             }))
             .sort((a, b) => a.weekStart.localeCompare(b.weekStart)),
         );
+      },
+    },
+    quests: {
+      get(userId, weekStart) {
+        const found = questRows.find((q) => q.userId === userId && q.weekStart === weekStart);
+        return Promise.resolve(found ? found.items.map((i) => ({ ...i })) : null);
+      },
+      create(userId, weekStart, quests) {
+        if (questRows.some((q) => q.userId === userId && q.weekStart === weekStart)) {
+          return Promise.resolve({ created: false });
+        }
+        questRows.push({ userId, weekStart, items: quests.map((q) => ({ ...q, done: false })) });
+        return Promise.resolve({ created: true });
+      },
+      markDone(userId, weekStart, kind) {
+        const item = questRows
+          .find((q) => q.userId === userId && q.weekStart === weekStart)
+          ?.items.find((i) => i.kind === kind && !i.done);
+        if (item) item.done = true;
+        return Promise.resolve(item !== undefined);
       },
     },
     notices: {
@@ -681,6 +708,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(notices, userId);
         removeRows(xpLedger, userId);
         removeRows(weekRecords, userId);
+        removeRows(questRows, userId);
         removeRows(workouts, userId);
         removeRows(records, userId);
         removeRows(achievements, userId);
@@ -726,6 +754,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     notices,
     xpLedger,
     weekRecords,
+    questRows,
     workouts,
     records,
     achievements,

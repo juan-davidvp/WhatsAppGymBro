@@ -10,6 +10,7 @@ import {
   PROHIBITED_EXPRESSIONS,
   WEEKLY_PHRASES,
   WEEK_LINE_SYMBOLS,
+  QUEST_LABELS,
   type Amount,
   type HandEquivalence,
   type HandPortion,
@@ -85,6 +86,12 @@ describe('T-003 · plantillas de mensajes', () => {
     const marks = line.slice(line.indexOf('Marcas:'));
     const symbols = [...marks.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
     expect(symbols).toEqual(Object.values(WEEK_LINE_SYMBOLS));
+  });
+
+  it('los rótulos de las misiones (MI-02) coinciden con su nota', () => {
+    const line = templatesMd.split('\n').find((l) => l.startsWith('> - **MI-02:**')) ?? '';
+    const labels = [...line.matchAll(/`([^`{]+)` \(/g)].map((m) => m[1]);
+    expect(labels).toEqual(Object.values(QUEST_LABELS));
   });
 
   it('las expresiones prohibidas coinciden con voz-y-marca', () => {

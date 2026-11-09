@@ -7,6 +7,7 @@ import {
   loggingGraceEnd,
   nextWeekStreak,
   operationalDate,
+  weekStartOf,
   type DayStatus,
   type DayType,
   type LocalDate,
@@ -19,7 +20,9 @@ import { grantXp } from '../days/xp.js';
 import type { DaySource } from '../events/schema.js';
 import { plannedDayType } from '../plans/weekly-plan.js';
 import type { StreakStatesRepository, UserRecord, UsersRepository } from '../ports/repositories.js';
-import { announceWeek, evaluateClosedWeek, type CloseWeekDeps } from './close-week.js';
+import { closeDayAchievements } from '../days/achievements.js';
+import { announceWeek, evaluateClosedWeek } from './close-week.js';
+import { ensureWeekQuests, evaluateQuests, type QuestDeps } from './quests.js';
 
 /**
  * Cierre programado del día (T-060, T-061, FR-005-02). Cada ciclo cierra, en
@@ -30,7 +33,7 @@ import { announceWeek, evaluateClosedWeek, type CloseWeekDeps } from './close-we
  * registros también se cierra: no cuenta, pero no resta.
  */
 
-export interface CloseDaysDeps extends CloseWeekDeps {
+export interface CloseDaysDeps extends QuestDeps {
   users: UsersRepository;
   streaks: StreakStatesRepository;
 }
@@ -80,11 +83,16 @@ export async function closeUserDays(
       : result.state;
     // Si otro proceso guardó antes (cambió `rev`), este ciclo se detiene; el siguiente sigue.
     if (!(await deps.streaks.save(user.id, rev, next))) return closed;
+    const before = state;
     state = next;
     rev += 1;
     closed += 1;
     await announce(user, date, day, result, now, deps);
+    // T-063: misiones de la semana del día, cierre de la semana, logros y misiones de la siguiente.
+    await evaluateQuests(user, date, deps);
     if (week) await announceWeek(user, date, week, day.riskPaused, deps);
+    await closeDayAchievements(user, date, before, next, deps);
+    await ensureWeekQuests(user, weekStartOf(addDays(date, 1)), deps);
   }
   return closed;
 }

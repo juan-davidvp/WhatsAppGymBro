@@ -10,6 +10,7 @@ import {
   generateWeeklyQuests,
   habitForged,
   nextWeekStreak,
+  questsReached,
   seasonOf,
   weekStartOf,
   weeklyCommitment,
@@ -88,6 +89,23 @@ describe('RN-GAM-008 · misiones semanales', () => {
     })) {
       expect(quest.target).toBe(1);
     }
+  });
+
+  it('T-063 · una misión se alcanza cuando lo logrado en la semana llega a su meta', () => {
+    const quests = generateWeeklyQuests({ sessions: 3, nutritionHalfDays: 4, countedDays: 5 });
+    const [training, nutrition] = quests;
+    expect(
+      questsReached(quests, {
+        sessions: training?.target ?? 0,
+        nutritionHalfDays: (nutrition?.target ?? 0) - 1,
+        countedDays: 0,
+      }),
+    ).toEqual(['TRAINING']);
+    expect(questsReached(quests, { sessions: 9, nutritionHalfDays: 9, countedDays: 9 })).toEqual([
+      'TRAINING',
+      'NUTRITION',
+      'CONSISTENCY',
+    ]);
   });
 
   it('propiedad: la meta nunca es mayor que lo logrado (salvo el mínimo de 1)', () => {

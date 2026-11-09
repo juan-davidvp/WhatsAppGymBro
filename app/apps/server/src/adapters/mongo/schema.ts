@@ -41,7 +41,7 @@ export const COLLECTIONS = {
   xp_ledger: [{ keys: ['userId', 'at'] }, { keys: ['userId', 'refId'], unique: true }],
   achievements: [{ keys: ['userId', 'code', 'at'] }],
   weeks: [{ keys: ['userId', 'weekStart'], unique: true }],
-  quests: [{ keys: ['userId', 'weekStart'] }],
+  quests: [{ keys: ['userId', 'weekStart'], unique: true }],
   seasons: [{ keys: ['userId', 'startDate'] }],
   proactive_messages: [{ keys: ['status', 'scheduledFor'] }, { keys: ['userId', 'sentAt'] }],
   message_stats: [{ keys: ['userId'], unique: true }],

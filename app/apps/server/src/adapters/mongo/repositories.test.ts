@@ -546,7 +546,7 @@ describe('RN-DQC-005 · T-041 · fuentes del día abierto', () => {
     await days.close('u13', '2026-10-20', 'REST', evaluateDay(rest), now);
     expect(await days.addSource('u13', '2026-10-20', 'REST', 'session:x')).toEqual(['mobility']);
     expect(await days.history('u13')).toEqual([
-      { date: '2026-10-20', counted: false, complete: false },
+      { date: '2026-10-20', counted: false, complete: false, nutritionHalf: false },
     ]);
     expect(await days.dayType('u13', '2026-10-20')).toBe('REST');
   });

@@ -80,6 +80,16 @@ export function generateWeeklyQuests(lastWeek: WeekAchieved | null): WeeklyQuest
   ];
 }
 
+/** RN-GAM-008: misiones cuya meta ya se alcanzó con lo logrado en la semana hasta ahora. */
+export function questsReached(quests: readonly WeeklyQuest[], achieved: WeekAchieved): QuestKind[] {
+  const value: Readonly<Record<QuestKind, number>> = {
+    TRAINING: achieved.sessions,
+    NUTRITION: achieved.nutritionHalfDays,
+    CONSISTENCY: achieved.countedDays,
+  };
+  return quests.filter((q) => value[q.kind] >= q.target).map((q) => q.kind);
+}
+
 /**
  * RN-GAM-009: liga personal. Solo recibe datos del propio usuario: la semana
  * actual, la anterior y la mejor. No existen rankings entre usuarios.

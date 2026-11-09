@@ -2,6 +2,7 @@ import {
   PARAMETERS,
   type ExerciseAdjustment,
   type PlayerState,
+  type QuestKind,
   type XpLedgerEntry,
   type PlannedSession,
   type WeeklyPlan,
@@ -45,6 +46,7 @@ import {
   type UserProfile,
   type UserRecord,
   type UsersRepository,
+  type QuestsRepository,
   type WeekRecord,
   type WeeksRepository,
   type XpLedgerRecord,
@@ -325,12 +327,16 @@ export function daysRepository(db: Db): DaysRepository {
     },
     async history(userId) {
       const docs = await collection
-        .find({ userId }, { projection: { _id: 0, date: 1, counted: 1, complete: 1 } })
+        .find(
+          { userId },
+          { projection: { _id: 0, date: 1, counted: 1, complete: 1, nutritionHalf: 1 } },
+        )
         .toArray();
       return docs.map((d) => ({
         date: d['date'] as LocalDate,
         counted: d['counted'] === true,
         complete: d['complete'] === true,
+        nutritionHalf: d['nutritionHalf'] === true,
       }));
     },
     async close(userId, date, dayType, status, at) {
@@ -485,14 +491,50 @@ export function weeksRepository(db: Db): WeeksRepository {
     },
     async list(userId) {
       const docs = await collection.find({ userId }).sort({ weekStart: 1 }).toArray();
-      return docs.map(({ weekStart, planned, completed, commitment, fulfilled, countedDays }) => ({
-        weekStart,
-        planned,
-        completed,
-        commitment,
-        fulfilled,
-        countedDays,
+      return docs.map((d) => ({
+        weekStart: d.weekStart,
+        planned: d.planned,
+        completed: d.completed,
+        commitment: d.commitment,
+        fulfilled: d.fulfilled,
+        countedDays: d.countedDays,
+        nutritionHalfDays: d.nutritionHalfDays ?? 0,
       }));
+    },
+  };
+}
+
+interface QuestDocument {
+  userId: string;
+  weekStart: LocalDate;
+  items: { code: QuestKind; target: number; progress: number; done: boolean }[];
+}
+
+export function questsRepository(db: Db): QuestsRepository {
+  const collection = db.collection<QuestDocument>('quests');
+  return {
+    async get(userId, weekStart) {
+      const doc = await collection.findOne({ userId, weekStart });
+      return doc ? doc.items.map((i) => ({ kind: i.code, target: i.target, done: i.done })) : null;
+    },
+    async create(userId, weekStart, quests) {
+      const items = quests.map((q) => ({
+        code: q.kind,
+        target: q.target,
+        progress: 0,
+        done: false,
+      }));
+      const { inserted } = await insertIfAbsent(() =>
+        collection.insertOne({ userId, weekStart, items }),
+      );
+      return { created: inserted };
+    },
+    async markDone(userId, weekStart, kind) {
+      const result = await collection.updateOne(
+        { userId, weekStart, items: { $elemMatch: { code: kind, done: false } } },
+        { $set: { 'items.$.done': true } },
+      );
+      return result.modifiedCount === 1;
     },
   };
 }

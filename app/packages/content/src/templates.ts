@@ -335,6 +335,27 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: [],
   },
   {
+    id: 'MI-01',
+    kind: 'response',
+    when: 'Misiones de la semana (al generarlas)',
+    text: 'Misiones de la semana. Sesiones: {entreno} · Días con la mitad de comida: {comida} · Días que cuentan: {constancia}',
+    buttons: [],
+  },
+  {
+    id: 'MI-02',
+    kind: 'response',
+    when: 'Misión de la semana cumplida',
+    text: 'Misión de la semana cumplida: {mision} ({meta}).',
+    buttons: [],
+  },
+  {
+    id: 'LG-01',
+    kind: 'response',
+    when: 'Logro desbloqueado (fuera del Reto 66)',
+    text: 'Logro: **{nombre}**. Quedó en tu bitácora.',
+    buttons: [],
+  },
+  {
     id: 'PR-01',
     kind: 'response',
     when: 'Récord',

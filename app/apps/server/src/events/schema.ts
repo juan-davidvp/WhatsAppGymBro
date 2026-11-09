@@ -155,6 +155,13 @@ export const EVENT_PROPS_SCHEMAS = {
     commitment: z.number().int().nonnegative(),
   }),
   achievement_unlocked: z.strictObject({ code: z.string().regex(/^[A-Z][A-Z0-9_]{1,31}$/) }),
+  /** SPEC-005 §7 (T-063): metas de las 3 misiones y misión cumplida. */
+  quest_generated: z.strictObject({
+    training: z.number().int().positive(),
+    nutrition: z.number().int().positive(),
+    consistency: z.number().int().positive(),
+  }),
+  quest_completed: z.strictObject({ kind: z.enum(['TRAINING', 'NUTRITION', 'CONSISTENCY']) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

@@ -215,7 +215,9 @@ describe('RN-DQC-003/004 · T-050 · la comida hace contar o completa el día, e
     await flow.act({ text: '🏋️ Hoy' });
     await flow.act('Hice la movilidad');
     await logPalms(flow, goal.palms);
-    expect(flow.last()?.text).toBe(`${templateById('DC-02').text}\n${week('PENDING', 'COMPLETE')}`);
+    expect(flow.calls.map((c) => String(c.payload['text'] ?? ''))).toContain(
+      `${templateById('DC-02').text}\n${week('PENDING', 'COMPLETE')}`,
+    );
     expect(
       flow.calls.some((c) =>
         String(c.payload['text'] ?? '').startsWith(renderTemplate('DC-01', { n: 1, racha: 1 })),
@@ -229,7 +231,9 @@ describe('RN-DQC-003/004 · T-050 · la comida hace contar o completa el día, e
     await flow.act('Gym');
     await flow.act('La hice tal cual');
     await logPalms(flow, goal.palms);
-    expect(flow.last()?.text).toBe(`${templateById('DC-02').text}\n${week('COMPLETE')}`);
+    expect(flow.calls.map((c) => String(c.payload['text'] ?? ''))).toContain(
+      `${templateById('DC-02').text}\n${week('COMPLETE')}`,
+    );
   });
 
   it('[Registrar comida] desde Hoy en descanso abre CM-01 (HU-004-6 escenario 2)', async () => {

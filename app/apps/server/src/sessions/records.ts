@@ -1,5 +1,6 @@
 import { ACHIEVEMENTS, renderTemplate } from '@gymbro/content';
 import { detectPersonalRecord, type LoggedEntry } from '@gymbro/domain';
+import { unlockAchievement } from '../days/achievements.js';
 import { grantXp } from '../days/xp.js';
 import type { Reply } from '../onboarding/replies.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
@@ -31,7 +32,6 @@ export async function checkRecord(
   );
   const record = detectPersonalRecord(entry, history);
   if (!record) return null;
-  const now = deps.clock();
   const setKey = `set:${session.id}:${entry.exerciseCode}:${entry.setIndex}`;
   const stored = await deps.records.record({
     userId: user.id,
@@ -45,16 +45,9 @@ export async function checkRecord(
   // RN-GAM-005: el récord suma su XP (P-038); quedó pendiente en T-044 y llega con T-062.
   await grantXp(user, session.date, { type: 'PERSONAL_RECORD' }, `pr:${setKey}`, deps);
   const total = await deps.records.count(user.id);
+  // RN-GAM-011 (T-063): se guardan una vez y se anuncian con LG-01.
   for (const code of [FIRST_PR, ...(total >= MANY_PRS_COUNT ? [MANY_PRS] : [])]) {
-    if (ACHIEVEMENTS.some((a) => a.code === code)) {
-      await deps.achievements.appendOnce({
-        userId: user.id,
-        code,
-        at: now,
-        value: entry.exerciseCode,
-        context: record.kind,
-      });
-    }
+    await unlockAchievement(user, code, session.date, entry.exerciseCode, deps);
   }
   await deps.events.emit(
     'pr_detected',

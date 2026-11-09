@@ -19,6 +19,8 @@ import type {
   TrainingPlace,
   WeeklyPlan,
   Weekday,
+  WeeklyQuest,
+  QuestKind,
   XpLedgerEntry,
 } from '@gymbro/domain';
 
@@ -275,8 +277,10 @@ export interface DaysRepository {
   sources(userId: string, date: LocalDate): Promise<string[]>;
   /** Tipo con el que se registró el día (null si no tiene registros). */
   dayType(userId: string, date: LocalDate): Promise<DayType | null>;
-  /** Días guardados con si cuentan y si son completos (total, racha y línea de la semana). */
-  history(userId: string): Promise<{ date: LocalDate; counted: boolean; complete: boolean }[]>;
+  /** Días guardados: si cuentan, si son completos y si cumplieron la mitad de comida. */
+  history(
+    userId: string,
+  ): Promise<{ date: LocalDate; counted: boolean; complete: boolean; nutritionHalf: boolean }[]>;
 }
 
 export type WorkoutStatus = 'active' | 'completed' | 'partial' | 'abandoned';
@@ -354,6 +358,25 @@ export interface WeekRecord {
   readonly commitment: number;
   readonly fulfilled: boolean;
   readonly countedDays: number;
+  /** Días con la mitad de comida (base de la misión de comida, RN-GAM-008). */
+  readonly nutritionHalfDays: number;
+}
+
+/** Misión de la semana guardada (`quests`, RN-GAM-008). */
+export interface StoredQuest extends WeeklyQuest {
+  readonly done: boolean;
+}
+
+export interface QuestsRepository {
+  get(userId: string, weekStart: LocalDate): Promise<StoredQuest[] | null>;
+  /** Guarda las misiones de la semana una sola vez; `created` es false si ya existían. */
+  create(
+    userId: string,
+    weekStart: LocalDate,
+    quests: readonly WeeklyQuest[],
+  ): Promise<{ created: boolean }>;
+  /** Marca una misión cumplida; true solo la primera vez. */
+  markDone(userId: string, weekStart: LocalDate, kind: QuestKind): Promise<boolean>;
 }
 
 export interface WeeksRepository {
