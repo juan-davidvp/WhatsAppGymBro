@@ -304,7 +304,7 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     kind: 'response',
     when: 'Racha reiniciada',
     text: 'Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés?',
-    buttons: [],
+    buttons: ["Exprés 15'"],
   },
   {
     id: 'RA-03',

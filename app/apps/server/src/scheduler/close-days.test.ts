@@ -22,7 +22,9 @@ async function onboarded() {
   const flow = await runFlow(ONBOARDED_GYM_LXV, { clock: time.clock });
   const deps: CloseDaysDeps = { ...flow.deps, clock: time.clock };
   const closedEvents = () => flow.events.filter((e) => e.name === 'day_closed').map((e) => e.props);
-  return { ...flow, ...time, deps, closedEvents };
+  const userId = () => flow.user()?.id ?? '';
+  const total = () => flow.streakStates.get(userId())?.state.counted.total;
+  return { ...flow, ...time, deps, closedEvents, userId, total };
 }
 
 describe('RN-DQC-005 · T-060 · el día se cierra solo al terminar la gracia', () => {
@@ -54,7 +56,7 @@ describe('RN-DQC-005 · T-060 · el día se cierra solo al terminar la gracia', 
         source: 'session',
       },
     ]);
-    expect(t.streakStates.get(t.user()?.id ?? '')?.total).toBe(1);
+    expect(t.total()).toBe(1);
   });
 });
 
@@ -67,7 +69,7 @@ describe('FR-005-02 · T-060 · el cierre es idempotente', () => {
     expect(await closeDueDays(t.deps)).toBe(1);
     expect(await closeDueDays(t.deps)).toBe(0);
     expect(t.closedEvents()).toHaveLength(1);
-    expect(t.streakStates.get(userId)?.total).toBe(1);
+    expect(t.total()).toBe(1);
   });
 
   it('un registro tardío no cambia un día ya cerrado', async () => {
@@ -78,7 +80,7 @@ describe('FR-005-02 · T-060 · el cierre es idempotente', () => {
     await t.deps.days.addSource(userId, '2026-10-19', 'TRAINING', 'session:tarde');
     await closeDueDays(t.deps);
     expect(t.days.find((d) => d.date === '2026-10-19')?.counted).toBe(false);
-    expect(t.streakStates.get(userId)?.total).toBe(0);
+    expect(t.total()).toBe(0);
   });
 });
 
@@ -95,7 +97,10 @@ describe('RN-DQC-007 · T-060 · los días sin abrir el bot se cierran en orden 
       ['2026-10-21', 'TRAINING', false],
       ['2026-10-22', 'REST', false],
     ]);
-    expect(t.streakStates.get(userId)).toEqual({ total: 1, lastClosedDate: '2026-10-22' });
+    expect(t.streakStates.get(userId)?.state.counted).toEqual({
+      total: 1,
+      lastClosedDate: '2026-10-22',
+    });
   });
 
   it('cerrar días pasados no guarda planes ni emite plan_generated', async () => {

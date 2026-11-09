@@ -40,6 +40,7 @@ import {
   recordDayActivity,
   withWeekLine,
 } from '../days/day-status.js';
+import { takeNotices } from '../days/notices.js';
 import { button, plain, type Button, type Reply } from '../onboarding/replies.js';
 import { ensureWeek } from '../plans/weekly-plan.js';
 import type {
@@ -286,7 +287,10 @@ async function afterMeal(
   if (!before.complete && after.status.complete) day.push(plain('DC-02'));
   // HU-005-1: la semana en una línea va con el último mensaje del día.
   const last = day.at(-1);
-  return last ? [summary, ...day.slice(0, -1), withWeekLine(last, after)] : [summary];
+  const notices = await takeNotices(user, deps);
+  return last
+    ? [summary, ...day.slice(0, -1), withWeekLine(last, after), ...notices]
+    : [summary, ...notices];
 }
 
 async function recordMeal(

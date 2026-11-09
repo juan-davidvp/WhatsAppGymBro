@@ -27,6 +27,7 @@ export {
 } from './day/day.js';
 export { WEEK_MARKS, weekMarks, type WeekLineDay, type WeekMark } from './day/week-line.js';
 export * from './gamification/streak.js';
+export * from './gamification/day-close.js';
 export * from './gamification/xp.js';
 export * from './gamification/weekly.js';
 export * from './goals/goals.js';

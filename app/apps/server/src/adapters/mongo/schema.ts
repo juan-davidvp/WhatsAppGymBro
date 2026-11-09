@@ -37,6 +37,7 @@ export const COLLECTIONS = {
   body_measurements: [{ keys: ['userId', 'date'] }],
   days: [{ keys: ['userId', 'date'], unique: true }],
   streak_states: [{ keys: ['userId'], unique: true }],
+  notices: [{ keys: ['userId', 'key'], unique: true }],
   xp_ledger: [{ keys: ['userId', 'at'] }],
   achievements: [{ keys: ['userId', 'code', 'at'] }],
   weeks: [{ keys: ['userId', 'weekStart'], unique: true }],

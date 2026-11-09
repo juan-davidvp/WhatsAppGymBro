@@ -3,9 +3,9 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.1.9
+version: 0.2.0
 creado: 2026-10-18
-actualizado: 2026-10-20
+actualizado: 2026-11-09
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [plan-tecnico, plan-de-medicion, glosario]
@@ -62,7 +62,8 @@ erDiagram
 | `favorite_meals` | `userId`, `name`, `portions`, `foodCodes[]` | `userId` | RN-NUT-004 |
 | `body_measurements` | `userId`, `date`, `weightKg`, `waistCm` | `userId+date` | RN-OBJ-010, RN-OBJ-012 |
 | `days` | `userId`, `date`, `dayType`, `trainingHalf`, `nutritionHalf`, `restMissionMet`, `counted`, `complete`, `sources[]` (`session:<id>` completada · `mobility` · `nutrition_half` cuando se cumple la mitad de comida, T-050), `freezeUsed`, `status` (`open`·`closed`), `closedAt` | `userId+date` único | RN-DQC-001 a 007 |
-| `streak_states` | `userId`, `current`, `longest`, `freezes`, `totalCountedDays`, `lastClosedDate`, `repairAvailableUntil`, `lastRepairAt` | `userId` único | `totalCountedDays` nunca baja (RN-DQC-007) |
+| `streak_states` | `userId`, `rev`, `current`, `longest`, `countedRun`, `freezes`, `totalCountedDays`, `lastClosedDate`, `repairAvailableUntil`, `repairRestoreTo`, `lastRepairDate`, `comebackPending` | `userId` único | `totalCountedDays` nunca baja (RN-DQC-007). Estado del juego que guarda el cierre programado (T-060, T-061). `rev` sube en cada cambio: dos procesos no aplican el mismo cierre o la misma reparación dos veces |
+| `notices` | `userId`, `key`, `templateId`, `variables`, `createdAt`, `shownAt` | `userId+key` único | Avisos del cierre (RA-01 a RA-03 y otros) que se muestran en la próxima interacción mientras no exista la bandeja de salida (decisión del PO, 2026-11-08). `key` evita duplicarlos |
 | `xp_ledger` | `userId`, `at`, `event`, `amount` (> 0), `refId` | `userId+at` | Solo inserciones; suma nunca baja (RN-GAM-006) |
 | `achievements` | `userId`, `code`, `at`, `value`, `context` | `userId+code+at` | Solo inserciones (RN-GAM-011) |
 | `weeks` | `userId`, `weekStart`, `planned`, `completed`, `commitment`, `fulfilled`, `countedDays` | `userId+weekStart` único | RN-GAM-004 |

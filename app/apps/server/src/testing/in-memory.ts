@@ -1,10 +1,4 @@
-import {
-  PARAMETERS,
-  closeDay,
-  initialCountedDaysState,
-  type ConsentCategory,
-  type CountedDaysState,
-} from '@gymbro/domain';
+import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
@@ -15,6 +9,8 @@ import {
   type SetEntryRecord,
   type FavoriteMealRecord,
   type MealRecord,
+  type NoticeRecord,
+  type StoredPlayerState,
   type StoredWeeklyPlan,
   type GoalRecord,
   type ScreeningType,
@@ -78,7 +74,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     sources: string[];
     dayStatus: DayStatus | null;
   }[] = [];
-  const streakStates = new Map<string, CountedDaysState>();
+  const streakStates = new Map<string, StoredPlayerState>();
+  const notices: (NoticeRecord & { userId: string; shownAt: Date | null })[] = [];
   const workouts: WorkoutSessionRecord[] = [];
   const records: {
     userId: string;
@@ -434,17 +431,33 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
       },
     },
     streaks: {
-      applyDayClose(userId, day) {
-        const current = streakStates.get(userId) ?? initialCountedDaysState();
-        const next = closeDay(current, day);
-        streakStates.set(userId, next);
-        return Promise.resolve({
-          applied: next.lastClosedDate !== current.lastClosedDate,
-          totalCountedDays: next.total,
-        });
+      get(userId) {
+        return Promise.resolve(streakStates.get(userId) ?? null);
       },
-      lastClosedDate(userId) {
-        return Promise.resolve(streakStates.get(userId)?.lastClosedDate ?? null);
+      save(userId, rev, state) {
+        if ((streakStates.get(userId)?.rev ?? 0) !== rev) return Promise.resolve(false);
+        streakStates.set(userId, { state, rev: rev + 1 });
+        return Promise.resolve(true);
+      },
+    },
+    notices: {
+      add(userId, notice) {
+        if (!notices.some((n) => n.userId === userId && n.key === notice.key)) {
+          notices.push({ ...notice, userId, shownAt: null });
+        }
+        return Promise.resolve();
+      },
+      takePending(userId, at) {
+        const pending = notices.filter((n) => n.userId === userId && n.shownAt === null);
+        for (const notice of pending) notice.shownAt = at;
+        return Promise.resolve(
+          pending.map(({ key, templateId, variables, createdAt }) => ({
+            key,
+            templateId,
+            variables,
+            createdAt,
+          })),
+        );
       },
     },
     workouts: {
@@ -609,6 +622,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(setEntries, userId);
         removeRows(days, userId);
         streakStates.delete(userId);
+        removeRows(notices, userId);
         removeRows(workouts, userId);
         removeRows(records, userId);
         removeRows(achievements, userId);
@@ -651,6 +665,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     setEntries,
     days,
     streakStates,
+    notices,
     workouts,
     records,
     achievements,

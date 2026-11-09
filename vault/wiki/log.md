@@ -478,3 +478,26 @@ relacionados: [index, inicio]
 - **Pendiente:**
   - Con `/pausa` (T-073), decidir si los días en pausa se cierran al volver o se saltan. Hoy un usuario en pausa no se cierra.
   - La racha, la reparación y los avisos llegan en T-061.
+
+## [2026-11-09] decision | RN-GAM-003 · misión de regreso: cualquier sesión y exprés en descanso
+- **Problema:** la oferta de reparar (RA-02) llega al cerrar el día fallado (12:00 del día siguiente). Con un plan L-X-V, ese día casi siempre es de descanso, y en descanso no se podía iniciar ninguna sesión: [Exprés 15'] no hacía nada.
+- **Decisión del PO:**
+  - En un día de descanso, [Exprés 15'] de RA-02 abre la versión exprés de la sesión planificada que no se hizo (si no hay, la siguiente del plan), con la fecha de hoy. La rotación del plan no cambia. Entrenar en descanso cuenta (RN-DQC-006) y RN-SEG-008 sigue vigilando el sobreuso.
+  - Repara cualquier sesión completada (A, B o C) más la mitad de comida, el mismo día y dentro de P-035 horas. La exprés es el mínimo; hacer más no impide reparar.
+- **Cambios:** [[reglas-de-negocio]] v0.6.0 (RN-GAM-003) y [[sistema-de-gamificacion]]. En el dominio, `RepairAttempt.expressSessionDone` pasa a `sessionCompleted`. RA-02 lleva el botón [Exprés 15'] ([[plantillas-de-mensajes]] v0.13.0).
+
+## [2026-11-09] implementar | T-061 Racha, comodines, reparación y regreso
+- **Dominio:**
+  - `closePlayerDay` (`gamification/day-close.ts`) cierra un día para el juego en un solo paso puro: total (RN-DQC-007), racha y comodines (RN-GAM-001/002), oferta de reparación (RN-GAM-003) y bonificación de regreso (RN-GAM-013).
+  - Día con señal de riesgo (FR-005-07, decisión del 2026-11-08): la racha puede subir, pero no se rompe, no gasta ni gana comodín y no hay bonificación.
+  - `StreakState.longest`.
+  - `liveCountedDays` parte de lo ya cerrado, así que una racha reparada se ve en vivo.
+- **Estado guardado:** `streak_states` guarda todo el estado del juego con `rev`. El cierre y la reparación se guardan solo si `rev` no cambió, y un documento de T-060 se lee como versión 0 ([[modelo-de-datos]] v0.2.0).
+- **Avisos en la próxima interacción:** colección `notices`. Al cerrar se guardan RA-01 (comodín usado) y RA-02 (racha reiniciada con oferta de reparar). Se muestran al abrir 🏋️ Hoy o al registrar una sesión, una comida o la movilidad.
+  - Tras varios días sin abrir el bot, solo el más reciente de cada plantilla.
+  - RA-02 solo mientras el plazo siga abierto.
+  - Sin avisos con el juego desactivado (FR-005-06) o con señal de riesgo ese día.
+- **Reparación en vivo** (`days/day-status.ts`): al registrar una sesión o la mitad de comida, si hay oferta abierta y el día tiene las dos cosas, la racha vuelve (`streak_repaired`, RA-03). `sessions/session.ts` · `repairSessionFor` elige la sesión de la misión de regreso.
+- **Eventos con esquema estricto:** `streak_extended`, `freeze_earned`, `freeze_used`, `streak_reset`, `streak_repair_offered`, `streak_repaired` (solo números).
+- **Pruebas:** `gamification/day-close.test.ts` (idempotencia, regreso, señal de riesgo, invariantes con fast-check: SC-005-1 para el total y la racha), `scheduler/streak-close.test.ts` (HU-005-2 escenarios 1 y 2, comodín ganado, reparación con exprés en descanso y con sesión completa, plazo vencido, señal de riesgo, juego desactivado) y las de los repositorios.
+- **Pendiente:** la bonificación de regreso (HU-005-4) queda calculada en el cierre (`comebackBonus`, `comebackPending`). Su XP y BR-01 llegan con T-062, porque la bonificación es XP.

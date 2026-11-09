@@ -65,6 +65,8 @@ const BUTTON_VALUES: Readonly<Record<string, Readonly<Record<string, string>>>> 
   'PL-01': { Gym: 'gym', Casa: 'home', "Exprés 15'": 'express', 'Hoy no puedo': 'cant' },
   'HN-01': { 'Exprés ahora': 'express', 'Mover a otro día': 'move', 'Hoy descanso': 'rest' },
   'HY-01': { 'Hice la movilidad': 'mobility', 'Registrar comida': 'food' },
+  // RN-GAM-003: la misión de regreso abre la exprés (en descanso, la de la sesión que faltó).
+  'RA-02': { "Exprés 15'": 'repair' },
   'BD-01': { 'Sí, borrar': 'confirm', Cancelar: 'cancel' },
   'BD-02': { 'Borrar todo': 'erase', Cancelar: 'cancel' },
 };

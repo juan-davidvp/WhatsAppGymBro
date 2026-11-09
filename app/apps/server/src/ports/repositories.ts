@@ -12,6 +12,7 @@ import type {
   LocalTime,
   OnboardingStep,
   PlannedSession,
+  PlayerState,
   SessionProgress,
   SessionTemplate,
   SessionVariant,
@@ -313,17 +314,36 @@ export interface WorkoutSessionsRepository {
   ): Promise<WorkoutSessionRecord | null>;
 }
 
+/** Estado del juego guardado y su versión (`rev` = 0 si todavía no existe). */
+export interface StoredPlayerState {
+  readonly state: PlayerState;
+  readonly rev: number;
+}
+
 export interface StreakStatesRepository {
+  get(userId: string): Promise<StoredPlayerState | null>;
   /**
-   * RN-DQC-007: suma el día cerrado al total una sola vez; el total nunca baja.
-   * `applied` es false si ese día (o uno posterior) ya estaba cerrado.
+   * Guarda el estado solo si `rev` sigue igual (FR-005-02): si otro proceso cerró
+   * el día o reparó la racha antes, devuelve false y no cambia nada. El dominio
+   * garantiza que el total nunca baja (RN-DQC-007).
    */
-  applyDayClose(
-    userId: string,
-    day: { date: LocalDate; counted: boolean },
-  ): Promise<{ applied: boolean; totalCountedDays: number }>;
-  /** Último día cerrado del usuario (null si nunca se cerró uno). */
-  lastClosedDate(userId: string): Promise<LocalDate | null>;
+  save(userId: string, rev: number, state: PlayerState): Promise<boolean>;
+}
+
+/** Aviso para la próxima interacción (decisión del PO, 2026-11-08). */
+export interface NoticeRecord {
+  /** Clave estable: el mismo aviso no se guarda dos veces. */
+  readonly key: string;
+  readonly templateId: string;
+  readonly variables: Readonly<Record<string, string | number>>;
+  readonly createdAt: Date;
+}
+
+export interface NoticesRepository {
+  /** Guarda el aviso una sola vez por clave. */
+  add(userId: string, notice: NoticeRecord): Promise<void>;
+  /** Avisos sin mostrar, en orden de creación; quedan marcados como mostrados. */
+  takePending(userId: string, at: Date): Promise<NoticeRecord[]>;
 }
 
 export interface RiskSignalsRepository {

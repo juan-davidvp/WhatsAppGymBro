@@ -7,6 +7,7 @@ import {
   exerciseAdjustmentsRepository,
   favoriteMealsRepository,
   mealsRepository,
+  noticesRepository,
   painFlagsRepository,
   personalRecordsRepository,
   daysRepository,
@@ -74,7 +75,9 @@ async function main(): Promise<void> {
     const users = usersRepository(db);
     const days = daysRepository(db);
     const streaks = streakStatesRepository(db);
+    const notices = noticesRepository(db);
     const plans = plansRepository(db);
+    const riskSignals = riskSignalsRepository(db);
 
     const bot = createBot({
       token: config.telegramBotToken,
@@ -83,7 +86,7 @@ async function main(): Promise<void> {
       deps: {
         processedUpdates: processedUpdatesRepository(db),
         users,
-        riskSignals: riskSignalsRepository(db),
+        riskSignals,
         consents: consentsRepository(db),
         screenings: screeningsRepository(db),
         eraser: userDataEraser(db),
@@ -94,6 +97,7 @@ async function main(): Promise<void> {
         setEntries: setEntriesRepository(db),
         days,
         streaks,
+        notices,
         workouts: workoutSessionsRepository(db),
         records: personalRecordsRepository(db),
         achievements: achievementsRepository(db),
@@ -109,7 +113,16 @@ async function main(): Promise<void> {
     const scheduler = startScheduler({
       logger,
       tick: async () => {
-        const closed = await closeDueDays({ users, days, streaks, plans, events, clock });
+        const closed = await closeDueDays({
+          users,
+          days,
+          streaks,
+          notices,
+          plans,
+          riskSignals,
+          events,
+          clock,
+        });
         if (closed > 0) logger.info('days_closed', { count: closed });
       },
     });

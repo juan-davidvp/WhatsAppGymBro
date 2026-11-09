@@ -90,12 +90,12 @@ describe('RN-GAM-003 · reparar la racha', () => {
     );
   });
 
-  it('con la misión de regreso (sesión C + mitad de comida) dentro del plazo, la racha vuelve', () => {
+  it('con la misión de regreso (una sesión completada, la exprés basta, + mitad de comida) dentro del plazo, la racha vuelve', () => {
     const { state } = broken();
     const result = repairStreak(state, {
       date: addDays(START, 4),
       at: new Date(day(3, false).closedAt.getTime() + 3_600_000),
-      expressSessionDone: true,
+      sessionCompleted: true,
       nutritionHalf: true,
     });
     expect(result.repaired).toBe(true);
@@ -109,8 +109,8 @@ describe('RN-GAM-003 · reparar la racha', () => {
     const late = new Date(
       day(3, false).closedAt.getTime() + (PARAMETERS.streak.repairWindowHours + 1) * 3_600_000,
     );
-    const attempt = (at: Date, expressSessionDone: boolean, nutritionHalf: boolean) =>
-      repairStreak(state, { date: addDays(START, 4), at, expressSessionDone, nutritionHalf })
+    const attempt = (at: Date, sessionCompleted: boolean, nutritionHalf: boolean) =>
+      repairStreak(state, { date: addDays(START, 4), at, sessionCompleted, nutritionHalf })
         .repaired;
     expect(attempt(within, true, false)).toBe(false);
     expect(attempt(within, false, true)).toBe(false);
@@ -122,7 +122,7 @@ describe('RN-GAM-003 · reparar la racha', () => {
     const repaired = repairStreak(state, {
       date: addDays(START, 4),
       at: new Date(day(3, false).closedAt.getTime() + 3_600_000),
-      expressSessionDone: true,
+      sessionCompleted: true,
       nutritionHalf: true,
     }).state;
     // Se vuelve a romper pocos días después: no se ofrece otra reparación.
@@ -156,7 +156,7 @@ describe('RN-GAM-001 y RN-GAM-002 · invariantes', () => {
               streak = repairStreak(streak, {
                 date: d.date,
                 at: new Date(d.closedAt.getTime() - 3_600_000),
-                expressSessionDone: counted,
+                sessionCompleted: counted,
                 nutritionHalf: counted,
               }).state;
             }
@@ -212,5 +212,29 @@ describe('RN-GAM-001 · RN-DQC-007 · racha y total en vivo (antes del cierre pr
 
   it('sin historia: 0 y 0', () => {
     expect(liveCountedDays([], '2026-10-19', tz)).toEqual({ total: 0, current: 0 });
+  });
+
+  it('RN-GAM-003 · parte de lo ya cerrado (T-061): una racha reparada se ve en vivo', () => {
+    const closed = {
+      total: 10,
+      streak: { ...initialStreakState(), current: 7, longest: 7, lastClosedDate: '2026-10-18' },
+    };
+    const today = [{ date: '2026-10-19', counted: true }];
+    expect(liveCountedDays(today, '2026-10-19', tz, closed)).toEqual({ total: 11, current: 8 });
+    // Los días ya cerrados del historial no se cuentan dos veces.
+    const withClosed = [{ date: '2026-10-18', counted: true }, ...today];
+    expect(liveCountedDays(withClosed, '2026-10-19', tz, closed)).toEqual({
+      total: 11,
+      current: 8,
+    });
+    // Un día abierto sin registro, sin comodín, reinicia la racha; el total no baja.
+    const later = [{ date: '2026-10-20', counted: true }];
+    expect(liveCountedDays(later, '2026-10-20', tz, closed)).toEqual({ total: 11, current: 1 });
+  });
+
+  it('RN-GAM-001 · la racha más larga solo crece', () => {
+    const { state } = run([true, true, true, false, true]);
+    expect(state.longest).toBe(3);
+    expect(state.current).toBe(1);
   });
 });

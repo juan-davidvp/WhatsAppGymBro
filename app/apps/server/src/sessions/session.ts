@@ -1,7 +1,9 @@
 import { SESSION_NAMES, renderTemplate, templateById } from '@gymbro/content';
 import {
+  addDays,
   operationalDate,
   startProgress,
+  weekStartOf,
   type LocalDate,
   type SessionExercise,
   type SessionVariant,
@@ -43,6 +45,8 @@ export async function startSession(
   variant: SessionVariant,
   deps: TrainingDeps,
   forceNew = false,
+  /** Sesión planificada a usar en vez de la de hoy (misión de regreso, RN-GAM-003). */
+  planned?: PlannedSessionRecord,
 ): Promise<Reply[]> {
   const date = today(user, deps);
   const active = await deps.workouts.activeOn(user.id, date);
@@ -58,15 +62,15 @@ export async function startSession(
       },
     ];
   }
-  const day = await planDayToday(user, deps);
-  if (!day?.session) return [];
+  const plannedSession = planned ?? (await planDayToday(user, deps))?.session;
+  if (!plannedSession) return [];
   if (active)
     await deps.workouts.update(active.id, active.rev, {
       status: 'abandoned',
       endedAt: deps.clock(),
     });
 
-  const exercises: SessionExercise[] = day.session.versions[variant].exercises.map((e) => ({
+  const exercises: SessionExercise[] = plannedSession.versions[variant].exercises.map((e) => ({
     exerciseCode: e.exerciseCode,
     pattern: e.pattern,
     sets: e.sets,
@@ -76,8 +80,8 @@ export async function startSession(
   const session = await deps.workouts.create({
     userId: user.id,
     date,
-    plannedSessionId: day.session.id,
-    template: day.session.template,
+    plannedSessionId: plannedSession.id,
+    template: plannedSession.template,
     variant,
     status: 'active',
     startedAt: deps.clock(),
@@ -92,6 +96,35 @@ export async function startSession(
   await deps.events.emit('session_started', subject, { variant });
   return [renderCard(session, deps.clock())];
 }
+
+type PlannedSessionRecord = NonNullable<StoredPlanDay['session']>;
+
+/**
+ * RN-GAM-003 (decisión del PO, 2026-11-09): sesión para la misión de regreso. Si
+ * hoy toca entrenar, la de hoy. Si es descanso, la última sesión planificada que
+ * no se hizo (esta semana o la anterior) y, si no hay, la siguiente del plan.
+ * Se hace en su versión exprés con la fecha de hoy; el plan no cambia.
+ */
+export async function repairSessionFor(
+  user: UserRecord,
+  deps: TrainingDeps,
+): Promise<PlannedSessionRecord | null> {
+  const date = today(user, deps);
+  const week = await currentWeek(user, deps);
+  const todays = week?.days.find((d) => d.date === date)?.session;
+  if (todays) return todays;
+  const previous = await deps.plans.week(user.id, addDays(weekStartOf(date), -WEEK_LENGTH));
+  const past = [...(previous?.days ?? []), ...(week?.days ?? [])]
+    .filter((d) => d.session && d.date < date)
+    .reverse();
+  for (const day of past) {
+    const sessions = await deps.workouts.onDate(user.id, day.date);
+    if (day.session && !sessions.some((s) => s.status === 'completed')) return day.session;
+  }
+  return week?.days.find((d) => d.session && d.date > date)?.session ?? null;
+}
+
+const WEEK_LENGTH = 7;
 
 /** Sesión abierta de hoy, para retomarla (Hoy o [Continuar la anterior]). */
 export async function resumeSession(user: UserRecord, deps: TrainingDeps): Promise<Reply[]> {

@@ -7,6 +7,7 @@ import {
   weekLineFor,
   withWeekLine,
 } from '../days/day-status.js';
+import { takeNotices } from '../days/notices.js';
 import { plain, templateReply, button, type Reply } from '../onboarding/replies.js';
 import { dayLabel } from '../plans/plan-view.js';
 import { currentWeek } from '../plans/weekly-plan.js';
@@ -16,6 +17,7 @@ import { logYesterdayAsPlanned, yesterdayPrompt } from '../sessions/finish.js';
 import {
   VARIANT_BY_VALUE,
   planDayToday,
+  repairSessionFor,
   resumeSession,
   startSession,
   today,
@@ -28,9 +30,13 @@ import {
 
 const td = (value: string) => ({ action: 'td' as const, value });
 
-/** `🏋️ Hoy`, `/hoy` y [Empezar]. */
+/** `🏋️ Hoy`, `/hoy` y [Empezar]: primero los avisos del cierre pendientes (T-061). */
 export async function todayScreen(user: UserRecord, deps: TrainingDeps): Promise<Reply[]> {
   if (!user.onboarding.completedAt) return [plain('PN-04')];
+  return [...(await takeNotices(user, deps)), ...(await todayBody(user, deps))];
+}
+
+async function todayBody(user: UserRecord, deps: TrainingDeps): Promise<Reply[]> {
   const resumed = await resumeSession(user, deps);
   if (resumed.length > 0) return resumed;
   const day = await planDayToday(user, deps);
@@ -110,6 +116,13 @@ export async function answerToday(
   switch (value) {
     case 'resume':
       return resumeSession(user, deps);
+    case 'repair': {
+      // RN-GAM-003: [Exprés 15'] de RA-02, también en un día de descanso.
+      const planned = await repairSessionFor(user, deps);
+      return planned
+        ? startSession(user, 'EXPRESS', deps, false, planned)
+        : todayScreen(user, deps);
+    }
     case 'asis_yesterday':
       return logYesterdayAsPlanned(user, deps);
     case 'cant':
@@ -135,7 +148,10 @@ export async function answerToday(
       const day = await planDayToday(user, deps);
       if (!day || day.session) return todayScreen(user, deps);
       const result = await recordDayActivity(user, day.date, 'REST', MOBILITY_SOURCE, deps);
-      return [withWeekLine(plain('HY-02', { n: result.total, racha: result.streak }), result)];
+      return [
+        withWeekLine(plain('HY-02', { n: result.total, racha: result.streak }), result),
+        ...(await takeNotices(user, deps)),
+      ];
     }
     default: {
       const to = fromCompact(value);

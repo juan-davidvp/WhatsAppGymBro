@@ -4,7 +4,7 @@ tipo: diseno
 hito: H2
 estado: en-revision
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-11-09
 fuentes: [F10, F11, F25, F26, F45, F46, F48, F49, F50, F51]
 relacionados: [gamificacion-y-habitos, cada-dia-cuenta, estrategia-anti-novedad, objetivos-y-progreso, spec-005-dia-que-cuenta-y-gamificacion, catalogo-de-logros-y-niveles, parametros]
 ---
@@ -37,7 +37,7 @@ La gamificación **amplifica** la constancia, pero no la sostiene sola: su efect
 ### 3.1 Racha, comodín y reparación
 - **Racha** = días que cuentan consecutivos (RN-GAM-001).
 - **Comodín:** se gana 1 por cada 7 días que cuentan consecutivos; se acumulan hasta 2; se aplica solo cuando un día no cuenta (RN-GAM-002).
-- **Reparar racha:** si se rompe sin comodín, hay 48 h para una **misión de regreso** (sesión exprés + proteína); máximo una vez cada 30 días (RN-GAM-003).
+- **Reparar racha:** si se rompe sin comodín, hay 48 h para una **misión de regreso** (una sesión —la exprés basta— + proteína); máximo una vez cada 30 días (RN-GAM-003).
 - **Mensaje al romperse:** destaca el total acumulado, que nunca baja (RN-DQC-007).
 
 ### 3.2 Semanas cumplidas (Estrella del Norte)

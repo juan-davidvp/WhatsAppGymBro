@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.12.0
+version: 0.13.0
 creado: 2026-10-18
-actualizado: 2026-11-08
+actualizado: 2026-11-09
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -96,7 +96,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | DC-02 | Día completo | Día completo ⭐ Entreno y comida, los dos. |
 | DC-03 | Línea de semana | {L} {M} {X} {J} {V} {S} {D} |
 | RA-01 | Comodín usado | Usé un comodín: tu racha sigue en {racha}. Te queda {comodines}. |
-| RA-02 | Racha reiniciada | Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés? |
+| RA-02 | Racha reiniciada | Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés? [Exprés 15'] |
 | RA-03 | Racha reparada | Racha reparada. Volver también suma. |
 | BR-01 | Bonificación de regreso | Volviste. Eso vale +{xp} puntos. |
 | PR-01 | Récord | 🏆 Récord: {ejercicio}, {carga} × {reps}. Quedó en tu bitácora. |

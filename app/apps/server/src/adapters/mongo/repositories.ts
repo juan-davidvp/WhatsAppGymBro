@@ -1,7 +1,7 @@
 import {
   PARAMETERS,
-  closeDay,
   type ExerciseAdjustment,
+  type PlayerState,
   type PlannedSession,
   type WeeklyPlan,
   type ConsentCategory,
@@ -34,6 +34,8 @@ import {
   type FavoriteMealsRepository,
   type MealRecord,
   type MealsRepository,
+  type NoticeRecord,
+  type NoticesRepository,
   type ProcessedUpdatesRepository,
   type RiskSignalsRepository,
   type SetEntriesRepository,
@@ -356,40 +358,115 @@ export function daysRepository(db: Db): DaysRepository {
   return repository;
 }
 
-interface StreakStateDocument {
-  userId: string;
+/** `streak_states` (modelo de datos §2): el estado del juego en campos planos. */
+interface StreakStateFields {
   totalCountedDays: number;
   lastClosedDate: LocalDate | null;
+  current: number;
+  longest: number;
+  countedRun: number;
+  freezes: number;
+  repairAvailableUntil: string | null;
+  repairRestoreTo: number | null;
+  lastRepairDate: LocalDate | null;
+  comebackPending: boolean;
+}
+
+interface StreakStateDocument extends Partial<StreakStateFields> {
+  userId: string;
+  rev?: number;
+}
+
+function toStreakFields(state: PlayerState): StreakStateFields {
+  const { streak } = state;
+  return {
+    totalCountedDays: state.counted.total,
+    lastClosedDate: state.counted.lastClosedDate,
+    current: streak.current,
+    longest: streak.longest,
+    countedRun: streak.countedRun,
+    freezes: streak.freezes,
+    repairAvailableUntil: streak.repair?.offeredUntil ?? null,
+    repairRestoreTo: streak.repair?.restoreTo ?? null,
+    lastRepairDate: streak.lastRepairDate,
+    comebackPending: state.comeback.pending,
+  };
+}
+
+/** Documentos de T-060 solo tienen el total y el último día cerrado: el resto parte de cero. */
+function fromStreakDocument(doc: StreakStateDocument): PlayerState {
+  const lastClosedDate = doc.lastClosedDate ?? null;
+  const repair =
+    doc.repairAvailableUntil && doc.repairRestoreTo !== null && doc.repairRestoreTo !== undefined
+      ? { offeredUntil: doc.repairAvailableUntil, restoreTo: doc.repairRestoreTo }
+      : null;
+  return {
+    counted: { total: doc.totalCountedDays ?? 0, lastClosedDate },
+    streak: {
+      current: doc.current ?? 0,
+      longest: doc.longest ?? 0,
+      countedRun: doc.countedRun ?? 0,
+      freezes: doc.freezes ?? 0,
+      repair,
+      lastRepairDate: doc.lastRepairDate ?? null,
+      lastClosedDate,
+    },
+    comeback: { pending: doc.comebackPending ?? false },
+  };
 }
 
 export function streakStatesRepository(db: Db): StreakStatesRepository {
   const collection = db.collection<StreakStateDocument>('streak_states');
   return {
-    async applyDayClose(userId, day) {
-      await insertIfAbsent(() =>
-        collection.insertOne({ userId, totalCountedDays: 0, lastClosedDate: null }),
-      );
-      const current = await collection.findOne({ userId });
-      const next = closeDay(
-        { total: current?.totalCountedDays ?? 0, lastClosedDate: current?.lastClosedDate ?? null },
-        day,
-      );
-      if (next.lastClosedDate === (current?.lastClosedDate ?? null)) {
-        return { applied: false, totalCountedDays: current?.totalCountedDays ?? 0 };
-      }
-      // Actualización condicional: si otro proceso cerró este día antes, no se suma dos veces.
-      const result = await collection.updateOne(
-        { userId, lastClosedDate: current?.lastClosedDate ?? null },
-        { $set: { totalCountedDays: next.total, lastClosedDate: next.lastClosedDate } },
-      );
-      const after = await collection.findOne({ userId });
-      return {
-        applied: result.modifiedCount === 1,
-        totalCountedDays: after?.totalCountedDays ?? 0,
-      };
+    async get(userId) {
+      const doc = await collection.findOne({ userId });
+      return doc ? { state: fromStreakDocument(doc), rev: doc.rev ?? 0 } : null;
     },
-    async lastClosedDate(userId) {
-      return (await collection.findOne({ userId }))?.lastClosedDate ?? null;
+    async save(userId, rev, state) {
+      const fields = toStreakFields(state);
+      if (rev === 0) {
+        const { inserted } = await insertIfAbsent(() =>
+          collection.insertOne({ userId, rev: 1, ...fields }),
+        );
+        if (inserted) return true;
+      }
+      // Actualización condicional: si otro proceso cambió el estado antes, no se aplica dos veces.
+      // Un documento de T-060 todavía no tiene `rev`: cuenta como versión 0.
+      const filter =
+        rev === 0 ? { userId, $or: [{ rev: 0 }, { rev: { $exists: false } }] } : { userId, rev };
+      const result = await collection.updateOne(filter, { $set: { ...fields, rev: rev + 1 } });
+      return result.modifiedCount === 1;
+    },
+  };
+}
+
+interface NoticeDocument extends NoticeRecord {
+  userId: string;
+  shownAt: Date | null;
+}
+
+export function noticesRepository(db: Db): NoticesRepository {
+  const collection = db.collection<NoticeDocument>('notices');
+  return {
+    async add(userId, notice) {
+      await insertIfAbsent(() => collection.insertOne({ userId, ...notice, shownAt: null }));
+    },
+    async takePending(userId, at) {
+      const docs = await collection
+        .find({ userId, shownAt: null })
+        .sort({ createdAt: 1, _id: 1 })
+        .toArray();
+      if (docs.length === 0) return [];
+      await collection.updateMany(
+        { _id: { $in: docs.map((d) => d._id) }, shownAt: null },
+        { $set: { shownAt: at } },
+      );
+      return docs.map(({ key, templateId, variables, createdAt }) => ({
+        key,
+        templateId,
+        variables,
+        createdAt,
+      }));
     },
   };
 }

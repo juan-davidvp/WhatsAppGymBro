@@ -133,6 +133,16 @@ export const EVENT_PROPS_SCHEMAS = {
     complete: z.boolean(),
     source: z.enum(DAY_SOURCES),
   }),
+  /** SPEC-005 §7 (T-061): racha, comodines y reparación; solo números. */
+  streak_extended: z.strictObject({ streak: z.number().int().positive() }),
+  freeze_earned: z.strictObject({ freezes: z.number().int().positive() }),
+  freeze_used: z.strictObject({
+    freezes: z.number().int().nonnegative(),
+    streak: z.number().int().nonnegative(),
+  }),
+  streak_reset: z.strictObject({}),
+  streak_repair_offered: z.strictObject({}),
+  streak_repaired: z.strictObject({ streak: z.number().int().positive() }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

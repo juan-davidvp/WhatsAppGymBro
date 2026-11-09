@@ -13,6 +13,7 @@ import {
   type SessionVariant,
 } from '@gymbro/domain';
 import { recordDayActivity, sessionSource, withWeekLine } from '../days/day-status.js';
+import { takeNotices } from '../days/notices.js';
 import { button, plain, type Reply } from '../onboarding/replies.js';
 import { ensureWeek } from '../plans/weekly-plan.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
@@ -76,7 +77,10 @@ export async function finishSession(
   const variables: Record<string, string | number> = { n: result.total, racha: result.streak };
   if (template !== 'SE-03') variables['series'] = logged;
   if (template === 'SE-01') variables['record_txt'] = await extras(updated);
-  return [{ ...withWeekLine(plain(template, variables), result), edit: true }];
+  return [
+    { ...withWeekLine(plain(template, variables), result), edit: true },
+    ...(await takeNotices(user, deps)),
+  ];
 }
 
 /** HU-003-2: "La hice tal cual" registra todas las series como estaban planeadas, en 1 toque. */

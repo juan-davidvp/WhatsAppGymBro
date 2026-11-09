@@ -9,6 +9,11 @@ export interface StreakDay {
   readonly counted: boolean;
   /** Instante del cierre del día (fin de la gracia, RN-DQC-005). */
   readonly closedAt: Date;
+  /**
+   * RN-SEG-007 y FR-005-07: hubo una señal de riesgo ese día. La racha puede
+   * sumar, pero no romperse ni gastar o ganar comodines (decisión del PO, 2026-11-08).
+   */
+  readonly riskPaused?: boolean;
 }
 
 export interface StreakRepairOffer {
@@ -21,6 +26,8 @@ export interface StreakRepairOffer {
 export interface StreakState {
   /** RN-GAM-001: días que cuentan consecutivos hasta el último día cerrado. */
   readonly current: number;
+  /** La racha más larga alcanzada (solo crece). */
+  readonly longest: number;
   /** Días que cuentan seguidos desde el último día que no contó (para ganar comodines). */
   readonly countedRun: number;
   /** RN-GAM-002: comodines disponibles (0…P-034). */
@@ -42,6 +49,7 @@ export type StreakEvent =
 export function initialStreakState(): StreakState {
   return {
     current: 0,
+    longest: 0,
     countedRun: 0,
     freezes: 0,
     repair: null,
@@ -75,18 +83,26 @@ export function closeStreakDay(
   if (day.counted) {
     const countedRun = state.countedRun + 1;
     const earns =
+      !day.riskPaused &&
       countedRun % PARAMETERS.streak.freezeEveryCountedDays === 0 &&
       state.freezes < PARAMETERS.streak.maxFreezes;
+    const current = state.current + 1;
     return {
       state: {
         ...state,
-        current: state.current + 1,
+        current,
+        longest: Math.max(state.longest, current),
         countedRun,
         freezes: earns ? state.freezes + 1 : state.freezes,
         lastClosedDate: day.date,
       },
       events: earns ? ['streak_extended', 'freeze_earned'] : ['streak_extended'],
     };
+  }
+
+  // FR-005-07: un día con señal de riesgo que no cuenta no rompe la racha ni gasta comodín.
+  if (day.riskPaused) {
+    return { state: { ...state, lastClosedDate: day.date }, events: [] };
   }
 
   // RN-GAM-002: el comodín se aplica solo; la racha se mantiene, pero el día no cuenta.
@@ -116,8 +132,11 @@ export function closeStreakDay(
 export interface RepairAttempt {
   readonly date: LocalDate;
   readonly at: Date;
-  /** Misión de regreso: sesión C (exprés) completada… */
-  readonly expressSessionDone: boolean;
+  /**
+   * Misión de regreso: una sesión completada ese día (la exprés basta; A o B
+   * también, decisión del PO 2026-11-09)…
+   */
+  readonly sessionCompleted: boolean;
   /** …y mitad de comida cumplida. */
   readonly nutritionHalf: boolean;
 }
@@ -129,13 +148,15 @@ export function repairStreak(
 ): { state: StreakState; repaired: boolean } {
   const offer = state.repair;
   const inTime = offer !== null && attempt.at.getTime() <= Date.parse(offer.offeredUntil);
-  if (!offer || !inTime || !attempt.expressSessionDone || !attempt.nutritionHalf) {
+  if (!offer || !inTime || !attempt.sessionCompleted || !attempt.nutritionHalf) {
     return { state, repaired: false };
   }
+  const current = offer.restoreTo + state.current;
   return {
     state: {
       ...state,
-      current: offer.restoreTo + state.current,
+      current,
+      longest: Math.max(state.longest, current),
       repair: null,
       lastRepairDate: attempt.date,
     },
@@ -143,24 +164,37 @@ export function repairStreak(
   };
 }
 
+/** Lo que el cierre programado ya guardó: total acumulado y racha hasta el último día cerrado. */
+export interface ClosedTotals {
+  readonly total: number;
+  readonly streak: StreakState;
+}
+
 /**
  * RN-GAM-001 y RN-DQC-007, vista en vivo: total de días que cuentan y racha
- * con lo registrado hasta hoy, antes de que el cierre programado (M6) guarde el
- * estado. Repite el cierre de cada día pasado (un día sin registro no cuenta,
- * con su comodín si lo hay) y suma hoy solo si ya cuenta: hoy sigue abierto.
+ * con lo registrado hasta hoy. Parte de lo ya cerrado (`closed`, T-060) y repite
+ * el cierre de los días pasados aún abiertos (p. ej. ayer durante su gracia; un
+ * día sin registro no cuenta, con su comodín si lo hay). Hoy suma solo si ya
+ * cuenta: sigue abierto. Sin `closed`, parte de cero con todo el historial.
  */
 export function liveCountedDays(
   history: readonly { readonly date: LocalDate; readonly counted: boolean }[],
   today: LocalDate,
   timeZone: string,
+  closed: ClosedTotals | null = null,
 ): { total: number; current: number } {
-  const byDate = new Map(history.map((d) => [d.date, d.counted]));
-  const past = history
-    .map((d) => d.date)
-    .filter((date) => date < today)
-    .sort();
-  let state = initialStreakState();
-  for (let date = past[0]; date !== undefined && date < today; date = addDays(date, 1)) {
+  const lastClosed = closed?.streak.lastClosedDate ?? null;
+  const open = history.filter((d) => lastClosed === null || d.date > lastClosed);
+  const byDate = new Map(open.map((d) => [d.date, d.counted]));
+  const firstOpen =
+    lastClosed === null
+      ? open
+          .map((d) => d.date)
+          .filter((date) => date < today)
+          .sort()[0]
+      : addDays(lastClosed, 1);
+  let state = closed?.streak ?? initialStreakState();
+  for (let date = firstOpen; date !== undefined && date < today; date = addDays(date, 1)) {
     state = closeStreakDay(state, {
       date,
       counted: byDate.get(date) ?? false,
@@ -168,6 +202,9 @@ export function liveCountedDays(
     }).state;
   }
   const countsToday = byDate.get(today) ?? false;
-  const total = history.filter((d) => d.counted && d.date <= today).length;
-  return { total, current: state.current + (countsToday ? 1 : 0) };
+  const openTotal = open.filter((d) => d.counted && d.date <= today).length;
+  return {
+    total: (closed?.total ?? 0) + openTotal,
+    current: state.current + (countsToday ? 1 : 0),
+  };
 }
