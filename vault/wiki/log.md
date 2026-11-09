@@ -545,3 +545,11 @@ relacionados: [index, inicio]
 - **Corrección:** de los avisos pendientes solo se resumen los que se reemplazan (RA-01, RA-02, MI-01). Antes también se resumían los logros, y si caían dos el mismo día se perdía uno.
 - **Textos nuevos** (redactados por Claude, [[plantillas-de-mensajes]] v0.15.0), pendientes de revisión del PO: MI-01, MI-02 (con los rótulos de su nota) y LG-01.
 - **Pruebas:** `scheduler/quests-achievements.test.ts` (generación, dificultad, misión cumplida una vez, Reto 66 capítulo 1 y hábito forjado, LG-01 una vez, señal de riesgo) y `weekly.test.ts` (`questsReached`). Además, las pruebas de fin de sesión y de comida buscan su mensaje entre los avisos de logros que ahora lo siguen.
+
+## [2026-11-09] implementar | T-064 Liga personal (Could; sin temporadas)
+- **Liga personal** (`scheduler/close-week.ts`, RN-GAM-009, HU-005-8 escenario 1): al cerrar la semana se compara solo con las semanas anteriores del mismo usuario (`compareWithOwnHistory`), en días que cuentan.
+  - Si supera su mejor semana y hay al menos una anterior: RE-03 en la próxima interacción.
+  - La primera vez, además, el logro `BEST_WEEK` en la bitácora; después solo RE-03.
+  - No existe ninguna comparación entre usuarios.
+- **Temporadas (RN-GAM-010):** no se implementan. Quedan como `[NEEDS CLARIFICATION]` en [[spec-005-dia-que-cuenta-y-gamificacion]] §10 hasta que el PO defina temas, metas e insignias. `seasonOf` sigue en el dominio con sus pruebas.
+- **Pruebas:** `scheduler/league.test.ts` (nueva mejor semana, segunda mejor semana sin repetir el logro, semana que no supera, primera semana).

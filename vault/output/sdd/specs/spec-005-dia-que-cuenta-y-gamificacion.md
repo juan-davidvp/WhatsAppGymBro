@@ -103,4 +103,5 @@ Rankings entre usuarios, tienda de recompensas, monedas canjeables, desafíos en
 ## 10. Aclaraciones pendientes
 
 - `[NEEDS CLARIFICATION]` Nombres de los niveles: validar con usuarios en H1.
+- `[NEEDS CLARIFICATION]` Temporadas (HU-005-8 escenario 2, RN-GAM-010): faltan los temas, las metas y las insignias de cada temporada. Quedan fuera de la Fase 0 hasta que el PO los defina (decisión del 2026-11-09); la liga personal (escenario 1) sí está hecha.
 - ~~¿Mostrar la racha diaria y la de semanas a la vez desde el día 1?~~ **Resuelto (PO, 2026-11-08):** la diaria desde el día 1; la de semanas desde que se cierra la primera semana cumplida.

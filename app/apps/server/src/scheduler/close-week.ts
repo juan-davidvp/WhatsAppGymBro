@@ -1,11 +1,14 @@
 import {
   addDays,
+  compareWithOwnHistory,
   evaluateWeek,
   weekStartOf,
   type LocalDate,
   type WeekAchieved,
   type WeekResult,
 } from '@gymbro/domain';
+import { unlockAchievement } from '../days/achievements.js';
+import { hadRiskSignal } from '../days/risk.js';
 import { grantXp, type XpDeps } from '../days/xp.js';
 import { plannedWeekDays } from '../plans/weekly-plan.js';
 import type {
@@ -92,6 +95,48 @@ export async function weekAchieved(
   };
 }
 
+const BEST_WEEK = 'BEST_WEEK';
+
+/**
+ * T-064 · liga personal (HU-005-8, RN-GAM-009): la semana solo se compara con
+ * las anteriores del mismo usuario. Si supera su mejor semana en días que
+ * cuentan (y hay al menos una anterior), RE-03; la primera vez, además, el logro
+ * "Mejor semana" queda en la bitácora. No existe comparación entre usuarios.
+ */
+async function announceBestWeek(
+  user: UserRecord,
+  date: LocalDate,
+  current: WeekRecord,
+  earlier: readonly WeekRecord[],
+  deps: CloseWeekDeps,
+): Promise<void> {
+  const previous = earlier.find((w) => w.weekStart === addDays(current.weekStart, -WEEK_LENGTH));
+  if (earlier.length === 0) return;
+  const { isNewBest } = compareWithOwnHistory({
+    current: current.countedDays,
+    previous: previous?.countedDays ?? null,
+    best: Math.max(...earlier.map((w) => w.countedDays)),
+  });
+  if (!isNewBest) return;
+  const announcement = { templateId: 'RE-03', variables: { dqc: current.countedDays } };
+  const first = await unlockAchievement(
+    user,
+    BEST_WEEK,
+    date,
+    current.countedDays,
+    deps,
+    announcement,
+  );
+  if (first || !user.settings.gamificationEnabled || (await hadRiskSignal(user, date, deps))) {
+    return;
+  }
+  await deps.notices.add(user.id, {
+    key: `RE-03:${current.weekStart}`,
+    ...announcement,
+    createdAt: deps.clock(),
+  });
+}
+
 /** Guarda la semana, emite `week_closed` y, si se cumplió, su XP y SM-01. */
 export async function announceWeek(
   user: UserRecord,
@@ -100,7 +145,11 @@ export async function announceWeek(
   riskPaused: boolean,
   deps: CloseWeekDeps,
 ): Promise<void> {
+  const earlier = (await deps.weeks.list(user.id)).filter(
+    (w) => w.weekStart < week.record.weekStart,
+  );
   await deps.weeks.save(user.id, week.record);
+  await announceBestWeek(user, date, week.record, earlier, deps);
   if (!week.result.evaluated) return;
   const { record } = week;
   await deps.events.emit(
