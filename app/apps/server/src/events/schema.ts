@@ -1,5 +1,5 @@
 import { alertCategorySchema } from '@gymbro/content';
-import { CONSENT_CATEGORIES, ONBOARDING_STEPS, WEEK_DAYS } from '@gymbro/domain';
+import { CONSENT_CATEGORIES, ONBOARDING_STEPS, WEEK_DAYS, XP_EVENT_TYPES } from '@gymbro/domain';
 import { z } from 'zod';
 import { EVENT_NAMES, STUDY_PHASES, type EventName } from './catalog.js';
 
@@ -143,6 +143,18 @@ export const EVENT_PROPS_SCHEMAS = {
   streak_reset: z.strictObject({}),
   streak_repair_offered: z.strictObject({}),
   streak_repaired: z.strictObject({ streak: z.number().int().positive() }),
+  /** SPEC-005 §7 (T-062): XP, niveles, semanas y logros; solo códigos y números. */
+  xp_awarded: z.strictObject({
+    event: z.enum(XP_EVENT_TYPES),
+    amount: z.number().int().positive(),
+  }),
+  level_up: z.strictObject({ level: z.number().int().min(2) }),
+  week_closed: z.strictObject({
+    fulfilled: z.boolean(),
+    sessions: z.number().int().nonnegative(),
+    commitment: z.number().int().nonnegative(),
+  }),
+  achievement_unlocked: z.strictObject({ code: z.string().regex(/^[A-Z][A-Z0-9_]{1,31}$/) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

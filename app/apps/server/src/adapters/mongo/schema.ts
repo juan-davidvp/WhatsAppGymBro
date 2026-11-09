@@ -38,7 +38,7 @@ export const COLLECTIONS = {
   days: [{ keys: ['userId', 'date'], unique: true }],
   streak_states: [{ keys: ['userId'], unique: true }],
   notices: [{ keys: ['userId', 'key'], unique: true }],
-  xp_ledger: [{ keys: ['userId', 'at'] }],
+  xp_ledger: [{ keys: ['userId', 'at'] }, { keys: ['userId', 'refId'], unique: true }],
   achievements: [{ keys: ['userId', 'code', 'at'] }],
   weeks: [{ keys: ['userId', 'weekStart'], unique: true }],
   quests: [{ keys: ['userId', 'weekStart'] }],

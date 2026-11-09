@@ -23,6 +23,8 @@ export interface PlayerState {
   readonly counted: CountedDaysState;
   readonly streak: StreakState;
   readonly comeback: ComebackState;
+  /** RN-GAM-004: semanas cumplidas seguidas (`nextWeekStreak`, al cerrar el domingo). */
+  readonly weekStreak: number;
 }
 
 export function initialPlayerState(): PlayerState {
@@ -30,6 +32,7 @@ export function initialPlayerState(): PlayerState {
     counted: initialCountedDaysState(),
     streak: initialStreakState(),
     comeback: { pending: false },
+    weekStreak: 0,
   };
 }
 
@@ -74,6 +77,7 @@ export function closePlayerDay(state: PlayerState, day: PlayerDay): PlayerDayRes
     : updateComeback(state.comeback, { type: day.type, counted: day.counted });
   return {
     state: {
+      ...state,
       counted: closeDay(state.counted, { date: day.date, counted: day.counted }),
       streak: streak.state,
       comeback: comeback.state,

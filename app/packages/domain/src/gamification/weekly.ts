@@ -35,6 +35,17 @@ export function evaluateWeek(week: {
   return { evaluated: true, commitment, fulfilled: week.completed >= commitment };
 }
 
+/**
+ * RN-GAM-004 (HU-005-5): semanas cumplidas seguidas. Una semana no evaluada (en
+ * pausa o sin sesiones planificadas) no cambia la racha. Con señal de riesgo al
+ * cerrarla (FR-005-07), puede subir pero no romperse.
+ */
+export function nextWeekStreak(current: number, week: WeekResult, riskPaused = false): number {
+  if (!week.evaluated) return current;
+  if (week.fulfilled) return current + 1;
+  return riskPaused ? current : 0;
+}
+
 export type QuestKind = 'TRAINING' | 'NUTRITION' | 'CONSISTENCY';
 
 export interface WeeklyQuest {

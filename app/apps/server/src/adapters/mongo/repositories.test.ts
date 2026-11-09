@@ -215,6 +215,7 @@ describe('RN-DQC-007 · T-061 · el estado del juego se guarda completo y por ve
         lastClosedDate: '2026-10-20',
       },
       comeback: { pending: true },
+      weekStreak: 2,
     };
     expect(await streaks.save('u2', 0, state)).toBe(true);
     expect(await streaks.get('u2')).toEqual({ state, rev: 1 });

@@ -25,6 +25,8 @@ import {
   riskSignalsRepository,
   streakStatesRepository,
   usersRepository,
+  weeksRepository,
+  xpLedgerRepository,
 } from './adapters/mongo/repositories.js';
 import { closeDueDays } from './scheduler/close-days.js';
 import { startScheduler } from './scheduler/loop.js';
@@ -78,6 +80,10 @@ async function main(): Promise<void> {
     const notices = noticesRepository(db);
     const plans = plansRepository(db);
     const riskSignals = riskSignalsRepository(db);
+    const workouts = workoutSessionsRepository(db);
+    const achievements = achievementsRepository(db);
+    const xp = xpLedgerRepository(db);
+    const weeks = weeksRepository(db);
 
     const bot = createBot({
       token: config.telegramBotToken,
@@ -98,9 +104,11 @@ async function main(): Promise<void> {
         days,
         streaks,
         notices,
-        workouts: workoutSessionsRepository(db),
+        xp,
+        weeks,
+        workouts,
         records: personalRecordsRepository(db),
-        achievements: achievementsRepository(db),
+        achievements,
         painFlags: painFlagsRepository(db),
         adjustments: exerciseAdjustmentsRepository(db),
         meals: mealsRepository(db),
@@ -120,6 +128,10 @@ async function main(): Promise<void> {
           notices,
           plans,
           riskSignals,
+          workouts,
+          achievements,
+          xp,
+          weeks,
           events,
           clock,
         });

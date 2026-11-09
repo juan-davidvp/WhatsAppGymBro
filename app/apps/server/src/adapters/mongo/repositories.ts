@@ -2,6 +2,7 @@ import {
   PARAMETERS,
   type ExerciseAdjustment,
   type PlayerState,
+  type XpLedgerEntry,
   type PlannedSession,
   type WeeklyPlan,
   type ConsentCategory,
@@ -44,6 +45,10 @@ import {
   type UserProfile,
   type UserRecord,
   type UsersRepository,
+  type WeekRecord,
+  type WeeksRepository,
+  type XpLedgerRecord,
+  type XpLedgerRepository,
 } from '../../ports/repositories.js';
 import { setIdempotencyKey } from './idempotency.js';
 import { COLLECTIONS } from './schema.js';
@@ -370,6 +375,7 @@ interface StreakStateFields {
   repairRestoreTo: number | null;
   lastRepairDate: LocalDate | null;
   comebackPending: boolean;
+  weekStreak: number;
 }
 
 interface StreakStateDocument extends Partial<StreakStateFields> {
@@ -390,6 +396,7 @@ function toStreakFields(state: PlayerState): StreakStateFields {
     repairRestoreTo: streak.repair?.restoreTo ?? null,
     lastRepairDate: streak.lastRepairDate,
     comebackPending: state.comeback.pending,
+    weekStreak: state.weekStreak,
   };
 }
 
@@ -412,6 +419,7 @@ function fromStreakDocument(doc: StreakStateDocument): PlayerState {
       lastClosedDate,
     },
     comeback: { pending: doc.comebackPending ?? false },
+    weekStreak: doc.weekStreak ?? 0,
   };
 }
 
@@ -436,6 +444,55 @@ export function streakStatesRepository(db: Db): StreakStatesRepository {
         rev === 0 ? { userId, $or: [{ rev: 0 }, { rev: { $exists: false } }] } : { userId, rev };
       const result = await collection.updateOne(filter, { $set: { ...fields, rev: rev + 1 } });
       return result.modifiedCount === 1;
+    },
+  };
+}
+
+export function xpLedgerRepository(db: Db): XpLedgerRepository {
+  const collection = db.collection<XpLedgerRecord & { userId: string }>('xp_ledger');
+  const toEntry = ({ date, event, variant, amount }: XpLedgerRecord): XpLedgerEntry => ({
+    date,
+    event,
+    ...(variant ? { variant } : {}),
+    amount,
+  });
+  return {
+    async add(userId, entry) {
+      // RN-GAM-006 y RN-GAM-014: nunca se guarda un movimiento que no sume.
+      if (!(entry.amount > 0)) return { inserted: false };
+      return insertIfAbsent(() => collection.insertOne({ userId, ...entry }));
+    },
+    async onDate(userId, date) {
+      return (await collection.find({ userId, date }).toArray()).map(toEntry);
+    },
+    async total(userId) {
+      const [sum] = await collection
+        .aggregate<{ total: number }>([
+          { $match: { userId } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ])
+        .toArray();
+      return sum?.total ?? 0;
+    },
+  };
+}
+
+export function weeksRepository(db: Db): WeeksRepository {
+  const collection = db.collection<WeekRecord & { userId: string }>('weeks');
+  return {
+    async save(userId, week) {
+      await insertIfAbsent(() => collection.insertOne({ userId, ...week }));
+    },
+    async list(userId) {
+      const docs = await collection.find({ userId }).sort({ weekStart: 1 }).toArray();
+      return docs.map(({ weekStart, planned, completed, commitment, fulfilled, countedDays }) => ({
+        weekStart,
+        planned,
+        completed,
+        commitment,
+        fulfilled,
+        countedDays,
+      }));
     },
   };
 }

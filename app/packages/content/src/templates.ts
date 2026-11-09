@@ -293,6 +293,13 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: [],
   },
   {
+    id: 'DC-04',
+    kind: 'response',
+    when: 'Racha de semanas (desde la primera semana cumplida)',
+    text: 'Semanas cumplidas seguidas: {semanas}',
+    buttons: [],
+  },
+  {
     id: 'RA-01',
     kind: 'response',
     when: 'Comodín usado',
@@ -318,6 +325,13 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     kind: 'response',
     when: 'Bonificación de regreso',
     text: 'Volviste. Eso vale +{xp} puntos.',
+    buttons: [],
+  },
+  {
+    id: 'SM-01',
+    kind: 'response',
+    when: 'Semana cumplida (al cerrar el domingo)',
+    text: 'Semana cumplida: {sesiones} de {compromiso} sesiones.',
     buttons: [],
   },
   {

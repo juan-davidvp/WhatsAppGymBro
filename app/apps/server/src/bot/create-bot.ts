@@ -21,6 +21,8 @@ import type {
   DaysRepository,
   NoticesRepository,
   StreakStatesRepository,
+  WeeksRepository,
+  XpLedgerRepository,
   AchievementsRepository,
   ExerciseAdjustmentsRepository,
   FavoriteMealsRepository,
@@ -74,6 +76,10 @@ export interface BotDependencies {
   streaks: StreakStatesRepository;
   /** Avisos del cierre para la próxima interacción (T-061). */
   notices: NoticesRepository;
+  /** Libro de XP (T-062, FR-005-03). */
+  xp: XpLedgerRepository;
+  /** Semanas cerradas (T-062, RN-GAM-004). */
+  weeks: WeeksRepository;
   workouts: WorkoutSessionsRepository;
   records: PersonalRecordsRepository;
   achievements: AchievementsRepository;

@@ -501,3 +501,27 @@ relacionados: [index, inicio]
 - **Eventos con esquema estricto:** `streak_extended`, `freeze_earned`, `freeze_used`, `streak_reset`, `streak_repair_offered`, `streak_repaired` (solo números).
 - **Pruebas:** `gamification/day-close.test.ts` (idempotencia, regreso, señal de riesgo, invariantes con fast-check: SC-005-1 para el total y la racha), `scheduler/streak-close.test.ts` (HU-005-2 escenarios 1 y 2, comodín ganado, reparación con exprés en descanso y con sesión completa, plazo vencido, señal de riesgo, juego desactivado) y las de los repositorios.
 - **Pendiente:** la bonificación de regreso (HU-005-4) queda calculada en el cierre (`comebackBonus`, `comebackPending`). Su XP y BR-01 llegan con T-062, porque la bonificación es XP.
+
+## [2026-11-09] implementar | T-062 XP, niveles y semana cumplida
+- **Libro de XP** (`xp_ledger`, FR-005-03, `days/xp.ts`):
+  - Cada hecho que da XP tiene su clave (`refId`): el mismo hecho no suma dos veces (índice único `userId+refId`, [[modelo-de-datos]] v0.3.0).
+  - Monto de P-038 con el tope diario P-039 del día al que se suma (RN-GAM-005, RN-DQC-006).
+  - Un día con señal de riesgo no da XP (FR-005-07).
+  - Solo se guardan movimientos positivos (RN-GAM-006).
+- **Qué suma:**
+  - La sesión al terminarla, según su versión.
+  - La mitad de comida, la misión de descanso y el día completo, una vez por día.
+  - El récord personal (pendiente desde T-044).
+  - La bonificación de regreso al cerrar el día (RN-GAM-013, HU-005-4), con BR-01 en la próxima interacción.
+  - La semana cumplida al cerrar el domingo.
+- **Niveles** (RN-GAM-007): al cruzar un umbral de P-040 se emite `level_up`, se guarda el logro del nivel (`L2`…`L10`, `achievement_unlocked`) y queda RE-02 para la próxima interacción. Por ahora RE-02 va sin su botón [Ver progreso]: `/progreso` llega con M8.
+- **Semana cumplida** (RN-GAM-004, HU-005-5, `scheduler/close-week.ts`):
+  - Al cerrar el último día de la semana se cuentan las sesiones completadas frente al compromiso y se guarda en `weeks`.
+  - Cumplida: XP, SM-01 y racha de semanas +1 (`nextWeekStreak`). No cumplida: la racha de semanas vuelve a 0, sin aviso ni lenguaje de fracaso.
+  - Una semana sin plan guardado se evalúa con el plan que se habría generado (`plannedWeekDays`), sin guardarlo.
+- **Racha de semanas en la línea** (SPEC-005 §10, decisión del 2026-11-08): DC-04 va debajo de DC-03 desde la primera semana cumplida.
+- **Textos nuevos** (redactados por Claude, [[plantillas-de-mensajes]] v0.14.0), pendientes de revisión del PO en el PR:
+  - DC-04 "Semanas cumplidas seguidas: {semanas}".
+  - SM-01 "Semana cumplida: {sesiones} de {compromiso} sesiones.", sin mencionar puntos porque el tope del domingo puede dejarlos en 0.
+- **Eventos con esquema estricto:** `xp_awarded` (evento, monto), `level_up` (nivel), `week_closed` (cumplida, sesiones, compromiso) y `achievement_unlocked` (código).
+- **Pruebas:** `scheduler/xp-week.test.ts` (HU-005-3 escenarios 1 y 2, tope diario, idempotencia, señal de riesgo, HU-005-4, HU-005-5 cumplida y no cumplida) y `weekly.test.ts` (`nextWeekStreak`).

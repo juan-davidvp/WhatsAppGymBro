@@ -9,6 +9,7 @@ import {
   evaluateWeek,
   generateWeeklyQuests,
   habitForged,
+  nextWeekStreak,
   seasonOf,
   weekStartOf,
   weeklyCommitment,
@@ -48,6 +49,20 @@ describe('RN-GAM-004 · semana cumplida', () => {
   it('una semana en pausa o sin sesiones planificadas no se evalúa (ni cumplida ni rota)', () => {
     expect(evaluateWeek({ planned: 4, completed: 0, paused: true })).toEqual({ evaluated: false });
     expect(evaluateWeek({ planned: 0, completed: 0, paused: false })).toEqual({ evaluated: false });
+  });
+
+  it('T-062 · racha de semanas: cumplida suma, no cumplida vuelve a 0, no evaluada no cambia', () => {
+    const fulfilled = evaluateWeek({ planned: 3, completed: 2, paused: false });
+    const missed = evaluateWeek({ planned: 3, completed: 1, paused: false });
+    const paused = evaluateWeek({ planned: 3, completed: 0, paused: true });
+    expect(nextWeekStreak(2, fulfilled)).toBe(3);
+    expect(nextWeekStreak(2, missed)).toBe(0);
+    expect(nextWeekStreak(2, paused)).toBe(2);
+  });
+
+  it('RN-SEG-007 · FR-005-07 · con señal de riesgo al cerrar, la racha de semanas no se rompe', () => {
+    const missed = evaluateWeek({ planned: 3, completed: 1, paused: false });
+    expect(nextWeekStreak(2, missed, true)).toBe(2);
   });
 });
 

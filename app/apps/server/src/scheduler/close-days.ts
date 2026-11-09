@@ -5,6 +5,7 @@ import {
   initialPlayerState,
   lastClosableDate,
   loggingGraceEnd,
+  nextWeekStreak,
   operationalDate,
   type DayStatus,
   type DayType,
@@ -12,24 +13,13 @@ import {
   type PlayerDayResult,
   type PlayerState,
 } from '@gymbro/domain';
-import {
-  MOBILITY_SOURCE,
-  NUTRITION_HALF_SOURCE,
-  dayInputsFrom,
-  hadRiskSignal,
-} from '../days/day-status.js';
-import type { EventEmitter } from '../events/emitter.js';
+import { MOBILITY_SOURCE, NUTRITION_HALF_SOURCE, dayInputsFrom } from '../days/day-status.js';
+import { hadRiskSignal } from '../days/risk.js';
+import { grantXp } from '../days/xp.js';
 import type { DaySource } from '../events/schema.js';
 import { plannedDayType } from '../plans/weekly-plan.js';
-import type {
-  DaysRepository,
-  NoticesRepository,
-  PlansRepository,
-  RiskSignalsRepository,
-  StreakStatesRepository,
-  UserRecord,
-  UsersRepository,
-} from '../ports/repositories.js';
+import type { StreakStatesRepository, UserRecord, UsersRepository } from '../ports/repositories.js';
+import { announceWeek, evaluateClosedWeek, type CloseWeekDeps } from './close-week.js';
 
 /**
  * Cierre programado del día (T-060, T-061, FR-005-02). Cada ciclo cierra, en
@@ -40,15 +30,9 @@ import type {
  * registros también se cierra: no cuenta, pero no resta.
  */
 
-export interface CloseDaysDeps {
+export interface CloseDaysDeps extends CloseWeekDeps {
   users: UsersRepository;
-  days: DaysRepository;
   streaks: StreakStatesRepository;
-  notices: NoticesRepository;
-  plans: PlansRepository;
-  riskSignals: RiskSignalsRepository;
-  events: EventEmitter;
-  clock: () => Date;
 }
 
 /** Cierra los días vencidos de todos los usuarios activos; devuelve cuántos cerró. */
@@ -86,12 +70,21 @@ export async function closeUserDays(
       riskPaused: day.riskPaused,
     });
     if (!result.applied) continue;
+    // RN-GAM-004: el domingo cierra también la semana; su racha se guarda con el día.
+    const week = await evaluateClosedWeek(user, date, deps);
+    const next: PlayerState = week
+      ? {
+          ...result.state,
+          weekStreak: nextWeekStreak(result.state.weekStreak, week.result, day.riskPaused),
+        }
+      : result.state;
     // Si otro proceso guardó antes (cambió `rev`), este ciclo se detiene; el siguiente sigue.
-    if (!(await deps.streaks.save(user.id, rev, result.state))) return closed;
-    state = result.state;
+    if (!(await deps.streaks.save(user.id, rev, next))) return closed;
+    state = next;
     rev += 1;
     closed += 1;
     await announce(user, date, day, result, now, deps);
+    if (week) await announceWeek(user, date, week, day.riskPaused, deps);
   }
   return closed;
 }
@@ -146,6 +139,10 @@ async function announce(
     streak_repaired: { streak: streak.current },
   } as const;
   for (const event of result.events) await deps.events.emit(event, subject, props[event]);
+  // RN-GAM-013 (HU-005-4): el primer día que cuenta tras un día de entreno no cumplido.
+  const comebackXp = result.comebackBonus
+    ? await grantXp(user, date, { type: 'COMEBACK' }, `comeback:${date}`, deps)
+    : 0;
 
   // FR-005-06 y FR-005-07: sin juego desactivado ni señal de riesgo ese día.
   if (!user.settings.gamificationEnabled || day.riskPaused) return;
@@ -162,6 +159,7 @@ async function announce(
   if (result.events.includes('streak_repair_offered')) {
     await notice('RA-02', { total: counted.total });
   }
+  if (comebackXp > 0) await notice('BR-01', { xp: comebackXp });
 }
 
 /** Qué hizo contar el día, para `day_closed.source` (RN-DQC-002, RN-DQC-003). */

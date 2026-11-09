@@ -10,6 +10,7 @@ import type {
   RiskSignalsRepository,
   SetEntriesRepository,
   StreakStatesRepository,
+  XpLedgerRepository,
   WorkoutSessionsRepository,
 } from '../ports/repositories.js';
 
@@ -22,6 +23,8 @@ export interface TrainingDeps extends PlanDeps {
   notices: NoticesRepository;
   /** FR-005-07: un día con señal de riesgo pausa las mecánicas de juego. */
   riskSignals: RiskSignalsRepository;
+  /** Libro de XP (T-062). */
+  xp: XpLedgerRepository;
   workouts: WorkoutSessionsRepository;
   setEntries: SetEntriesRepository;
   records: PersonalRecordsRepository;

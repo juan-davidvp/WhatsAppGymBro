@@ -14,6 +14,7 @@ import {
 } from '@gymbro/domain';
 import { recordDayActivity, sessionSource, withWeekLine } from '../days/day-status.js';
 import { takeNotices } from '../days/notices.js';
+import { grantXp } from '../days/xp.js';
 import { button, plain, type Reply } from '../onboarding/replies.js';
 import { ensureWeek } from '../plans/weekly-plan.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
@@ -66,6 +67,14 @@ export async function finishSession(
     session.date,
     'TRAINING',
     sessionSource(session.id),
+    deps,
+  );
+  // RN-GAM-005 (HU-005-3): XP de la sesión según su versión, con el tope del día.
+  await grantXp(
+    user,
+    session.date,
+    { type: 'SESSION', variant: session.variant },
+    `session:${session.id}`,
     deps,
   );
   await deps.events.emit('session_completed', subject, {

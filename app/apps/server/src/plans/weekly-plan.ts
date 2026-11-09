@@ -161,12 +161,20 @@ export async function plannedDayType(
   date: LocalDate,
   deps: { plans: PlansRepository },
 ): Promise<DayType> {
-  const weekStart = weekStartOf(date);
+  const days = await plannedWeekDays(user, weekStartOf(date), deps);
+  return days.find((d) => d.date === date)?.type ?? 'REST';
+}
+
+/** Días de una semana según el plan guardado o, si no se guardó, el que se habría generado. */
+export async function plannedWeekDays(
+  user: UserRecord,
+  weekStart: LocalDate,
+  deps: { plans: PlansRepository },
+): Promise<readonly { date: LocalDate; type: DayType }[]> {
   const stored = await deps.plans.week(user.id, weekStart);
-  if (stored) return stored.days.find((d) => d.date === date)?.type ?? 'REST';
+  if (stored) return stored.days;
   const inputs = planInputsFor(user, weekStart, 0, {});
-  if (!inputs) return 'REST';
-  return generateWeeklyPlan(inputs).days.find((d) => d.date === date)?.type ?? 'REST';
+  return inputs ? generateWeeklyPlan(inputs).days : [];
 }
 
 /** Semana actual (según el día operativo del usuario). */

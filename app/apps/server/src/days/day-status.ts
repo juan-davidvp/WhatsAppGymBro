@@ -1,11 +1,9 @@
-import { renderWeekLine } from '@gymbro/content';
+import { renderTemplate, renderWeekLine } from '@gymbro/content';
 import {
   PARAMETERS,
-  addDays,
   evaluateDay,
   liveCountedDays,
   operationalDate,
-  operationalDayStart,
   repairStreak,
   weekMarks,
   weekStartOf,
@@ -13,16 +11,15 @@ import {
   type DayType,
   type LocalDate,
 } from '@gymbro/domain';
-import type { EventEmitter } from '../events/emitter.js';
 import type { Reply } from '../onboarding/replies.js';
 import type {
   DaysRepository,
-  NoticesRepository,
-  RiskSignalsRepository,
   StreakStatesRepository,
   UserRecord,
   WorkoutSessionsRepository,
 } from '../ports/repositories.js';
+import { hadRiskSignal } from './risk.js';
+import { grantXp, type XpDeps } from './xp.js';
 
 /**
  * Registro del día mientras está abierto. Cada actividad se guarda como fuente
@@ -47,25 +44,32 @@ export interface DayResult {
 
 type HistoryDay = Awaited<ReturnType<DaysRepository['history']>>[number];
 
-/** HU-005-1 y RN-DQC-002 a 005: DC-03 de la semana de `date`, vista en `now`. */
+/**
+ * HU-005-1 y RN-DQC-002 a 005: DC-03 de la semana de `date`, vista en `now`.
+ * Desde la primera semana cumplida, debajo va la racha de semanas (DC-04;
+ * SPEC-005 §10, decisión del PO del 2026-11-08).
+ */
 function weekLineOf(
   history: readonly HistoryDay[],
   date: LocalDate,
   now: Date,
   timeZone: string,
+  weekStreak = 0,
 ): string {
   const today = operationalDate(now, timeZone);
-  return renderWeekLine(weekMarks(weekStartOf(date), history, today, now, timeZone));
+  const line = renderWeekLine(weekMarks(weekStartOf(date), history, today, now, timeZone));
+  return weekStreak > 0 ? `${line}\n${renderTemplate('DC-04', { semanas: weekStreak })}` : line;
 }
 
-/** DC-03 de la semana de hoy (🏋️ Hoy). */
+/** DC-03 (y DC-04) de la semana de hoy (🏋️ Hoy). */
 export async function weekLineFor(
   user: UserRecord,
-  deps: { days: DaysRepository; clock: () => Date },
+  deps: { days: DaysRepository; streaks: StreakStatesRepository; clock: () => Date },
 ): Promise<string> {
   const now = deps.clock();
   const history = await deps.days.history(user.id);
-  return weekLineOf(history, operationalDate(now, user.timezone), now, user.timezone);
+  const weekStreak = (await deps.streaks.get(user.id))?.state.weekStreak;
+  return weekLineOf(history, operationalDate(now, user.timezone), now, user.timezone, weekStreak);
 }
 
 /** Respuesta de "día que cuenta" con la semana en una línea en su propio renglón. */
@@ -85,15 +89,11 @@ export function dayInputsFrom(type: DayType, sources: readonly string[]) {
   };
 }
 
-/** Lo que necesita el registro del día en vivo (T-060, T-061). */
-export interface DayDeps {
+/** Lo que necesita el registro del día en vivo (T-060 a T-062). */
+export interface DayDeps extends XpDeps {
   days: DaysRepository;
   streaks: StreakStatesRepository;
-  notices: NoticesRepository;
   workouts: WorkoutSessionsRepository;
-  riskSignals: RiskSignalsRepository;
-  events: EventEmitter;
-  clock: () => Date;
 }
 
 /**
@@ -111,6 +111,7 @@ export async function recordDayActivity(
   const sources = await deps.days.addSource(user.id, date, type, source);
   const status = evaluateDay(dayInputsFrom(type, sources));
   await deps.days.saveStatus(user.id, date, type, status);
+  await grantDayXp(user, date, type, status, deps);
   await attemptRepair(user, date, sources, deps);
   const history = await deps.days.history(user.id);
   const stored = await deps.streaks.get(user.id);
@@ -120,19 +121,31 @@ export async function recordDayActivity(
     status,
     total: live.total,
     streak: live.current,
-    weekLine: weekLineOf(history, date, deps.clock(), user.timezone),
+    weekLine: weekLineOf(history, date, deps.clock(), user.timezone, stored?.state.weekStreak),
   };
 }
 
-/** RN-SEG-007 y FR-005-07: ¿hubo una señal de riesgo en el día operativo `date`? */
-export async function hadRiskSignal(
+/**
+ * RN-GAM-005 (HU-005-3): XP de la mitad de comida, de la misión de descanso y del
+ * día completo, una vez por día (la clave incluye la fecha). La sesión suma su XP
+ * al terminarla (`finishSession`).
+ */
+async function grantDayXp(
   user: UserRecord,
   date: LocalDate,
-  deps: { riskSignals: RiskSignalsRepository },
-): Promise<boolean> {
-  const from = operationalDayStart(date, user.timezone);
-  const to = operationalDayStart(addDays(date, 1), user.timezone);
-  return (await deps.riskSignals.instantsBetween(user.id, from, to)).length > 0;
+  type: DayType,
+  status: DayStatus,
+  deps: DayDeps,
+): Promise<void> {
+  if (status.nutritionHalf) {
+    await grantXp(user, date, { type: 'NUTRITION_HALF' }, `nutrition:${date}`, deps);
+  }
+  if (type === 'REST' && (status.nutritionHalf || status.activeRecovery)) {
+    await grantXp(user, date, { type: 'REST_MISSION' }, `rest:${date}`, deps);
+  }
+  if (status.complete) {
+    await grantXp(user, date, { type: 'COMPLETE_DAY_BONUS' }, `complete:${date}`, deps);
+  }
 }
 
 /**

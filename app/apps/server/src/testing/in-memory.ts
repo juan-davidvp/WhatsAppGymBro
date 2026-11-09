@@ -11,6 +11,8 @@ import {
   type MealRecord,
   type NoticeRecord,
   type StoredPlayerState,
+  type WeekRecord,
+  type XpLedgerRecord,
   type StoredWeeklyPlan,
   type GoalRecord,
   type ScreeningType,
@@ -76,6 +78,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   }[] = [];
   const streakStates = new Map<string, StoredPlayerState>();
   const notices: (NoticeRecord & { userId: string; shownAt: Date | null })[] = [];
+  const xpLedger: (XpLedgerRecord & { userId: string })[] = [];
+  const weekRecords: (WeekRecord & { userId: string })[] = [];
   const workouts: WorkoutSessionRecord[] = [];
   const records: {
     userId: string;
@@ -440,6 +444,58 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve(true);
       },
     },
+    xp: {
+      add(userId, entry) {
+        if (
+          !(entry.amount > 0) ||
+          xpLedger.some((e) => e.userId === userId && e.refId === entry.refId)
+        ) {
+          return Promise.resolve({ inserted: false });
+        }
+        xpLedger.push({ ...entry, userId });
+        return Promise.resolve({ inserted: true });
+      },
+      onDate(userId, date) {
+        return Promise.resolve(
+          xpLedger
+            .filter((e) => e.userId === userId && e.date === date)
+            .map(({ date: d, event, variant, amount }) => ({
+              date: d,
+              event,
+              ...(variant ? { variant } : {}),
+              amount,
+            })),
+        );
+      },
+      total(userId) {
+        return Promise.resolve(
+          xpLedger.filter((e) => e.userId === userId).reduce((sum, e) => sum + e.amount, 0),
+        );
+      },
+    },
+    weeks: {
+      save(userId, week) {
+        if (!weekRecords.some((w) => w.userId === userId && w.weekStart === week.weekStart)) {
+          weekRecords.push({ ...week, userId });
+        }
+        return Promise.resolve();
+      },
+      list(userId) {
+        return Promise.resolve(
+          weekRecords
+            .filter((w) => w.userId === userId)
+            .map(({ weekStart, planned, completed, commitment, fulfilled, countedDays }) => ({
+              weekStart,
+              planned,
+              completed,
+              commitment,
+              fulfilled,
+              countedDays,
+            }))
+            .sort((a, b) => a.weekStart.localeCompare(b.weekStart)),
+        );
+      },
+    },
     notices: {
       add(userId, notice) {
         if (!notices.some((n) => n.userId === userId && n.key === notice.key)) {
@@ -623,6 +679,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(days, userId);
         streakStates.delete(userId);
         removeRows(notices, userId);
+        removeRows(xpLedger, userId);
+        removeRows(weekRecords, userId);
         removeRows(workouts, userId);
         removeRows(records, userId);
         removeRows(achievements, userId);
@@ -666,6 +724,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     days,
     streakStates,
     notices,
+    xpLedger,
+    weekRecords,
     workouts,
     records,
     achievements,

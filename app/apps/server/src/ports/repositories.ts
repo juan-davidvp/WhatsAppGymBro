@@ -19,6 +19,7 @@ import type {
   TrainingPlace,
   WeeklyPlan,
   Weekday,
+  XpLedgerEntry,
 } from '@gymbro/domain';
 
 /**
@@ -328,6 +329,37 @@ export interface StreakStatesRepository {
    * garantiza que el total nunca baja (RN-DQC-007).
    */
   save(userId: string, rev: number, state: PlayerState): Promise<boolean>;
+}
+
+/** Movimiento del libro de XP con lo que lo originó (FR-005-03). */
+export interface XpLedgerRecord extends XpLedgerEntry {
+  /** Qué dio el XP (`session:<id>`, `nutrition:<fecha>`, `week:<lunes>`…). */
+  readonly refId: string;
+  readonly at: Date;
+}
+
+export interface XpLedgerRepository {
+  /** RN-GAM-006: solo inserciones; el mismo `refId` no suma dos veces. */
+  add(userId: string, entry: XpLedgerRecord): Promise<{ inserted: boolean }>;
+  /** Movimientos del día operativo `date` (tope diario P-039). */
+  onDate(userId: string, date: LocalDate): Promise<XpLedgerEntry[]>;
+  total(userId: string): Promise<number>;
+}
+
+/** Semana cerrada (`weeks`, RN-GAM-004). */
+export interface WeekRecord {
+  readonly weekStart: LocalDate;
+  readonly planned: number;
+  readonly completed: number;
+  readonly commitment: number;
+  readonly fulfilled: boolean;
+  readonly countedDays: number;
+}
+
+export interface WeeksRepository {
+  /** Guarda la semana una sola vez (cerrar dos veces no cambia nada). */
+  save(userId: string, week: WeekRecord): Promise<void>;
+  list(userId: string): Promise<WeekRecord[]>;
 }
 
 /** Aviso para la próxima interacción (decisión del PO, 2026-11-08). */
