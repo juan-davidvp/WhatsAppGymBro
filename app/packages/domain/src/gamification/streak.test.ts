@@ -117,6 +117,22 @@ describe('RN-GAM-003 · reparar la racha', () => {
     expect(attempt(late, true, true)).toBe(false);
   });
 
+  it('un segundo día sin contar no borra la oferta vigente ni vuelve a reiniciar la racha', () => {
+    const { state } = broken();
+    const offer = state.repair;
+    const next = closeStreakDay(state, day(4, false));
+    expect(next.state.repair).toEqual(offer);
+    expect(next.events).toEqual([]);
+    // Dentro del plazo de P-035 horas, todavía se puede reparar.
+    const repaired = repairStreak(next.state, {
+      date: addDays(START, 5),
+      at: new Date(day(3, false).closedAt.getTime() + 30 * 3_600_000),
+      sessionCompleted: true,
+      nutritionHalf: true,
+    });
+    expect(repaired.state.current).toBe(3);
+  });
+
   it('como máximo una reparación cada P-036 días', () => {
     const { state } = broken();
     const repaired = repairStreak(state, {

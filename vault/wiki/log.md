@@ -570,3 +570,22 @@ relacionados: [index, inicio]
   - Envío proactivo de los avisos del cierre con la bandeja (T-070/T-071).
   - [Ver progreso] y [Ver bitácora] con `/progreso` y `/logros` (M8).
   - T-045 (ajustar días) para [Ajustar plan] de CU-06.
+
+## [2026-11-09] implementar | M6 · correcciones tras la revisión de código
+Revisión de todo el código de M6 con un agente revisor. Corregido:
+- **Arranque con una base existente:** `ensureIndexes` falla si un índice cambió de opciones (`quests` pasó a único en T-063). Ahora borra y recrea ese índice, sin tocar los datos. Hay prueba con el índice viejo.
+- **Cierre resistente a fallos (FR-005-02):** los efectos del cierre (XP, avisos, semana, misiones, logros) van antes de guardar el estado. Todos tienen clave, así que si algo falla, el ciclo siguiente repite el día sin duplicar ni perder nada. Los eventos de medición pueden repetirse en ese caso.
+- **Un usuario con error ya no detiene el cierre de los demás:** se registra `day_close_failed` y se sigue.
+- **RN-GAM-003:**
+  - Un segundo día sin contar ya no borra una oferta de reparación vigente, y `streak_reset` solo sale si había racha.
+  - La reparación se intenta también después del cierre, para cuando la misión se hizo antes de que existiera la oferta. Si choca con el cierre (`rev`), se reintenta una vez.
+- **Misiones y señal de riesgo (FR-005-07):** ese día no se evalúan, así que la misión se cumple con un cierre posterior y no pierde su XP. El XP y el aviso van antes de marcarla cumplida.
+- **RN-DQC-001:** al terminar una sesión, el día se guarda con el tipo del plan y no siempre como entreno. Así "completo" ya no depende del orden en que se registran la sesión y la comida.
+
+Pendiente, sin cambiar:
+- **Para decisión del PO (RN-GAM-005, P-039):** el tope diario recorta los bonos del cierre (semana cumplida, misiones, regreso), que se suman al día cerrado. Un domingo con 85 XP en vivo y una misión deja 25 de 100 para la semana cumplida. Cambiarlo es una regla nueva.
+- **Riesgos bajos** (Fase 0 corre en un solo proceso):
+  - Detectar la subida de nivel y marcar avisos no es atómico.
+  - Un cierre en curso podría recrear datos de un usuario que se borra en ese mismo instante.
+  - Si el proceso cae entre guardar el XP del regreso y su aviso, BR-01 no se repite.
+  - Terminar una sesión marca la sesión completada antes de sumar el día (patrón de T-043): si falla a mitad, el día no cuenta.

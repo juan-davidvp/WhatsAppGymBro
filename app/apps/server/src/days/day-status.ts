@@ -10,6 +10,7 @@ import {
   type DayStatus,
   type DayType,
   type LocalDate,
+  type StreakState,
 } from '@gymbro/domain';
 import type { Reply } from '../onboarding/replies.js';
 import type {
@@ -113,7 +114,7 @@ export async function recordDayActivity(
   const status = evaluateDay(dayInputsFrom(type, sources));
   await deps.days.saveStatus(user.id, date, type, status);
   await grantDayXp(user, date, type, status, deps);
-  await attemptRepair(user, date, sources, deps);
+  await attemptRepair(user, date, deps);
   const history = await deps.days.history(user.id);
   const stored = await deps.streaks.get(user.id);
   const closed = stored ? { total: stored.state.counted.total, streak: stored.state.streak } : null;
@@ -155,29 +156,37 @@ async function grantDayXp(
  * basta) y la mitad de comida, el mismo día y dentro del plazo de P-035 horas. Con
  * una señal de riesgo ese día no se repara (FR-005-07): la oferta sigue mientras dure el plazo.
  */
-async function attemptRepair(
+export async function attemptRepair(
   user: UserRecord,
   date: LocalDate,
-  sources: readonly string[],
   deps: DayDeps,
 ): Promise<void> {
-  const stored = await deps.streaks.get(user.id);
-  if (!stored?.state.streak.repair) return;
   if (await hadRiskSignal(user, date, deps)) return;
   const now = deps.clock();
   const sessions = await deps.workouts.onDate(user.id, date);
-  const result = repairStreak(stored.state.streak, {
+  const sources = await deps.days.sources(user.id, date);
+  const attempt = {
     date,
     at: now,
     sessionCompleted: sessions.some((s) => s.status === 'completed'),
     nutritionHalf: sources.includes(NUTRITION_HALF_SOURCE),
-  });
-  if (!result.repaired) return;
-  const saved = await deps.streaks.save(user.id, stored.rev, {
-    ...stored.state,
-    streak: result.state,
-  });
-  if (!saved) return;
+  };
+  // Si el cierre programado guarda a la vez (cambia `rev`), se lee otra vez y se reintenta una vez.
+  const MAX_TRIES = 2;
+  let repaired: StreakState | null = null;
+  for (let attemptNo = 0; attemptNo < MAX_TRIES && !repaired; attemptNo += 1) {
+    const stored = await deps.streaks.get(user.id);
+    if (!stored?.state.streak.repair) return;
+    const result = repairStreak(stored.state.streak, attempt);
+    if (!result.repaired) return;
+    const saved = await deps.streaks.save(user.id, stored.rev, {
+      ...stored.state,
+      streak: result.state,
+    });
+    if (saved) repaired = result.state;
+  }
+  if (!repaired) return;
+  const result = { state: repaired };
   await deps.events.emit(
     'streak_repaired',
     { userId: user.id, timezone: user.timezone },

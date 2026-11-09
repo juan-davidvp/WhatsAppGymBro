@@ -19,7 +19,7 @@ import { unlockAchievement } from '../days/achievements.js';
 import { overuseCareReply, takeNotices } from '../days/notices.js';
 import { grantXp } from '../days/xp.js';
 import { button, plain, type Reply } from '../onboarding/replies.js';
-import { ensureWeek } from '../plans/weekly-plan.js';
+import { ensureWeek, plannedDayType } from '../plans/weekly-plan.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
 import type { TrainingDeps } from './deps.js';
 import { checkRecord } from './records.js';
@@ -65,10 +65,12 @@ export async function finishSession(
     await deps.events.emit('session_partial', subject, { variant: session.variant, sets: logged });
     return [{ ...plain('SE-04', { series: logged }), edit: true }];
   }
+  // RN-DQC-001: el tipo del día lo pone el plan, no la actividad. Entrenar en un
+  // descanso cuenta igual (RN-DQC-006) y el día no cambia de tipo según el orden.
   const result = await recordDayActivity(
     user,
     session.date,
-    'TRAINING',
+    await plannedDayType(user, session.date, deps),
     sessionSource(session.id),
     deps,
   );

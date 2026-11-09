@@ -110,6 +110,8 @@ describe('RN-GAM-003 · RN-DQC-007 · T-061 · racha reiniciada y reparación (H
       repair: null,
       lastRepairDate: '2026-10-20',
     });
+    // RN-DQC-001: entrenar en un descanso no cambia el tipo del día (lo pone el plan).
+    expect(t.days.find((d) => d.date === '2026-10-20')?.dayType).toBe('REST');
     const finish = sent(t.calls.filter((c) => c.method === 'editMessageText')).at(-1);
     // 5 cerrados + hoy; la racha recupera los 5 y suma hoy.
     expect(finish?.text.split('\n')[0]).toBe(renderTemplate('SE-03', { n: 6, racha: 6 }));
