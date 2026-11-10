@@ -298,24 +298,28 @@ export const FREQUENT_MEAL_TEMPLATES = z.array(frequentMealTemplateSchema).parse
   {
     code: 'CORRIENTAZO',
     name: 'Almuerzo corrientazo (sopa, arroz, fríjoles o lentejas, una proteína, ensalada, tajada)',
+    shortName: 'Corrientazo',
     portions: { PALM: 1, CUPPED_HAND: { min: 2, max: 3 }, FIST: 1, THUMB: 1 },
     proteinG: { min: 30, max: 40 },
   },
   {
     code: 'DESAYUNO_AREPA_HUEVO',
     name: 'Arepa con huevos y chocolate o café con leche',
+    shortName: 'Arepa con huevo',
     portions: { PALM: 0.75, CUPPED_HAND: { min: 1, max: 2 }, THUMB: 1 },
     proteinG: { min: 20, max: 25 },
   },
   {
     code: 'CALENTADO',
     name: 'Calentado con huevo',
+    shortName: 'Calentado',
     portions: { PALM: 0.5, CUPPED_HAND: 2, THUMB: 1 },
     proteinG: { min: 15, max: 20 },
   },
   {
     code: 'CENA_POLLO_ARROZ',
     name: 'Pollo con arroz y ensalada',
+    shortName: 'Pollo con arroz',
     portions: { PALM: 1, CUPPED_HAND: { min: 1, max: 2 }, FIST: 1 },
     proteinG: { min: 30, max: 35 },
   },

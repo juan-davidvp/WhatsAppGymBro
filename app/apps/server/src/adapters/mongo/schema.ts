@@ -26,8 +26,12 @@ export const COLLECTIONS = {
   planned_sessions: [{ keys: ['userId', 'date'] }],
   workout_sessions: [{ keys: ['userId', 'date'] }],
   set_entries: [{ keys: ['idempotencyKey'], unique: true }],
-  personal_records: [{ keys: ['userId', 'exerciseCode', 'type'] }],
+  personal_records: [
+    { keys: ['userId', 'exerciseCode', 'type'] },
+    { keys: ['setKey'], unique: true },
+  ],
   pain_flags: [{ keys: ['userId', 'exerciseCode'] }],
+  exercise_adjustments: [{ keys: ['userId', 'exerciseCode'] }],
   meals: [{ keys: ['userId', 'date'] }, { keys: ['idempotencyKey'], unique: true }],
   favorite_meals: [{ keys: ['userId'] }],
   body_measurements: [{ keys: ['userId', 'date'] }],

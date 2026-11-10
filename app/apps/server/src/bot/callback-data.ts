@@ -10,6 +10,10 @@ export const CALLBACK_DATA_MAX_BYTES = 64;
 const VERSION = 'v1';
 /** Valor de un botón: corto, en minúsculas, sin `:`. */
 const VALUE = /^[a-z0-9_]{1,24}$/;
+/** Id de una sesión de entreno (ObjectId en hexadecimal). */
+const SESSION_ID = /^[a-f0-9]{24}$/;
+/** Borrador de una comida: porciones, día, toques y referencia (`meals/draft.ts`). */
+const MEAL_STATE = /^[a-z0-9_]{1,48}$/;
 
 /** Destinos de navegación de los botones de CU-07 (Hoy, Comida, Progreso). */
 export const NAV_TARGETS = ['today', 'food', 'progress', 'plan'] as const;
@@ -26,7 +30,15 @@ export type CallbackAction =
   /** Confirmaciones de /borrar_datos. */
   | { action: 'del'; value: string }
   /** Retomar el onboarding: continuar o empezar de nuevo (SPEC-001 §8). */
-  | { action: 'rs'; value: string };
+  | { action: 'rs'; value: string }
+  /** Pantalla Hoy: versión, "Hoy no puedo", movilidad, mover de día (T-041). */
+  | { action: 'td'; value: string }
+  /** Tarjeta de una sesión: `<operación>_<versión del estado>` (T-042). */
+  | { action: 'ss'; sessionId: string; value: string }
+  /** Estrategia ante un estancamiento: `<r|v|d><índice del ejercicio>` (RN-ENT-003). */
+  | { action: 'pt'; sessionId: string; value: string }
+  /** Comida: `<operación>` y el borrador de la comida en curso (T-050, T-051). */
+  | { action: 'ml'; op: string; state: string };
 
 function checkSize(data: string): string {
   const bytes = new TextEncoder().encode(data).length;
@@ -47,10 +59,20 @@ export function encodeCallbackData(action: CallbackAction): string {
       return checkSize(`${VERSION}:nav:${action.target}`);
     case 'ob':
       return checkSize(`${VERSION}:ob:${action.step}:${checkValue(action.value)}`);
+    case 'ss':
+    case 'pt':
+      if (!SESSION_ID.test(action.sessionId)) throw new Error('Id de sesión inválido');
+      return checkSize(
+        `${VERSION}:${action.action}:${action.sessionId}:${checkValue(action.value)}`,
+      );
+    case 'ml':
+      if (!MEAL_STATE.test(action.state)) throw new Error(`Borrador inválido: ${action.state}`);
+      return checkSize(`${VERSION}:ml:${checkValue(action.op)}:${action.state}`);
     case 'pv':
     case 'sc':
     case 'del':
     case 'rs':
+    case 'td':
       return checkSize(`${VERSION}:${action.action}:${checkValue(action.value)}`);
   }
 }
@@ -71,12 +93,34 @@ export function parseCallbackData(data: string): CallbackAction | null {
     return { action: 'ob', step: arg as OnboardingStep, value };
   }
   if (
-    (action === 'pv' || action === 'sc' || action === 'del' || action === 'rs') &&
+    (action === 'pv' ||
+      action === 'sc' ||
+      action === 'del' ||
+      action === 'rs' ||
+      action === 'td') &&
     arg !== undefined &&
     value === undefined &&
     VALUE.test(arg)
   ) {
     return { action, value: arg };
+  }
+  if (
+    (action === 'ss' || action === 'pt') &&
+    arg !== undefined &&
+    SESSION_ID.test(arg) &&
+    value !== undefined &&
+    VALUE.test(value)
+  ) {
+    return { action, sessionId: arg, value };
+  }
+  if (
+    action === 'ml' &&
+    arg !== undefined &&
+    VALUE.test(arg) &&
+    value !== undefined &&
+    MEAL_STATE.test(value)
+  ) {
+    return { action, op: arg, state: value };
   }
   return null;
 }

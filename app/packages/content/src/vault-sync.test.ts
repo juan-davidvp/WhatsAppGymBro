@@ -38,6 +38,10 @@ describe('T-003 · plantillas de mensajes', () => {
     /^### 1\.6/,
     /^### 1\.7/,
     /^## 2\./,
+    /^### 2\.1/,
+    /^### 2\.2/,
+    /^### 2\.4/,
+    /^### 2\.5/,
     /^## 3\./,
     /^### 3\.1/,
     /^### 3\.2/,
@@ -208,6 +212,7 @@ describe('T-003 · alimentos', () => {
     const expected = readTable(foodsMd, /^## 3\./).map((r) => ({
       code: r['Código'],
       name: r['Comida'],
+      shortName: r['Nombre corto'],
       portions: parseHands(r['Porciones propuestas'] ?? ''),
       proteinG: parseAmount(r['Proteína aprox. (g)'] ?? ''),
     }));

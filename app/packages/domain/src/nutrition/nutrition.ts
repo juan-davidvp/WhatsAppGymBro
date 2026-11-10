@@ -154,3 +154,45 @@ export function proteinFocus(day: {
 export function isCalorieCountingEnabled(): false {
   return false;
 }
+
+/**
+ * RN-NUT-002 y SPEC-004 §8 (`[VALIDAR-PROFESIONAL]`): meta del día. Con peso
+ * declarado, la de `proteinTarget`; sin peso, P-092 palmas de P-027 g.
+ */
+export function dailyProteinGoal(weightKg: number | null): { grams: number; palms: number } {
+  if (weightKg !== null) return proteinTarget(weightKg);
+  const palms = PARAMETERS.nutrition.defaultProteinPalms;
+  return { grams: palms * PARAMETERS.nutrition.proteinGPerPalm, palms };
+}
+
+/** RN-NUT-002: proteína registrada expresada en palmas, redondeada hacia abajo a la media palma. */
+export function palmsFromProtein(proteinG: number): number {
+  const palms = proteinG / PARAMETERS.nutrition.proteinGPerPalm;
+  return Math.floor(palms / PALM_ROUNDING_STEP) * PALM_ROUNDING_STEP;
+}
+
+/**
+ * RN-NUT-001: un toque en [+] o [−] del teclado de porciones. La palma cambia de
+ * P-093 en P-093; las demás manos, de una en una. Nunca baja de 0.
+ */
+export function adjustPortion(portions: Portions, hand: HandPortion, direction: 1 | -1): Portions {
+  const step = hand === 'PALM' ? PARAMETERS.nutrition.palmStep : 1;
+  const next = Math.max(0, (portions[hand] ?? 0) + direction * step);
+  return { ...portions, [hand]: next };
+}
+
+/** ¿Hay al menos una porción? (no se guarda una comida vacía). */
+export function hasPortions(portions: Portions): boolean {
+  return Object.values(portions).some((count) => count > 0);
+}
+
+/**
+ * RN-NUT-006 (`[VALIDAR-PROFESIONAL]`): P-095 elementos que rotan cada día, a
+ * partir de un índice del día (p. ej., días desde una fecha fija).
+ */
+export function rotatingPick<T>(items: readonly T[], dayIndex: number): T[] {
+  const count = Math.min(PARAMETERS.nutrition.suggestedFoods, items.length);
+  if (items.length === 0) return [];
+  const start = ((dayIndex % items.length) + items.length) % items.length;
+  return Array.from({ length: count }, (_, i) => items[(start + i) % items.length] as T);
+}

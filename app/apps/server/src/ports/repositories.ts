@@ -3,6 +3,7 @@ import type {
   ConsentCategory,
   DayStatus,
   DayType,
+  ExerciseAdjustment,
   ExperienceLevel,
   GoalMetric,
   GoalType,
@@ -10,7 +11,12 @@ import type {
   LocalDate,
   LocalTime,
   OnboardingStep,
+  PlannedSession,
+  SessionProgress,
+  SessionTemplate,
+  SessionVariant,
   TrainingPlace,
+  WeeklyPlan,
   Weekday,
 } from '@gymbro/domain';
 
@@ -187,6 +193,12 @@ export interface SetEntryRecord {
 export interface SetEntriesRepository {
   /** SC-003-2: repetir la confirmación de la misma serie no la duplica. */
   record(entry: SetEntryRecord): Promise<{ inserted: boolean }>;
+  /** FR-003-04: deshace una serie registrada. */
+  remove(sessionId: string, exerciseCode: string, setIndex: number): Promise<void>;
+  /** FR-002-04: última carga registrada de cada ejercicio (para precargar el plan). */
+  lastLoads(userId: string): Promise<Record<string, number>>;
+  /** Todas las series de un ejercicio, en orden (récords, progresión y estancamiento). */
+  exerciseHistory(userId: string, exerciseCode: string): Promise<ExerciseSet[]>;
 }
 
 export interface MealRecord {
@@ -202,6 +214,9 @@ export interface MealRecord {
   };
   readonly proteinG: number;
   readonly favoriteMealId: string | null;
+  /** FR-004-08: duración desde que se abrió `🍽️ Comida` y toques del registro. */
+  readonly durationMs: number;
+  readonly taps: number;
   /** Clave estable del toque que originó el registro (`mealIdempotencyKey`). */
   readonly idempotencyKey: string;
 }
@@ -209,6 +224,29 @@ export interface MealRecord {
 export interface MealsRepository {
   /** SC-003-2: el mismo toque repetido no duplica la comida. */
   record(meal: MealRecord): Promise<{ inserted: boolean }>;
+  /** Comidas de un día, en el orden en que se registraron. */
+  onDate(userId: string, date: LocalDate): Promise<MealRecord[]>;
+}
+
+export type MealPortions = MealRecord['portions'];
+
+/** `FavoriteMeal` del glosario (RN-NUT-004). */
+export interface FavoriteMealRecord {
+  readonly id: string;
+  readonly userId: string;
+  readonly name: string;
+  readonly portions: MealPortions;
+  readonly foodCodes: readonly string[];
+}
+
+export interface FavoriteMealsRepository {
+  create(input: Omit<FavoriteMealRecord, 'id'>): Promise<FavoriteMealRecord>;
+  /** En el orden en que se guardaron. */
+  list(userId: string): Promise<FavoriteMealRecord[]>;
+  byId(userId: string, id: string): Promise<FavoriteMealRecord | null>;
+  /** FR-004-03: ajustar las porciones de una frecuente. */
+  updatePortions(userId: string, id: string, portions: MealPortions): Promise<void>;
+  remove(userId: string, id: string): Promise<void>;
 }
 
 export interface DaysRepository {
@@ -216,6 +254,50 @@ export interface DaysRepository {
   saveStatus(userId: string, date: LocalDate, dayType: DayType, status: DayStatus): Promise<void>;
   /** Cierra el día una sola vez (FR-005-02). */
   close(userId: string, date: LocalDate, at: Date): Promise<{ closedNow: boolean }>;
+  /**
+   * Añade una fuente al día abierto (`session:<id>`, `mobility`) sin repetirla y
+   * devuelve todas sus fuentes; en un día cerrado no cambia nada (RN-DQC-005).
+   */
+  addSource(userId: string, date: LocalDate, dayType: DayType, source: string): Promise<string[]>;
+  sources(userId: string, date: LocalDate): Promise<string[]>;
+  /** Días guardados con si cuentan (para el total y la racha en vivo). */
+  history(userId: string): Promise<{ date: LocalDate; counted: boolean }[]>;
+}
+
+export type WorkoutStatus = 'active' | 'completed' | 'partial' | 'abandoned';
+
+export interface WorkoutSessionRecord {
+  readonly id: string;
+  readonly userId: string;
+  readonly date: LocalDate;
+  readonly plannedSessionId: string;
+  readonly template: SessionTemplate;
+  readonly variant: SessionVariant;
+  readonly status: WorkoutStatus;
+  readonly startedAt: Date;
+  readonly endedAt: Date | null;
+  readonly loggedAsPlanned: boolean;
+  /** Estado de la tarjeta (dominio `SessionProgress`). */
+  readonly progress: SessionProgress;
+  /** Versión del estado: un toque de una tarjeta vieja no lo cambia (FR-003-03). */
+  readonly rev: number;
+  readonly lastConfirmedAt: Date | null;
+  /** Toques desde la última serie confirmada (SC-003-1: toques por serie). */
+  readonly pendingTaps: number;
+}
+
+export interface WorkoutSessionsRepository {
+  create(session: Omit<WorkoutSessionRecord, 'id' | 'rev'>): Promise<WorkoutSessionRecord>;
+  byId(id: string): Promise<WorkoutSessionRecord | null>;
+  /** Sesión activa del usuario en esa fecha, si hay. */
+  activeOn(userId: string, date: LocalDate): Promise<WorkoutSessionRecord | null>;
+  onDate(userId: string, date: LocalDate): Promise<WorkoutSessionRecord[]>;
+  /** Guarda cambios solo si `rev` sigue igual; devuelve la sesión nueva o null si cambió antes. */
+  update(
+    id: string,
+    rev: number,
+    changes: Partial<Omit<WorkoutSessionRecord, 'id' | 'rev' | 'userId'>>,
+  ): Promise<WorkoutSessionRecord | null>;
 }
 
 export interface StreakStatesRepository {
@@ -236,4 +318,78 @@ export interface RiskSignalsRepository {
 export interface EventsRepository {
   /** Guarda un evento ya validado (`validateEvent`). */
   insert(event: AnalyticsEvent): Promise<void>;
+}
+
+/** Día de un plan guardado: la sesión lleva su id (`planned_sessions`). */
+export interface StoredPlanDay {
+  readonly date: LocalDate;
+  readonly type: DayType;
+  readonly session: (PlannedSession & { readonly id: string }) | null;
+}
+
+export interface StoredWeeklyPlan extends Omit<WeeklyPlan, 'days'> {
+  readonly days: readonly StoredPlanDay[];
+}
+
+export interface PlansRepository {
+  /** Guarda la semana si no existe (RN-PLAN-001); devuelve la guardada. Idempotente. */
+  saveWeek(userId: string, plan: WeeklyPlan): Promise<StoredWeeklyPlan>;
+  week(userId: string, weekStart: LocalDate): Promise<StoredWeeklyPlan | null>;
+  /** RN-PLAN-007: mueve la sesión de `from` a `to` dentro de la misma semana. */
+  moveSession(userId: string, weekStart: LocalDate, from: LocalDate, to: LocalDate): Promise<void>;
+  /** Descarta una semana futura todavía sin usar, para regenerarla (RN-ENT-003). */
+  discardWeek(userId: string, weekStart: LocalDate): Promise<void>;
+}
+
+export interface ExerciseSet {
+  readonly sessionId: string;
+  readonly setIndex: number;
+  readonly reps: number;
+  readonly loadKg: number;
+  readonly edited: boolean;
+  readonly confirmedAt: Date;
+}
+
+export interface PersonalRecordsRepository {
+  /** RN-ENT-005: un récord por serie (la clave de la serie lo hace idempotente). */
+  record(input: {
+    userId: string;
+    exerciseCode: string;
+    type: 'e1rm' | 'reps';
+    value: number;
+    date: LocalDate;
+    setKey: string;
+  }): Promise<{ inserted: boolean }>;
+  count(userId: string): Promise<number>;
+  /** Récords de una sesión (para el fin de sesión). */
+  countForSession(userId: string, sessionId: string): Promise<number>;
+}
+
+export interface AchievementsRepository {
+  /** RN-GAM-011: cada logro del catálogo se guarda una vez en la bitácora. */
+  appendOnce(input: {
+    userId: string;
+    code: string;
+    at: Date;
+    value: string | number | null;
+    context: string | null;
+  }): Promise<{ added: boolean }>;
+}
+
+export interface PainFlagsRepository {
+  record(input: {
+    userId: string;
+    exerciseCode: string;
+    zone: string;
+    date: LocalDate;
+    sessionId: string;
+  }): Promise<void>;
+  /** Sesiones distintas en las que se marcó dolor en ese ejercicio (RN-SEG-006). */
+  sessionsWithPain(userId: string, exerciseCode: string): Promise<string[]>;
+}
+
+export interface ExerciseAdjustmentsRepository {
+  /** RN-ENT-003: estrategia elegida ante un estancamiento. */
+  save(userId: string, adjustment: ExerciseAdjustment): Promise<void>;
+  list(userId: string): Promise<ExerciseAdjustment[]>;
 }

@@ -6,6 +6,7 @@ import { addDays } from '../time/zoned.js';
 import {
   closeStreakDay,
   initialStreakState,
+  liveCountedDays,
   repairStreak,
   type StreakDay,
   type StreakState,
@@ -168,5 +169,48 @@ describe('RN-GAM-001 y RN-GAM-002 · invariantes', () => {
         },
       ),
     );
+  });
+});
+
+describe('RN-GAM-001 · RN-DQC-007 · racha y total en vivo (antes del cierre programado)', () => {
+  const tz = 'America/Bogota';
+  it('días seguidos que cuentan suman racha; hoy suma solo si ya cuenta', () => {
+    const history = [
+      { date: '2026-10-17', counted: true },
+      { date: '2026-10-18', counted: true },
+      { date: '2026-10-19', counted: true },
+    ];
+    expect(liveCountedDays(history, '2026-10-19', tz)).toEqual({ total: 3, current: 3 });
+    expect(liveCountedDays(history.slice(0, 2), '2026-10-19', tz)).toEqual({
+      total: 2,
+      current: 2,
+    });
+  });
+
+  it('un día sin registro no cuenta: sin comodín, la racha vuelve a empezar; el total nunca baja', () => {
+    const history = [
+      { date: '2026-10-15', counted: true },
+      { date: '2026-10-17', counted: true },
+    ];
+    expect(liveCountedDays(history, '2026-10-17', tz)).toEqual({ total: 2, current: 1 });
+  });
+
+  it('RN-GAM-002 · con un comodín ganado, un día sin registro no rompe la racha', () => {
+    const start = '2026-10-01';
+    const days = Array.from({ length: PARAMETERS.streak.freezeEveryCountedDays }, (_, i) => ({
+      date: addDays(start, i),
+      counted: true,
+    }));
+    const gapThenToday = addDays(start, days.length + 1);
+    const result = liveCountedDays(
+      [...days, { date: gapThenToday, counted: true }],
+      gapThenToday,
+      tz,
+    );
+    expect(result.current).toBe(days.length + 1);
+  });
+
+  it('sin historia: 0 y 0', () => {
+    expect(liveCountedDays([], '2026-10-19', tz)).toEqual({ total: 0, current: 0 });
   });
 });

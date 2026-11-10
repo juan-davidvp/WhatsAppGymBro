@@ -3,7 +3,7 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.4.1
+version: 0.5.0
 creado: 2026-10-18
 actualizado: 2026-10-19
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
@@ -66,7 +66,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 |---|---|---|---|
 | RN-ENT-001 | Cada serie se presenta precargada con repeticiones y carga objetivo; confirmarla tal cual cuesta **1 toque**; corregir modifica solo el valor cambiado. "La hice tal cual" registra la sesión completa en 1 toque. | — | FB-001-08 |
 | RN-ENT-002 | Progresión doble: si en todas las series de un ejercicio se alcanza el tope del rango durante P-019 sesiones seguidas, la siguiente sugiere el incremento mínimo (P-020 tren superior, P-021 tren inferior); en casa, una variante más difícil o más repeticiones. `[VALIDAR-PROFESIONAL]` | P-019–P-021 | [[fundamentos-de-entrenamiento]] |
-| RN-ENT-003 | Si un ejercicio no progresa en P-022 sesiones, se propone una estrategia (rango, variante o descarga). El estancamiento no resta XP ni afecta la racha. | P-022 | FB-001-17 |
+| RN-ENT-003 | Si un ejercicio no progresa en P-022 sesiones, se propone una estrategia: **variante** (otro ejercicio del mismo patrón y versión del catálogo), **rango** (alterna entre el rango de fuerza y el de músculo de P-016 para ese ejercicio) o **descarga** (la semana siguiente ese ejercicio lleva P-091 series menos). Se aplica desde el plan de la semana siguiente. El estancamiento no resta XP ni afecta la racha. `[VALIDAR-PROFESIONAL]` | P-022, P-091 | FB-001-17 |
 | RN-ENT-004 | Una sesión está completada si se registra al menos P-023 de las series de su versión; la versión C debe completarse entera. | P-023 | ADR-010 |
 | RN-ENT-005 | Hay récord personal cuando el e1RM (Epley, solo con ≤ P-024 repeticiones) supera el máximo previo del ejercicio, o cuando las repeticiones con el mismo peso (o peso corporal) superan el máximo previo. | P-024 | FB-001-18 |
 | RN-ENT-006 | Una actividad importada de al menos P-025 minutos cuenta como entreno alternativo para el día; no modifica la progresión de cargas. | P-025 | FB-001-05 |
@@ -177,4 +177,4 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 
 ---
 
-**Conteo:** 103 reglas · 14 con `[VALIDAR-PROFESIONAL]` (lo verifica `herramientas/lint_trazabilidad.py`).
+**Conteo:** 103 reglas · 15 con `[VALIDAR-PROFESIONAL]` (lo verifica `herramientas/lint_trazabilidad.py`).

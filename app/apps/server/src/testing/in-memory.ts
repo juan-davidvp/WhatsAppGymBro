@@ -2,8 +2,14 @@ import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
+import type { DayStatus, DayType, ExerciseAdjustment } from '@gymbro/domain';
 import {
   EMPTY_PROFILE,
+  type WorkoutSessionRecord,
+  type SetEntryRecord,
+  type FavoriteMealRecord,
+  type MealRecord,
+  type StoredWeeklyPlan,
   type GoalRecord,
   type ScreeningType,
   type TrainingHabitRecord,
@@ -26,6 +32,8 @@ export interface InMemoryOptions {
   /** Crea los usuarios con el onboarding ya terminado. */
   onboardingCompleted?: boolean;
   failErase?: boolean;
+  /** Reloj de la prueba (por defecto, lunes 2026-10-19 10:00 en Bogotá). */
+  clock?: () => Date;
 }
 
 export interface ConsentRow {
@@ -53,6 +61,45 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const weights: { userId: string; date: string; weightKg: number }[] = [];
   const habits: TrainingHabitRecord[] = [];
   const goals: (GoalRecord & { status: 'active' | 'changed' })[] = [];
+  const weeks: (StoredWeeklyPlan & { userId: string })[] = [];
+  const setEntries: (SetEntryRecord & { idempotencyKey: string })[] = [];
+  const days: {
+    userId: string;
+    date: string;
+    dayType: DayType;
+    status: 'open' | 'closed';
+    counted: boolean;
+    sources: string[];
+    dayStatus: DayStatus | null;
+  }[] = [];
+  const workouts: WorkoutSessionRecord[] = [];
+  const records: {
+    userId: string;
+    exerciseCode: string;
+    type: 'e1rm' | 'reps';
+    value: number;
+    date: string;
+    setKey: string;
+  }[] = [];
+  const achievements: {
+    userId: string;
+    code: string;
+    at: Date;
+    value: unknown;
+    context: unknown;
+  }[] = [];
+  const painFlags: {
+    userId: string;
+    exerciseCode: string;
+    zone: string;
+    date: string;
+    sessionId: string;
+  }[] = [];
+  const adjustments: (ExerciseAdjustment & { userId: string })[] = [];
+  const meals: MealRecord[] = [];
+  const favorites: FavoriteMealRecord[] = [];
+  let nextId = 1;
+  const newId = () => (nextId++).toString(16).padStart(24, '0');
 
   /** Reemplaza el usuario con ese id aplicando `change`. */
   function updateUser(userId: string, change: (user: UserRecord) => UserRecord): void {
@@ -209,6 +256,230 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         });
       },
     },
+    plans: {
+      saveWeek(userId, plan) {
+        const existing = weeks.find((w) => w.userId === userId && w.weekStart === plan.weekStart);
+        if (existing) return Promise.resolve(existing);
+        const stored = {
+          ...plan,
+          userId,
+          days: plan.days.map((d) => ({
+            ...d,
+            session: d.session ? { ...d.session, id: newId() } : null,
+          })),
+        };
+        weeks.push(stored);
+        return Promise.resolve(stored);
+      },
+      week(userId, weekStart) {
+        return Promise.resolve(
+          weeks.find((w) => w.userId === userId && w.weekStart === weekStart) ?? null,
+        );
+      },
+      discardWeek(userId, weekStart) {
+        const index = weeks.findIndex((w) => w.userId === userId && w.weekStart === weekStart);
+        if (index >= 0) weeks.splice(index, 1);
+        return Promise.resolve();
+      },
+      moveSession(userId, weekStart, from, to) {
+        const index = weeks.findIndex((w) => w.userId === userId && w.weekStart === weekStart);
+        const week = weeks[index];
+        const source = week?.days.find((d) => d.date === from)?.session;
+        if (!week || !source) return Promise.resolve();
+        weeks[index] = {
+          ...week,
+          days: week.days.map((d) => {
+            if (d.date === from) return { ...d, type: 'REST' as const, session: null };
+            if (d.date === to) return { ...d, type: 'TRAINING' as const, session: source };
+            return d;
+          }),
+        };
+        return Promise.resolve();
+      },
+    },
+    setEntries: {
+      record(entry) {
+        const idempotencyKey = `set:${entry.sessionId}:${entry.exerciseCode}:${entry.setIndex}`;
+        if (setEntries.some((e) => e.idempotencyKey === idempotencyKey)) {
+          return Promise.resolve({ inserted: false });
+        }
+        setEntries.push({ ...entry, idempotencyKey });
+        return Promise.resolve({ inserted: true });
+      },
+      remove(sessionId, exerciseCode, setIndex) {
+        const key = `set:${sessionId}:${exerciseCode}:${setIndex}`;
+        const index = setEntries.findIndex((e) => e.idempotencyKey === key);
+        if (index >= 0) setEntries.splice(index, 1);
+        return Promise.resolve();
+      },
+      exerciseHistory(userId, exerciseCode) {
+        return Promise.resolve(
+          setEntries
+            .filter((e) => e.userId === userId && e.exerciseCode === exerciseCode)
+            .sort(
+              (a, b) =>
+                a.confirmedAt.getTime() - b.confirmedAt.getTime() || a.setIndex - b.setIndex,
+            )
+            .map(({ sessionId, setIndex, reps, loadKg, edited, confirmedAt }) => ({
+              sessionId,
+              setIndex,
+              reps,
+              loadKg,
+              edited,
+              confirmedAt,
+            })),
+        );
+      },
+      lastLoads(userId) {
+        const loads: Record<string, number> = {};
+        const mine = setEntries
+          .filter((e) => e.userId === userId)
+          .sort((a, b) => a.confirmedAt.getTime() - b.confirmedAt.getTime());
+        for (const e of mine) loads[e.exerciseCode] = e.loadKg;
+        return Promise.resolve(loads);
+      },
+    },
+    days: {
+      saveStatus(userId, date, dayType, status) {
+        const day = days.find((d) => d.userId === userId && d.date === date);
+        if (day?.status === 'closed') return Promise.resolve();
+        if (day) {
+          day.counted = status.counts;
+          day.dayStatus = status;
+        } else {
+          days.push({
+            userId,
+            date,
+            dayType,
+            status: 'open',
+            counted: status.counts,
+            sources: [],
+            dayStatus: status,
+          });
+        }
+        return Promise.resolve();
+      },
+      close(userId, date) {
+        const day = days.find((d) => d.userId === userId && d.date === date && d.status === 'open');
+        if (day) day.status = 'closed';
+        return Promise.resolve({ closedNow: day !== undefined });
+      },
+      addSource(userId, date, dayType, source) {
+        let day = days.find((d) => d.userId === userId && d.date === date);
+        if (!day) {
+          day = {
+            userId,
+            date,
+            dayType,
+            status: 'open',
+            counted: false,
+            sources: [],
+            dayStatus: null,
+          };
+          days.push(day);
+        }
+        if (day.status === 'open' && !day.sources.includes(source)) day.sources.push(source);
+        return Promise.resolve([...day.sources]);
+      },
+      sources(userId, date) {
+        return Promise.resolve([
+          ...(days.find((d) => d.userId === userId && d.date === date)?.sources ?? []),
+        ]);
+      },
+      history(userId) {
+        return Promise.resolve(
+          days
+            .filter((d) => d.userId === userId)
+            .map((d) => ({ date: d.date, counted: d.counted })),
+        );
+      },
+    },
+    workouts: {
+      create(session) {
+        const record = { ...session, id: newId(), rev: 0 };
+        workouts.push(record);
+        return Promise.resolve(record);
+      },
+      byId(id) {
+        return Promise.resolve(workouts.find((w) => w.id === id) ?? null);
+      },
+      activeOn(userId, date) {
+        return Promise.resolve(
+          workouts.find((w) => w.userId === userId && w.date === date && w.status === 'active') ??
+            null,
+        );
+      },
+      onDate(userId, date) {
+        return Promise.resolve(workouts.filter((w) => w.userId === userId && w.date === date));
+      },
+      update(id, rev, changes) {
+        const index = workouts.findIndex((w) => w.id === id && w.rev === rev);
+        const current = workouts[index];
+        if (!current) return Promise.resolve(null);
+        const next = { ...current, ...changes, rev: rev + 1 };
+        workouts[index] = next;
+        return Promise.resolve(next);
+      },
+    },
+    records: {
+      record(input) {
+        if (records.some((r) => r.setKey === input.setKey))
+          return Promise.resolve({ inserted: false });
+        records.push(input);
+        return Promise.resolve({ inserted: true });
+      },
+      count(userId) {
+        return Promise.resolve(records.filter((r) => r.userId === userId).length);
+      },
+      countForSession(userId, sessionId) {
+        return Promise.resolve(
+          records.filter((r) => r.userId === userId && r.setKey.startsWith(`set:${sessionId}:`))
+            .length,
+        );
+      },
+    },
+    achievements: {
+      appendOnce(input) {
+        if (achievements.some((a) => a.userId === input.userId && a.code === input.code)) {
+          return Promise.resolve({ added: false });
+        }
+        achievements.push(input);
+        return Promise.resolve({ added: true });
+      },
+    },
+    painFlags: {
+      record(input) {
+        painFlags.push(input);
+        return Promise.resolve();
+      },
+      sessionsWithPain(userId, exerciseCode) {
+        return Promise.resolve([
+          ...new Set(
+            painFlags
+              .filter((p) => p.userId === userId && p.exerciseCode === exerciseCode)
+              .map((p) => p.sessionId),
+          ),
+        ]);
+      },
+    },
+    adjustments: {
+      save(userId, adjustment) {
+        adjustments.push({ userId, ...adjustment });
+        return Promise.resolve();
+      },
+      list(userId) {
+        return Promise.resolve(
+          adjustments
+            .filter((a) => a.userId === userId)
+            .map(({ exerciseCode, strategy, fromWeek, replacementCode }) => ({
+              exerciseCode,
+              strategy,
+              fromWeek,
+              replacementCode,
+            })),
+        );
+      },
+    },
     consents: {
       record({ userId, granted, declined, at, policyVersion }) {
         for (const category of granted)
@@ -235,6 +506,42 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve();
       },
     },
+    meals: {
+      record(meal) {
+        if (meals.some((m) => m.idempotencyKey === meal.idempotencyKey)) {
+          return Promise.resolve({ inserted: false });
+        }
+        meals.push(meal);
+        return Promise.resolve({ inserted: true });
+      },
+      onDate(userId, date) {
+        return Promise.resolve(meals.filter((m) => m.userId === userId && m.date === date));
+      },
+    },
+    favorites: {
+      create(input) {
+        const favorite = { ...input, id: newId() };
+        favorites.push(favorite);
+        return Promise.resolve(favorite);
+      },
+      list(userId) {
+        return Promise.resolve(favorites.filter((f) => f.userId === userId));
+      },
+      byId(userId, id) {
+        return Promise.resolve(favorites.find((f) => f.userId === userId && f.id === id) ?? null);
+      },
+      updatePortions(userId, id, portions) {
+        const index = favorites.findIndex((f) => f.userId === userId && f.id === id);
+        const current = favorites[index];
+        if (current) favorites[index] = { ...current, portions };
+        return Promise.resolve();
+      },
+      remove(userId, id) {
+        const index = favorites.findIndex((f) => f.userId === userId && f.id === id);
+        if (index >= 0) favorites.splice(index, 1);
+        return Promise.resolve();
+      },
+    },
     eraser: {
       eraseUser(userId) {
         if (options.failErase) return Promise.reject(new Error('mongo caído'));
@@ -245,6 +552,16 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(weights, userId);
         removeRows(habits, userId);
         removeRows(goals, userId);
+        removeRows(weeks, userId);
+        removeRows(setEntries, userId);
+        removeRows(days, userId);
+        removeRows(workouts, userId);
+        removeRows(records, userId);
+        removeRows(achievements, userId);
+        removeRows(painFlags, userId);
+        removeRows(adjustments, userId);
+        removeRows(meals, userId);
+        removeRows(favorites, userId);
         for (const event of events) if (event.subject?.userId === userId) event.subject = null;
         return Promise.resolve();
       },
@@ -266,5 +583,25 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     events: emitter,
   };
 
-  return { deps, users, riskSignals, events, consents, screenings, weights, habits, goals };
+  return {
+    deps,
+    users,
+    riskSignals,
+    events,
+    consents,
+    screenings,
+    weights,
+    habits,
+    goals,
+    weeks,
+    setEntries,
+    days,
+    workouts,
+    records,
+    achievements,
+    painFlags,
+    adjustments,
+    meals,
+    favorites,
+  };
 }

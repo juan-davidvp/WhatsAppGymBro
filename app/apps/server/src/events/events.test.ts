@@ -27,7 +27,7 @@ const AT = new Date('2026-10-19T15:00:00Z');
 function baseEvent(overrides: Partial<AnalyticsEvent> = {}): unknown {
   return {
     userRef: USER_ID,
-    name: 'meal_logged',
+    name: 'photo_estimate_requested',
     at: AT,
     common: { localDate: '2026-10-19', appVersion: '0.0.0', phase: 'n1_B' },
     props: {},

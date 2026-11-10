@@ -3,9 +3,9 @@ titulo: Catálogo base de alimentos accesibles (Colombia)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.2.0
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-20
 deriva_de: [relacion-comida-entreno, usuario-cabeza-01]
 fuentes: [F61]
 relacionados: [spec-004-registro-de-nutricion, parametros, reglas-de-negocio]
@@ -59,14 +59,19 @@ relacionados: [spec-004-registro-de-nutricion, parametros, reglas-de-negocio]
 
 ## 3. Comidas frecuentes predefinidas (plantillas)
 
-| Código | Comida | Porciones propuestas | Proteína aprox. (g) |
-|---|---|---|---|
-| `CORRIENTAZO` | Almuerzo corrientazo (sopa, arroz, fríjoles o lentejas, una proteína, ensalada, tajada) | 1 palma + 2–3 manos ahuecadas + 1 puño + 1 pulgar | 30–40 |
-| `DESAYUNO_AREPA_HUEVO` | Arepa con huevos y chocolate o café con leche | 0,75 palma + 1–2 manos ahuecadas + 1 pulgar | 20–25 |
-| `CALENTADO` | Calentado con huevo | 0,5 palma + 2 manos ahuecadas + 1 pulgar | 15–20 |
-| `CENA_POLLO_ARROZ` | Pollo con arroz y ensalada | 1 palma + 1–2 manos ahuecadas + 1 puño | 30–35 |
+| Código | Comida | Nombre corto | Porciones propuestas | Proteína aprox. (g) |
+|---|---|---|---|---|
+| `CORRIENTAZO` | Almuerzo corrientazo (sopa, arroz, fríjoles o lentejas, una proteína, ensalada, tajada) | Corrientazo | 1 palma + 2–3 manos ahuecadas + 1 puño + 1 pulgar | 30–40 |
+| `DESAYUNO_AREPA_HUEVO` | Arepa con huevos y chocolate o café con leche | Arepa con huevo | 0,75 palma + 1–2 manos ahuecadas + 1 pulgar | 20–25 |
+| `CALENTADO` | Calentado con huevo | Calentado | 0,5 palma + 2 manos ahuecadas + 1 pulgar | 15–20 |
+| `CENA_POLLO_ARROZ` | Pollo con arroz y ensalada | Pollo con arroz | 1 palma + 1–2 manos ahuecadas + 1 puño | 30–35 |
 
 El usuario puede ajustar cada plantilla y guardarla como su comida frecuente (RN-NUT-004).
+
+> [!note] Uso en el bot (T-051, decisión del PO 2026-10-20)
+> - El **nombre corto** es el texto del botón y el nombre de la frecuente que se guarda desde la plantilla.
+> - Cuando la plantilla da un rango de porciones, el teclado se abre con el **valor bajo**.
+> - La proteína que se suma es la de toda comida: **palmas × P-027** (FR-004-04). La columna "Proteína aprox." es una referencia; no se suma.
 
 ## 4. Fuera del catálogo
 

@@ -26,3 +26,5 @@ export {
   WEEKDAY_BUTTON_LABELS,
   WEEKDAY_NAMES,
 } from './onboarding.js';
+export { BOT_COMMANDS, MAIN_KEYBOARD } from './navigation.js';
+export { FAVORITE_DELETE_PREFIX, FAVORITE_EDIT_PREFIX, PROTEIN_BAR, proteinBar } from './meals.js';

@@ -4,12 +4,12 @@ tipo: sdd-spec
 id: SPEC-003
 hito: H3
 estado: borrador
-version: 0.1.0
+version: 0.1.1
 fase: 0
 prioridad: P1
 depende_de: [SPEC-002]
 creado: 2026-10-18
-actualizado: 2026-10-18
+actualizado: 2026-10-20
 deriva_de: [registro-sin-friccion, fundamentos-de-entrenamiento, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-005-dia-que-cuenta-y-gamificacion, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -53,7 +53,7 @@ Eliminar la fricción de registrar el entreno (causa n.º 1 de abandono, FB-001-
 | FR-003-01 | La tarjeta de sesión DEBE ser un único mensaje editado en cada acción. |
 | FR-003-02 | Confirmar una serie tal cual DEBE costar exactamente 1 toque (RN-ENT-001). |
 | FR-003-03 | Todos los toques DEBEN ser idempotentes: un toque repetido o un reintento de Telegram no duplica la serie (NFR-03). |
-| FR-003-04 | El sistema DEBE ofrecer [↩️ Deshacer] para la última serie durante 10 s. |
+| FR-003-04 | El sistema DEBE ofrecer [↩️ Deshacer] para la última serie durante P-090 segundos. |
 | FR-003-05 | El sistema DEBE permitir "La hice tal cual" hasta el final de la gracia de registro (RN-DQC-005). |
 | FR-003-06 | El cálculo de sesión completada, récords y progresión DEBE vivir en el dominio (RN-ENT-002 a RN-ENT-005). |
 | FR-003-07 | El sistema NO DEBE enviar mensajes de temporizador de descanso por el chat (ruido); el temporizador vive en la Mini App (Should). |

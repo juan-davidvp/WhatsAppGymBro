@@ -97,7 +97,18 @@ describe('HU-001-1 · SC-001-1 · T-032 · onboarding completo', () => {
     ]);
     expect(flow.weights.map((w) => w.weightKg)).toEqual([68]);
 
-    const summary = flow.last();
+    // El resumen va antes del mensaje del teclado persistente (KB-01, FR-001-11).
+    const summary = sent(flow.calls).at(-2);
+    expect(flow.last()?.text).toBe(templateById('KB-01').text);
+    const keyboard = flow.calls.filter((c) => c.method === 'sendMessage').at(-1)?.payload[
+      'reply_markup'
+    ] as { keyboard?: { text: string }[][]; is_persistent?: boolean } | undefined;
+    expect(keyboard?.keyboard?.flat().map((k) => k.text)).toEqual([
+      '🏋️ Hoy',
+      '🍽️ Comida',
+      '📈 Progreso',
+    ]);
+    expect(keyboard?.is_persistent).toBe(true);
     expect(summary?.text).toBe(
       renderTemplate('ON-24', {
         objetivo: 'Ganar músculo',
@@ -151,7 +162,7 @@ describe('HU-009-1 · T-032 · sin autorización', () => {
     ]);
     expect(flow.weights).toEqual([]);
     expect(flow.user()?.settings.intensity).toBe('LOW');
-    expect(flow.last()?.text).toContain('Objetivo: Ser constante.');
+    expect(sent(flow.calls).at(-2)?.text).toContain('Objetivo: Ser constante.');
   });
 });
 
