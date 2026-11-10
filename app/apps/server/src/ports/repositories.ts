@@ -12,12 +12,16 @@ import type {
   LocalTime,
   OnboardingStep,
   PlannedSession,
+  PlayerState,
   SessionProgress,
   SessionTemplate,
   SessionVariant,
   TrainingPlace,
   WeeklyPlan,
   Weekday,
+  WeeklyQuest,
+  QuestKind,
+  XpLedgerEntry,
 } from '@gymbro/domain';
 
 /**
@@ -93,6 +97,8 @@ export interface UsersRepository {
   /** Cuenta una interacción del onboarding; la primera fija `startedAt`. */
   recordOnboardingInteraction(userId: string, at: Date): Promise<void>;
   completeOnboarding(userId: string, at: Date): Promise<void>;
+  /** Usuarios activos que terminaron el onboarding (para el cierre programado, T-060). */
+  listActive(): Promise<UserRecord[]>;
   /** "Empezar de nuevo" (SPEC-001 §8): borra lo declarado y vuelve a `step`. */
   restartOnboarding(userId: string, step: OnboardingStep): Promise<void>;
 }
@@ -252,16 +258,29 @@ export interface FavoriteMealsRepository {
 export interface DaysRepository {
   /** Guarda el estado del día mientras está abierto (RN-DQC-005); uno cerrado no cambia. */
   saveStatus(userId: string, date: LocalDate, dayType: DayType, status: DayStatus): Promise<void>;
-  /** Cierra el día una sola vez (FR-005-02). */
-  close(userId: string, date: LocalDate, at: Date): Promise<{ closedNow: boolean }>;
+  /**
+   * Cierra el día una sola vez con su estado final (FR-005-02); lo crea si no
+   * tenía registros. Un día ya cerrado no cambia.
+   */
+  close(
+    userId: string,
+    date: LocalDate,
+    dayType: DayType,
+    status: DayStatus,
+    at: Date,
+  ): Promise<{ closedNow: boolean }>;
   /**
    * Añade una fuente al día abierto (`session:<id>`, `mobility`) sin repetirla y
    * devuelve todas sus fuentes; en un día cerrado no cambia nada (RN-DQC-005).
    */
   addSource(userId: string, date: LocalDate, dayType: DayType, source: string): Promise<string[]>;
   sources(userId: string, date: LocalDate): Promise<string[]>;
-  /** Días guardados con si cuentan (para el total y la racha en vivo). */
-  history(userId: string): Promise<{ date: LocalDate; counted: boolean }[]>;
+  /** Tipo con el que se registró el día (null si no tiene registros). */
+  dayType(userId: string, date: LocalDate): Promise<DayType | null>;
+  /** Días guardados: si cuentan, si son completos y si cumplieron la mitad de comida. */
+  history(
+    userId: string,
+  ): Promise<{ date: LocalDate; counted: boolean; complete: boolean; nutritionHalf: boolean }[]>;
 }
 
 export type WorkoutStatus = 'active' | 'completed' | 'partial' | 'abandoned';
@@ -300,12 +319,89 @@ export interface WorkoutSessionsRepository {
   ): Promise<WorkoutSessionRecord | null>;
 }
 
+/** Estado del juego guardado y su versión (`rev` = 0 si todavía no existe). */
+export interface StoredPlayerState {
+  readonly state: PlayerState;
+  readonly rev: number;
+}
+
 export interface StreakStatesRepository {
-  /** RN-DQC-007: suma el día cerrado al total una sola vez; el total nunca baja. */
-  applyDayClose(
+  get(userId: string): Promise<StoredPlayerState | null>;
+  /**
+   * Guarda el estado solo si `rev` sigue igual (FR-005-02): si otro proceso cerró
+   * el día o reparó la racha antes, devuelve false y no cambia nada. El dominio
+   * garantiza que el total nunca baja (RN-DQC-007).
+   */
+  save(userId: string, rev: number, state: PlayerState): Promise<boolean>;
+}
+
+/** Movimiento del libro de XP con lo que lo originó (FR-005-03). */
+export interface XpLedgerRecord extends XpLedgerEntry {
+  /** Qué dio el XP (`session:<id>`, `nutrition:<fecha>`, `week:<lunes>`…). */
+  readonly refId: string;
+  readonly at: Date;
+}
+
+export interface XpLedgerRepository {
+  /** RN-GAM-006: solo inserciones; el mismo `refId` no suma dos veces. */
+  add(userId: string, entry: XpLedgerRecord): Promise<{ inserted: boolean }>;
+  /** Movimientos del día operativo `date` (tope diario P-039). */
+  onDate(userId: string, date: LocalDate): Promise<XpLedgerEntry[]>;
+  total(userId: string): Promise<number>;
+}
+
+/** Semana cerrada (`weeks`, RN-GAM-004). */
+export interface WeekRecord {
+  readonly weekStart: LocalDate;
+  readonly planned: number;
+  readonly completed: number;
+  readonly commitment: number;
+  readonly fulfilled: boolean;
+  readonly countedDays: number;
+  /** Días con la mitad de comida (base de la misión de comida, RN-GAM-008). */
+  readonly nutritionHalfDays: number;
+  /** RN-SEG-008: días de descanso del plan y en cuántos se entrenó. */
+  readonly restDaysPlanned: number;
+  readonly restDaysTrained: number;
+}
+
+/** Misión de la semana guardada (`quests`, RN-GAM-008). */
+export interface StoredQuest extends WeeklyQuest {
+  readonly done: boolean;
+}
+
+export interface QuestsRepository {
+  get(userId: string, weekStart: LocalDate): Promise<StoredQuest[] | null>;
+  /** Guarda las misiones de la semana una sola vez; `created` es false si ya existían. */
+  create(
     userId: string,
-    day: { date: LocalDate; counted: boolean },
-  ): Promise<{ totalCountedDays: number }>;
+    weekStart: LocalDate,
+    quests: readonly WeeklyQuest[],
+  ): Promise<{ created: boolean }>;
+  /** Marca una misión cumplida; true solo la primera vez. */
+  markDone(userId: string, weekStart: LocalDate, kind: QuestKind): Promise<boolean>;
+}
+
+export interface WeeksRepository {
+  /** Guarda la semana una sola vez (cerrar dos veces no cambia nada). */
+  save(userId: string, week: WeekRecord): Promise<void>;
+  list(userId: string): Promise<WeekRecord[]>;
+}
+
+/** Aviso para la próxima interacción (decisión del PO, 2026-11-08). */
+export interface NoticeRecord {
+  /** Clave estable: el mismo aviso no se guarda dos veces. */
+  readonly key: string;
+  readonly templateId: string;
+  readonly variables: Readonly<Record<string, string | number>>;
+  readonly createdAt: Date;
+}
+
+export interface NoticesRepository {
+  /** Guarda el aviso una sola vez por clave. */
+  add(userId: string, notice: NoticeRecord): Promise<void>;
+  /** Avisos sin mostrar, en orden de creación; quedan marcados como mostrados. */
+  takePending(userId: string, at: Date): Promise<NoticeRecord[]>;
 }
 
 export interface RiskSignalsRepository {

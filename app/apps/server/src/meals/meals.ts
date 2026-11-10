@@ -34,7 +34,13 @@ import {
   type Portions,
 } from '@gymbro/domain';
 import { mealIdempotencyKey } from '../adapters/mongo/idempotency.js';
-import { NUTRITION_HALF_SOURCE, dayInputsFrom, recordDayActivity } from '../days/day-status.js';
+import {
+  NUTRITION_HALF_SOURCE,
+  dayInputsFrom,
+  recordDayActivity,
+  withWeekLine,
+} from '../days/day-status.js';
+import { takeNotices } from '../days/notices.js';
 import { button, plain, type Button, type Reply } from '../onboarding/replies.js';
 import { ensureWeek } from '../plans/weekly-plan.js';
 import type {
@@ -279,7 +285,12 @@ async function afterMeal(
     day.push(plain('DC-01', { n: after.total, racha: after.streak }));
   }
   if (!before.complete && after.status.complete) day.push(plain('DC-02'));
-  return [summary, ...day];
+  // HU-005-1: la semana en una línea va con el último mensaje del día.
+  const last = day.at(-1);
+  const notices = await takeNotices(user, deps);
+  return last
+    ? [summary, ...day.slice(0, -1), withWeekLine(last, after), ...notices]
+    : [summary, ...notices];
 }
 
 async function recordMeal(

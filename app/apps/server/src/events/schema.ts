@@ -1,7 +1,11 @@
 import { alertCategorySchema } from '@gymbro/content';
-import { CONSENT_CATEGORIES, ONBOARDING_STEPS, WEEK_DAYS } from '@gymbro/domain';
+import { CONSENT_CATEGORIES, ONBOARDING_STEPS, WEEK_DAYS, XP_EVENT_TYPES } from '@gymbro/domain';
 import { z } from 'zod';
 import { EVENT_NAMES, STUDY_PHASES, type EventName } from './catalog.js';
+
+/** Qué hizo contar el día cerrado (`day_closed.source`). */
+export const DAY_SOURCES = ['session', 'nutrition', 'mobility', 'none'] as const;
+export type DaySource = (typeof DAY_SOURCES)[number];
 
 /**
  * Esquemas de los eventos de medición (RN-DAT-005, SC-009-3): un evento solo
@@ -121,6 +125,45 @@ export const EVENT_PROPS_SCHEMAS = {
     durationMs: z.number().int().nonnegative(),
     taps: z.number().int().nonnegative(),
   }),
+  /** SPEC-005 §7: tipo, cuenta, completo y fuente del día cerrado (T-060). */
+  day_closed: z.strictObject({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    dayType: z.enum(['TRAINING', 'REST']),
+    counted: z.boolean(),
+    complete: z.boolean(),
+    source: z.enum(DAY_SOURCES),
+  }),
+  /** SPEC-005 §7 (T-061): racha, comodines y reparación; solo números. */
+  streak_extended: z.strictObject({ streak: z.number().int().positive() }),
+  freeze_earned: z.strictObject({ freezes: z.number().int().positive() }),
+  freeze_used: z.strictObject({
+    freezes: z.number().int().nonnegative(),
+    streak: z.number().int().nonnegative(),
+  }),
+  streak_reset: z.strictObject({}),
+  streak_repair_offered: z.strictObject({}),
+  streak_repaired: z.strictObject({ streak: z.number().int().positive() }),
+  /** SPEC-005 §7 (T-062): XP, niveles, semanas y logros; solo códigos y números. */
+  xp_awarded: z.strictObject({
+    event: z.enum(XP_EVENT_TYPES),
+    amount: z.number().int().positive(),
+  }),
+  level_up: z.strictObject({ level: z.number().int().min(2) }),
+  week_closed: z.strictObject({
+    fulfilled: z.boolean(),
+    sessions: z.number().int().nonnegative(),
+    commitment: z.number().int().nonnegative(),
+  }),
+  achievement_unlocked: z.strictObject({ code: z.string().regex(/^[A-Z][A-Z0-9_]{1,31}$/) }),
+  /** SPEC-005 §7 (T-063): metas de las 3 misiones y misión cumplida. */
+  quest_generated: z.strictObject({
+    training: z.number().int().positive(),
+    nutrition: z.number().int().positive(),
+    consistency: z.number().int().positive(),
+  }),
+  quest_completed: z.strictObject({ kind: z.enum(['TRAINING', 'NUTRITION', 'CONSISTENCY']) }),
+  /** SPEC-009 (T-065, RN-SEG-008): qué disparó la señal de sobreuso. */
+  overuse_signal: z.strictObject({ reason: z.enum(['sessions_per_day', 'rest_days']) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;
 
 /** Propiedades comunes (plan de medición §1). */

@@ -1,4 +1,4 @@
-import { PARAMETERS, type ConsentCategory } from '@gymbro/domain';
+import { PARAMETERS, type ConsentCategory, type QuestKind } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
@@ -9,6 +9,10 @@ import {
   type SetEntryRecord,
   type FavoriteMealRecord,
   type MealRecord,
+  type NoticeRecord,
+  type StoredPlayerState,
+  type WeekRecord,
+  type XpLedgerRecord,
   type StoredWeeklyPlan,
   type GoalRecord,
   type ScreeningType,
@@ -71,6 +75,15 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     counted: boolean;
     sources: string[];
     dayStatus: DayStatus | null;
+  }[] = [];
+  const streakStates = new Map<string, StoredPlayerState>();
+  const notices: (NoticeRecord & { userId: string; shownAt: Date | null })[] = [];
+  const xpLedger: (XpLedgerRecord & { userId: string })[] = [];
+  const weekRecords: (WeekRecord & { userId: string })[] = [];
+  const questRows: {
+    userId: string;
+    weekStart: string;
+    items: { kind: QuestKind; target: number; done: boolean }[];
   }[] = [];
   const workouts: WorkoutSessionRecord[] = [];
   const records: {
@@ -196,6 +209,11 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           onboarding: { ...user.onboarding, completedAt: at, step: 'summary' },
         }));
         return Promise.resolve();
+      },
+      listActive() {
+        return Promise.resolve(
+          [...users.values()].filter((u) => u.status === 'active' && u.onboarding.completedAt),
+        );
       },
       restartOnboarding(userId, step) {
         updateUser(userId, (user) => ({
@@ -359,10 +377,28 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         }
         return Promise.resolve();
       },
-      close(userId, date) {
-        const day = days.find((d) => d.userId === userId && d.date === date && d.status === 'open');
-        if (day) day.status = 'closed';
-        return Promise.resolve({ closedNow: day !== undefined });
+      close(userId, date, dayType, status) {
+        const day = days.find((d) => d.userId === userId && d.date === date);
+        if (day?.status === 'closed') return Promise.resolve({ closedNow: false });
+        if (day) {
+          Object.assign(day, {
+            dayType,
+            status: 'closed',
+            counted: status.counts,
+            dayStatus: status,
+          });
+        } else {
+          days.push({
+            userId,
+            date,
+            dayType,
+            status: 'closed',
+            counted: status.counts,
+            sources: [],
+            dayStatus: status,
+          });
+        }
+        return Promise.resolve({ closedNow: true });
       },
       addSource(userId, date, dayType, source) {
         let day = days.find((d) => d.userId === userId && d.date === date);
@@ -386,11 +422,126 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           ...(days.find((d) => d.userId === userId && d.date === date)?.sources ?? []),
         ]);
       },
+      dayType(userId, date) {
+        return Promise.resolve(
+          days.find((d) => d.userId === userId && d.date === date)?.dayType ?? null,
+        );
+      },
       history(userId) {
         return Promise.resolve(
           days
             .filter((d) => d.userId === userId)
-            .map((d) => ({ date: d.date, counted: d.counted })),
+            .map((d) => ({
+              date: d.date,
+              counted: d.counted,
+              complete: d.dayStatus?.complete ?? false,
+              nutritionHalf: d.dayStatus?.nutritionHalf ?? false,
+            })),
+        );
+      },
+    },
+    streaks: {
+      get(userId) {
+        return Promise.resolve(streakStates.get(userId) ?? null);
+      },
+      save(userId, rev, state) {
+        if ((streakStates.get(userId)?.rev ?? 0) !== rev) return Promise.resolve(false);
+        streakStates.set(userId, { state, rev: rev + 1 });
+        return Promise.resolve(true);
+      },
+    },
+    xp: {
+      add(userId, entry) {
+        if (
+          !(entry.amount > 0) ||
+          xpLedger.some((e) => e.userId === userId && e.refId === entry.refId)
+        ) {
+          return Promise.resolve({ inserted: false });
+        }
+        xpLedger.push({ ...entry, userId });
+        return Promise.resolve({ inserted: true });
+      },
+      onDate(userId, date) {
+        return Promise.resolve(
+          xpLedger
+            .filter((e) => e.userId === userId && e.date === date)
+            .map(({ date: d, event, variant, amount }) => ({
+              date: d,
+              event,
+              ...(variant ? { variant } : {}),
+              amount,
+            })),
+        );
+      },
+      total(userId) {
+        return Promise.resolve(
+          xpLedger.filter((e) => e.userId === userId).reduce((sum, e) => sum + e.amount, 0),
+        );
+      },
+    },
+    weeks: {
+      save(userId, week) {
+        if (!weekRecords.some((w) => w.userId === userId && w.weekStart === week.weekStart)) {
+          weekRecords.push({ ...week, userId });
+        }
+        return Promise.resolve();
+      },
+      list(userId) {
+        return Promise.resolve(
+          weekRecords
+            .filter((w) => w.userId === userId)
+            .map((w) => ({
+              weekStart: w.weekStart,
+              planned: w.planned,
+              completed: w.completed,
+              commitment: w.commitment,
+              fulfilled: w.fulfilled,
+              countedDays: w.countedDays,
+              nutritionHalfDays: w.nutritionHalfDays,
+              restDaysPlanned: w.restDaysPlanned,
+              restDaysTrained: w.restDaysTrained,
+            }))
+            .sort((a, b) => a.weekStart.localeCompare(b.weekStart)),
+        );
+      },
+    },
+    quests: {
+      get(userId, weekStart) {
+        const found = questRows.find((q) => q.userId === userId && q.weekStart === weekStart);
+        return Promise.resolve(found ? found.items.map((i) => ({ ...i })) : null);
+      },
+      create(userId, weekStart, quests) {
+        if (questRows.some((q) => q.userId === userId && q.weekStart === weekStart)) {
+          return Promise.resolve({ created: false });
+        }
+        questRows.push({ userId, weekStart, items: quests.map((q) => ({ ...q, done: false })) });
+        return Promise.resolve({ created: true });
+      },
+      markDone(userId, weekStart, kind) {
+        const item = questRows
+          .find((q) => q.userId === userId && q.weekStart === weekStart)
+          ?.items.find((i) => i.kind === kind && !i.done);
+        if (item) item.done = true;
+        return Promise.resolve(item !== undefined);
+      },
+    },
+    notices: {
+      add(userId, notice) {
+        if (!notices.some((n) => n.userId === userId && n.key === notice.key)) {
+          notices.push({ ...notice, userId, shownAt: null });
+        }
+        return Promise.resolve();
+      },
+      takePending(userId, at) {
+        const pending = notices.filter((n) => n.userId === userId && n.shownAt === null);
+        for (const notice of pending) notice.shownAt = at;
+        return Promise.resolve(
+          pending.map(({ key, templateId, variables, createdAt }) => ({
+            key,
+            templateId,
+            variables,
+            createdAt,
+          })),
         );
       },
     },
@@ -555,6 +706,11 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(weeks, userId);
         removeRows(setEntries, userId);
         removeRows(days, userId);
+        streakStates.delete(userId);
+        removeRows(notices, userId);
+        removeRows(xpLedger, userId);
+        removeRows(weekRecords, userId);
+        removeRows(questRows, userId);
         removeRows(workouts, userId);
         removeRows(records, userId);
         removeRows(achievements, userId);
@@ -596,6 +752,11 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     weeks,
     setEntries,
     days,
+    streakStates,
+    notices,
+    xpLedger,
+    weekRecords,
+    questRows,
     workouts,
     records,
     achievements,

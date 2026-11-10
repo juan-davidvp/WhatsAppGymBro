@@ -1,4 +1,11 @@
-import { EXERCISES, SESSION_NAMES, renderTemplate, templateById } from '@gymbro/content';
+import {
+  EXERCISES,
+  SESSION_NAMES,
+  renderTemplate,
+  renderWeekLine,
+  templateById,
+  type WeekLineMark,
+} from '@gymbro/content';
 import { PARAMETERS, rescheduleSession } from '@gymbro/domain';
 import { describe, expect, it } from 'vitest';
 import { encodeCallbackData } from '../bot/callback-data.js';
@@ -17,6 +24,10 @@ function movableClock() {
   };
 }
 
+/** DC-03 de la semana del 2026-10-19: las marcas dadas desde el lunes y el resto por llegar. */
+const week = (...marks: WeekLineMark[]) =>
+  renderWeekLine([...marks, ...Array<WeekLineMark>(7 - marks.length).fill('FUTURE')]);
+
 const exerciseName = (code: string | undefined) => EXERCISES.find((e) => e.code === code)?.name;
 
 describe('HU-002-2 · T-041 · Hoy en un día de entreno', () => {
@@ -25,10 +36,10 @@ describe('HU-002-2 · T-041 · Hoy en un día de entreno', () => {
     const session = flow.weeks[0]?.days[0]?.session;
     expect(flow.last()?.text).toBe(
       toTelegramHtml(
-        renderTemplate('PL-01', {
+        `${renderTemplate('PL-01', {
           sesion: SESSION_NAMES[session?.template ?? 'FULL_A'],
           minutos: Math.round(session?.versions.GYM.estimatedMinutes ?? 0),
-        }),
+        })}\n${week('PENDING')}`,
       ),
     );
     expect(flow.last()?.buttons.map((b) => b.text)).toEqual(templateById('PL-01').buttons);
@@ -149,14 +160,26 @@ describe('RN-DQC-003 · T-041 · Hoy en un día de descanso', () => {
     const flow = await runFlow(ONBOARDED_GYM_LXV, { clock: time.clock });
     time.goTo('2026-10-20T15:00:00Z'); // martes, día de descanso
     await flow.act({ text: '🏋️ Hoy' });
+    // El lunes sigue ⬜ porque aún está en su gracia (hasta el martes a las 12:00).
     expect(flow.last()?.text).toBe(
-      renderTemplate('HY-01', { minutos: PARAMETERS.day.restMobilityMinutes }),
+      `${renderTemplate('HY-01', { minutos: PARAMETERS.day.restMobilityMinutes })}\n${week('PENDING', 'PENDING')}`,
     );
     await flow.act('Hice la movilidad');
-    expect(flow.last()?.text).toBe(renderTemplate('HY-02', { n: 1, racha: 1 }));
+    expect(flow.last()?.text).toBe(
+      `${renderTemplate('HY-02', { n: 1, racha: 1 })}\n${week('PENDING', 'COUNTED')}`,
+    );
     expect(flow.days).toMatchObject([{ date: '2026-10-20', counted: true, sources: ['mobility'] }]);
     await flow.act({ text: '🏋️ Hoy' });
-    expect(flow.last()?.text).toBe(templateById('HY-03').text);
+    expect(flow.last()?.text).toBe(`${templateById('HY-03').text}\n${week('PENDING', 'COUNTED')}`);
+  });
+
+  it('HU-005-1 escenario 4 · pasada la gracia del lunes, Hoy lo muestra cerrado sin contar (–)', async () => {
+    const time = movableClock();
+    const flow = await runFlow(ONBOARDED_GYM_LXV, { clock: time.clock });
+    time.goTo('2026-10-20T18:00:00Z'); // martes 13:00
+    await flow.act({ text: '🏋️ Hoy' });
+    expect(flow.last()?.text.split('\n').at(-1)).toBe(week('MISSED', 'PENDING'));
+    expect(flow.last()?.buttons.map((b) => b.text)).toEqual(templateById('HY-01').buttons);
   });
 });
 

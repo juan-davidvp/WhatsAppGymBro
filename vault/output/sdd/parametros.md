@@ -3,9 +3,9 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.8.0
+version: 0.9.0
 creado: 2026-10-18
-actualizado: 2026-10-20
+actualizado: 2026-11-08
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
 fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93, F94, F95, F99]
 relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
@@ -123,6 +123,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-066 | `messages.dayClosingAt` | 20:00 | — | RN-MSJ-016 | No | — |
 | P-073 | `messages.dayClosingMaxTaps` | 2 toques | — | RN-MSJ-016 | No | — |
 | P-067 | `metrics.actionWindowHours` | 2 h | — | [[plan-de-medicion]] | Sí | — |
+| P-096 | `scheduler.intervalSeconds` | 60 s | — | FR-005-02 (ciclo del planificador: cierre de días y, desde T-070, la bandeja; [[plan-tecnico]] §6) | No | — |
 
 ## Integraciones, seguridad y datos
 

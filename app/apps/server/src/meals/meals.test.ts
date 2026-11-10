@@ -3,8 +3,14 @@ import {
   FREQUENT_MEAL_TEMPLATES,
   proteinBar,
   renderTemplate,
+  renderWeekLine,
   templateById,
+  type WeekLineMark,
 } from '@gymbro/content';
+
+/** DC-03 de la semana del 2026-10-19: las marcas dadas desde el lunes y el resto por llegar. */
+const week = (...marks: WeekLineMark[]) =>
+  renderWeekLine([...marks, ...Array<WeekLineMark>(7 - marks.length).fill('FUTURE')]);
 import { PARAMETERS, dailyProteinGoal, proteinTarget } from '@gymbro/domain';
 import { describe, expect, it } from 'vitest';
 import { CALLBACK_DATA_MAX_BYTES, encodeCallbackData } from '../bot/callback-data.js';
@@ -198,7 +204,9 @@ describe('RN-DQC-003/004 · T-050 · la comida hace contar o completa el día, e
       .filter((c) => c.method === 'sendMessage' || c.method === 'editMessageText')
       .map((c) => String(c.payload['text']));
     expect(texts.at(-2)).toBe(summary(goal.grams, true));
-    expect(texts.at(-1)).toBe(renderTemplate('DC-01', { n: 1, racha: 1 }));
+    expect(texts.at(-1)).toBe(
+      `${renderTemplate('DC-01', { n: 1, racha: 1 })}\n${week('PENDING', 'COUNTED')}`,
+    );
     expect(flow.days).toMatchObject([{ date: '2026-10-20', counted: true }]);
   });
 
@@ -207,10 +215,14 @@ describe('RN-DQC-003/004 · T-050 · la comida hace contar o completa el día, e
     await flow.act({ text: '🏋️ Hoy' });
     await flow.act('Hice la movilidad');
     await logPalms(flow, goal.palms);
-    expect(flow.last()?.text).toBe(templateById('DC-02').text);
-    expect(flow.calls.map((c) => String(c.payload['text'] ?? ''))).not.toContain(
-      renderTemplate('DC-01', { n: 1, racha: 1 }),
+    expect(flow.calls.map((c) => String(c.payload['text'] ?? ''))).toContain(
+      `${templateById('DC-02').text}\n${week('PENDING', 'COMPLETE')}`,
     );
+    expect(
+      flow.calls.some((c) =>
+        String(c.payload['text'] ?? '').startsWith(renderTemplate('DC-01', { n: 1, racha: 1 })),
+      ),
+    ).toBe(false);
   });
 
   it('día de entreno con la sesión hecha: la comida lo completa (DC-02)', async () => {
@@ -219,14 +231,16 @@ describe('RN-DQC-003/004 · T-050 · la comida hace contar o completa el día, e
     await flow.act('Gym');
     await flow.act('La hice tal cual');
     await logPalms(flow, goal.palms);
-    expect(flow.last()?.text).toBe(templateById('DC-02').text);
+    expect(flow.calls.map((c) => String(c.payload['text'] ?? ''))).toContain(
+      `${templateById('DC-02').text}\n${week('COMPLETE')}`,
+    );
   });
 
   it('[Registrar comida] desde Hoy en descanso abre CM-01 (HU-004-6 escenario 2)', async () => {
     const flow = await withClock(TUESDAY);
     await flow.act({ text: '🏋️ Hoy' });
     expect(flow.last()?.text).toBe(
-      renderTemplate('HY-01', { minutos: PARAMETERS.day.restMobilityMinutes }),
+      `${renderTemplate('HY-01', { minutos: PARAMETERS.day.restMobilityMinutes })}\n${week('PENDING', 'PENDING')}`,
     );
     await flow.act('Registrar comida');
     expect(flow.last()?.text).toBe(templateById('CM-01').text);

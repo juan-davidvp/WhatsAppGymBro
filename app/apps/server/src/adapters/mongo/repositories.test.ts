@@ -1,5 +1,12 @@
 import { EXERCISES, EXPRESS_EXCEPTIONS } from '@gymbro/content';
-import { evaluateDay, generateWeeklyPlan, startProgress, type DayInputs } from '@gymbro/domain';
+import {
+  closePlayerDay,
+  evaluateDay,
+  generateWeeklyPlan,
+  initialPlayerState,
+  startProgress,
+  type DayInputs,
+} from '@gymbro/domain';
 import { MongoClient, type Db } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -22,6 +29,7 @@ import {
   daysRepository,
   eventsRepository,
   mealsRepository,
+  noticesRepository,
   processedUpdatesRepository,
   riskSignalsRepository,
   setEntriesRepository,
@@ -60,6 +68,15 @@ describe('T-020 · índices', () => {
     expect(indexes.some((i) => i.key['idempotencyKey'] === 1 && i.unique)).toBe(true);
     const ttl = (await db.collection('processed_updates').indexes()).find((i) => i.key['at'] === 1);
     expect(ttl?.expireAfterSeconds).toBeGreaterThan(0);
+  });
+
+  it('T-063 · un índice que cambió de opciones en una base existente se recrea sin fallar', async () => {
+    const quests = db.collection('quests');
+    await quests.dropIndex('userId_1_weekStart_1').catch(() => undefined);
+    await quests.createIndex({ userId: 1, weekStart: 1 }); // como antes de T-063: no único
+    await ensureIndexes(db);
+    const index = (await quests.indexes()).find((i) => i.name === 'userId_1_weekStart_1');
+    expect(index?.unique).toBe(true);
   });
 });
 
@@ -144,14 +161,28 @@ describe('SC-003-2 · un toque repetido no duplica una serie, una comida ni un d
       mobilityMinutes: 0,
     };
     await days.saveStatus('u1', '2026-10-19', 'TRAINING', evaluateDay(inputs));
+    const status = evaluateDay(inputs);
     const closes = await Promise.all([
-      days.close('u1', '2026-10-19', now),
-      days.close('u1', '2026-10-19', now),
+      days.close('u1', '2026-10-19', 'TRAINING', status, now),
+      days.close('u1', '2026-10-19', 'TRAINING', status, now),
     ]);
     expect(closes.filter((c) => c.closedNow)).toHaveLength(1);
-    await streaks.applyDayClose('u1', { date: '2026-10-19', counted: true });
-    const again = await streaks.applyDayClose('u1', { date: '2026-10-19', counted: true });
-    expect(again.totalCountedDays).toBe(1);
+    const day = {
+      date: '2026-10-19',
+      type: 'TRAINING' as const,
+      counted: true,
+      closedAt: now,
+      riskPaused: false,
+    };
+    const next = closePlayerDay(initialPlayerState(), day).state;
+    // Dos procesos con la misma versión: solo uno guarda.
+    const saves = await Promise.all([streaks.save('u1', 0, next), streaks.save('u1', 0, next)]);
+    expect(saves.filter(Boolean)).toHaveLength(1);
+    const stored = await streaks.get('u1');
+    expect(stored?.rev).toBe(1);
+    expect(stored?.state).toEqual(next);
+    // Repetir el cierre sobre lo guardado no cambia nada.
+    expect(closePlayerDay(stored?.state ?? initialPlayerState(), day).applied).toBe(false);
   });
 
   it('un día cerrado ya no cambia aunque llegue un registro tarde', async () => {
@@ -165,7 +196,7 @@ describe('SC-003-2 · un toque repetido no duplica una serie, una comida ni un d
       mobilityMinutes: 0,
     };
     await days.saveStatus('u1', '2026-10-19', 'TRAINING', evaluateDay(off));
-    await days.close('u1', '2026-10-19', now);
+    await days.close('u1', '2026-10-19', 'TRAINING', evaluateDay(off), now);
     await days.saveStatus(
       'u1',
       '2026-10-19',
@@ -178,14 +209,71 @@ describe('SC-003-2 · un toque repetido no duplica una serie, una comida ni un d
   });
 });
 
-describe('RN-DQC-007 · el total acumulado nunca baja en la base', () => {
-  it('un día que no cuenta no resta y un día anterior no cambia el total', async () => {
+describe('RN-DQC-007 · T-061 · el estado del juego se guarda completo y por versión', () => {
+  it('ida y vuelta de racha, comodines, reparación y regreso; una versión vieja no guarda', async () => {
     const streaks = streakStatesRepository(db);
-    await streaks.applyDayClose('u2', { date: '2026-10-19', counted: true });
-    await streaks.applyDayClose('u2', { date: '2026-10-20', counted: false });
-    expect(
-      (await streaks.applyDayClose('u2', { date: '2026-10-18', counted: true })).totalCountedDays,
-    ).toBe(1);
+    const state = {
+      counted: { total: 12, lastClosedDate: '2026-10-20' },
+      streak: {
+        current: 0,
+        longest: 9,
+        countedRun: 0,
+        freezes: 1,
+        repair: { offeredUntil: '2026-10-23T17:00:00.000Z', restoreTo: 9 },
+        lastRepairDate: null,
+        lastClosedDate: '2026-10-20',
+      },
+      comeback: { pending: true },
+      weekStreak: 2,
+    };
+    expect(await streaks.save('u2', 0, state)).toBe(true);
+    expect(await streaks.get('u2')).toEqual({ state, rev: 1 });
+    const later = { ...state, counted: { total: 13, lastClosedDate: '2026-10-21' } };
+    expect(await streaks.save('u2', 0, later)).toBe(false);
+    expect(await streaks.save('u2', 1, later)).toBe(true);
+    expect((await streaks.get('u2'))?.state.counted.total).toBe(13);
+  });
+
+  it('un documento de T-060 (solo total y último día) se lee y se actualiza como versión 0', async () => {
+    await db
+      .collection('streak_states')
+      .insertOne({ userId: 'u2b', totalCountedDays: 4, lastClosedDate: '2026-10-19' });
+    const streaks = streakStatesRepository(db);
+    const stored = await streaks.get('u2b');
+    expect(stored?.rev).toBe(0);
+    expect(stored?.state.counted).toEqual({ total: 4, lastClosedDate: '2026-10-19' });
+    expect(stored?.state.streak.current).toBe(0);
+    expect(await streaks.save('u2b', 0, stored?.state ?? initialPlayerState())).toBe(true);
+    expect((await streaks.get('u2b'))?.rev).toBe(1);
+  });
+});
+
+describe('T-061 · avisos para la próxima interacción', () => {
+  it('se guardan una vez por clave y se entregan una sola vez, en orden', async () => {
+    const notices = noticesRepository(db);
+    const at = (minute: number) => new Date(`2026-10-21T17:0${minute}:00Z`);
+    await notices.add('u3n', {
+      key: 'RA-01:a',
+      templateId: 'RA-01',
+      variables: {},
+      createdAt: at(1),
+    });
+    await notices.add('u3n', {
+      key: 'RA-01:a',
+      templateId: 'RA-01',
+      variables: {},
+      createdAt: at(1),
+    });
+    await notices.add('u3n', {
+      key: 'RA-02:b',
+      templateId: 'RA-02',
+      variables: { total: 3 },
+      createdAt: at(2),
+    });
+    const taken = await notices.takePending('u3n', at(5));
+    expect(taken.map((n) => n.key)).toEqual(['RA-01:a', 'RA-02:b']);
+    expect(taken[1]?.variables).toEqual({ total: 3 });
+    expect(await notices.takePending('u3n', at(6))).toEqual([]);
   });
 });
 
@@ -456,9 +544,40 @@ describe('RN-DQC-005 · T-041 · fuentes del día abierto', () => {
     const days = daysRepository(db);
     expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
     expect(await days.addSource('u13', '2026-10-20', 'REST', 'mobility')).toEqual(['mobility']);
-    await days.close('u13', '2026-10-20', now);
+    const rest: DayInputs = {
+      type: 'REST',
+      sessionsCompleted: 0,
+      importedActivityMinutes: [],
+      nutritionHalf: false,
+      importedSteps: 0,
+      mobilityMinutes: 0,
+    };
+    await days.close('u13', '2026-10-20', 'REST', evaluateDay(rest), now);
     expect(await days.addSource('u13', '2026-10-20', 'REST', 'session:x')).toEqual(['mobility']);
-    expect(await days.history('u13')).toEqual([{ date: '2026-10-20', counted: false }]);
+    expect(await days.history('u13')).toEqual([
+      { date: '2026-10-20', counted: false, complete: false, nutritionHalf: false },
+    ]);
+    expect(await days.dayType('u13', '2026-10-20')).toBe('REST');
+  });
+
+  it('T-060 · cerrar un día sin registros lo crea cerrado y no se puede abrir de nuevo', async () => {
+    const days = daysRepository(db);
+    const off: DayInputs = {
+      type: 'TRAINING',
+      sessionsCompleted: 0,
+      importedActivityMinutes: [],
+      nutritionHalf: false,
+      importedSteps: 0,
+      mobilityMinutes: 0,
+    };
+    expect(await days.close('u13', '2026-10-21', 'TRAINING', evaluateDay(off), now)).toEqual({
+      closedNow: true,
+    });
+    expect(await days.close('u13', '2026-10-21', 'TRAINING', evaluateDay(off), now)).toEqual({
+      closedNow: false,
+    });
+    expect(await days.addSource('u13', '2026-10-21', 'TRAINING', 'session:y')).toEqual([]);
+    expect(await days.dayType('u13', '2026-10-22')).toBeNull();
   });
 });
 

@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.11.0
+version: 0.15.0
 creado: 2026-10-18
-actualizado: 2026-10-20
+actualizado: 2026-11-09
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -95,10 +95,15 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | DC-01 | Día que cuenta (descanso) | Descanso cumplido: tu día cuenta. n.º {n} · 🔥 {racha} |
 | DC-02 | Día completo | Día completo ⭐ Entreno y comida, los dos. |
 | DC-03 | Línea de semana | {L} {M} {X} {J} {V} {S} {D} |
+| DC-04 | Racha de semanas (desde la primera semana cumplida) | Semanas cumplidas seguidas: {semanas} |
 | RA-01 | Comodín usado | Usé un comodín: tu racha sigue en {racha}. Te queda {comodines}. |
-| RA-02 | Racha reiniciada | Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés? |
+| RA-02 | Racha reiniciada | Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés? [Exprés 15'] |
 | RA-03 | Racha reparada | Racha reparada. Volver también suma. |
 | BR-01 | Bonificación de regreso | Volviste. Eso vale +{xp} puntos. |
+| SM-01 | Semana cumplida (al cerrar el domingo) | Semana cumplida: {sesiones} de {compromiso} sesiones. |
+| MI-01 | Misiones de la semana (al generarlas) | Misiones de la semana. Sesiones: {entreno} · Días con la mitad de comida: {comida} · Días que cuentan: {constancia} |
+| MI-02 | Misión de la semana cumplida | Misión de la semana cumplida: {mision} ({meta}). |
+| LG-01 | Logro desbloqueado (fuera del Reto 66) | Logro: **{nombre}**. Quedó en tu bitácora. |
 | PR-01 | Récord | 🏆 Récord: {ejercicio}, {carga} × {reps}. Quedó en tu bitácora. |
 | PR-02 | Récord con memoria | 🏆 {ejercicio}: {kg} kg × {reps}. Hace {semanas} semanas eran {kg_antes}. |
 | ES-01 | Estancamiento | {ejercicio} está quieto hace {sesiones} sesiones. Es normal. ¿Probamos algo distinto? [Cambiar rango] [Cambiar variante] [Semana suave] |
@@ -108,6 +113,9 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | ES-05 | Sin otra variante | No tengo otra variante de {ejercicio} en el catálogo. Prueba con el rango o la semana suave. |
 | DL-01 | [⚠️ Dolor] | ¿Dónde te duele? [Hombro] [Codo] [Muñeca] [Espalda] [Cadera] [Rodilla] [Tobillo] [Otra zona] |
 | DL-02 | Sin variante sin dolor | No tengo otra variante para ese ejercicio en esta versión: pasamos al siguiente. |
+
+> - **MI-02:** `{mision}` es el rótulo de la misión, el mismo de MI-01: `Sesiones` (entreno), `Días con la mitad de comida` (comida) o `Días que cuentan` (constancia). `{meta}` es su número. Los avisos de §2 que salen del cierre (RA-01, RA-02, BR-01, SM-01, MI-01, MI-02, LG-01, RE-01 a RE-05) se muestran en la próxima interacción, sin botones salvo RA-02 (decisión del PO, 2026-11-08).
+> - **DC-03:** cada variable es la letra del día seguida de su marca, sin espacio (`L✅`). Marcas: `⭐` completo · `✅` cuenta · `⬜` pendiente (hoy, o un día anterior mientras dura su gracia) · `–` cerrado sin contar o salvado con un comodín · `·` todavía no llega. La raya es neutra: nunca una ✗ (constitución I). La línea va en su propio renglón debajo de SE-01, SE-02, SE-03, DC-01 y HY-02, y al final de 🏋️ Hoy (V2 de [[cada-dia-cuenta]]).
 
 
 ### 2.1 Plan de la semana (`/plan`, T-040)

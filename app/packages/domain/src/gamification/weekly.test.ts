@@ -9,6 +9,8 @@ import {
   evaluateWeek,
   generateWeeklyQuests,
   habitForged,
+  nextWeekStreak,
+  questsReached,
   seasonOf,
   weekStartOf,
   weeklyCommitment,
@@ -49,6 +51,20 @@ describe('RN-GAM-004 · semana cumplida', () => {
     expect(evaluateWeek({ planned: 4, completed: 0, paused: true })).toEqual({ evaluated: false });
     expect(evaluateWeek({ planned: 0, completed: 0, paused: false })).toEqual({ evaluated: false });
   });
+
+  it('T-062 · racha de semanas: cumplida suma, no cumplida vuelve a 0, no evaluada no cambia', () => {
+    const fulfilled = evaluateWeek({ planned: 3, completed: 2, paused: false });
+    const missed = evaluateWeek({ planned: 3, completed: 1, paused: false });
+    const paused = evaluateWeek({ planned: 3, completed: 0, paused: true });
+    expect(nextWeekStreak(2, fulfilled)).toBe(3);
+    expect(nextWeekStreak(2, missed)).toBe(0);
+    expect(nextWeekStreak(2, paused)).toBe(2);
+  });
+
+  it('RN-SEG-007 · FR-005-07 · con señal de riesgo al cerrar, la racha de semanas no se rompe', () => {
+    const missed = evaluateWeek({ planned: 3, completed: 1, paused: false });
+    expect(nextWeekStreak(2, missed, true)).toBe(2);
+  });
 });
 
 describe('RN-GAM-008 · misiones semanales', () => {
@@ -73,6 +89,23 @@ describe('RN-GAM-008 · misiones semanales', () => {
     })) {
       expect(quest.target).toBe(1);
     }
+  });
+
+  it('T-063 · una misión se alcanza cuando lo logrado en la semana llega a su meta', () => {
+    const quests = generateWeeklyQuests({ sessions: 3, nutritionHalfDays: 4, countedDays: 5 });
+    const [training, nutrition] = quests;
+    expect(
+      questsReached(quests, {
+        sessions: training?.target ?? 0,
+        nutritionHalfDays: (nutrition?.target ?? 0) - 1,
+        countedDays: 0,
+      }),
+    ).toEqual(['TRAINING']);
+    expect(questsReached(quests, { sessions: 9, nutritionHalfDays: 9, countedDays: 9 })).toEqual([
+      'TRAINING',
+      'NUTRITION',
+      'CONSISTENCY',
+    ]);
   });
 
   it('propiedad: la meta nunca es mayor que lo logrado (salvo el mínimo de 1)', () => {

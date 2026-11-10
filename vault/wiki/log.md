@@ -455,3 +455,137 @@ relacionados: [index, inicio]
   - T-053 y T-054 (IA), por decisión del PO.
   - Pedir el peso en `/progreso` (SPEC-004 §8) llega con M8.
   - SPEC-004 sigue en `borrador` mientras falten HU-004-4/5.
+
+## [2026-11-08] decision | M6 · día que cuenta y juego: lecturas aprobadas por el PO
+- **Avisos del cierre** (comodín usado, racha reiniciada con oferta de reparar, bonificación de regreso): se muestran en la **próxima interacción** (🏋️ Hoy o al registrar algo). El cierre corre a las 12:00 del día siguiente y la bandeja de salida es de T-070. Así ningún módulo envía proactivos por fuera del motor (constitución III). RA-01 a RA-03 ya estaban en la §2 de [[plantillas-de-mensajes]] como respuestas no proactivas. El envío proactivo llega con T-071.
+- **Día con señal de riesgo** (FR-005-07, RN-SEG-007): el día que cuenta sigue sumando al total, porque no es una mecánica (FR-005-06). La racha **puede sumar, nunca romperse**: si el día cuenta, sube en silencio; si no, no se rompe ni gasta comodín. Ese día no hay XP, ni comodín ganado, ni logros, ni mensajes de juego. Aplica desde T-061.
+- **Línea de la semana (DC-03):** un día cerrado que no contó, o que salvó un comodín, se marca con `–`. Es una raya neutra: nunca una ✗ y sin emoji nuevo. Actualizado V2 de [[cada-dia-cuenta]] y la nota de DC-03.
+- **Racha de semanas** ([[spec-005-dia-que-cuenta-y-gamificacion]] §10): se adopta la propuesta de la spec. La racha diaria se muestra desde el día 1 y la de semanas desde que se cierra la primera semana cumplida (T-062).
+- **Parámetro nuevo P-096** (`scheduler.intervalSeconds` = 60 s): el ciclo del planificador del [[plan-tecnico]] §6 ("cada minuto"), para no dejar el número en el código ([[parametros]] v0.9.0).
+
+## [2026-11-08] implementar | T-060 Cierre de día programado e idempotente; día que cuenta y línea de la semana
+- **Cierre programado** (`app/apps/server/src/scheduler/close-days.ts`, FR-005-02): cada ciclo (P-096) cierra, en orden, los días de cada usuario activo con el onboarding hecho cuya gracia terminó (RN-DQC-005, `lastClosableDate`).
+  - Evalúa el día con sus fuentes, lo guarda cerrado y lo suma al total (RN-DQC-007).
+  - Un día sin registros también se cierra: no cuenta, pero no resta.
+  - Es idempotente: el estado guarda el último día cerrado; cerrar otra vez no cambia nada ni repite el evento.
+  - El tipo del día es el que tenía al registrarse. Sin registros, es el del plan guardado o, si esa semana nunca se guardó, el que el plan le habría dado, sin guardarlo ni emitir `plan_generated` (`plannedDayType`).
+- **Ciclo** (`scheduler/loop.ts`): un tic al arrancar y uno cada P-096. Un tic no se solapa con otro y un error se registra (`scheduler_tick_failed`) sin detener el ciclo. Se arranca y se detiene con el bot en `main.ts`.
+- **Semana en una línea** (HU-005-1, DC-03): `weekMarks` en el dominio y `renderWeekLine` en el contenido. Va debajo de SE-01/02/03, DC-01/DC-02, HY-02 y al final de 🏋️ Hoy. Un día anterior sigue ⬜ mientras dura su gracia.
+- **Evento:** `day_closed` (fecha, tipo, cuenta, completo, fuente: `session`·`nutrition`·`mobility`·`none`), con esquema estricto.
+- **Repositorios:** `days.close` crea el día cerrado si no tenía registros; `days.dayType`; `history` con `complete`; `streak_states.applyDayClose` dice si aplicó; `lastClosedDate`; `users.listActive`.
+- **HU-005-1 escenario 4** ya lo cubrían HY-01 y PL-01 con su botón; ahora también muestran la semana.
+- **Pruebas:** `scheduler/close-days.test.ts` (gracia, "La hice tal cual" dentro de la gracia, idempotencia, registro tardío, días sin abrir el bot, usuario en pausa), `scheduler/loop.test.ts`, `day/week-line.test.ts` y la prueba de `lastClosableDate`.
+- **Pendiente:**
+  - Con `/pausa` (T-073), decidir si los días en pausa se cierran al volver o se saltan. Hoy un usuario en pausa no se cierra.
+  - La racha, la reparación y los avisos llegan en T-061.
+
+## [2026-11-09] decision | RN-GAM-003 · misión de regreso: cualquier sesión y exprés en descanso
+- **Problema:** la oferta de reparar (RA-02) llega al cerrar el día fallado (12:00 del día siguiente). Con un plan L-X-V, ese día casi siempre es de descanso, y en descanso no se podía iniciar ninguna sesión: [Exprés 15'] no hacía nada.
+- **Decisión del PO:**
+  - En un día de descanso, [Exprés 15'] de RA-02 abre la versión exprés de la sesión planificada que no se hizo (si no hay, la siguiente del plan), con la fecha de hoy. La rotación del plan no cambia. Entrenar en descanso cuenta (RN-DQC-006) y RN-SEG-008 sigue vigilando el sobreuso.
+  - Repara cualquier sesión completada (A, B o C) más la mitad de comida, el mismo día y dentro de P-035 horas. La exprés es el mínimo; hacer más no impide reparar.
+- **Cambios:** [[reglas-de-negocio]] v0.6.0 (RN-GAM-003) y [[sistema-de-gamificacion]]. En el dominio, `RepairAttempt.expressSessionDone` pasa a `sessionCompleted`. RA-02 lleva el botón [Exprés 15'] ([[plantillas-de-mensajes]] v0.13.0).
+
+## [2026-11-09] implementar | T-061 Racha, comodines, reparación y regreso
+- **Dominio:**
+  - `closePlayerDay` (`gamification/day-close.ts`) cierra un día para el juego en un solo paso puro: total (RN-DQC-007), racha y comodines (RN-GAM-001/002), oferta de reparación (RN-GAM-003) y bonificación de regreso (RN-GAM-013).
+  - Día con señal de riesgo (FR-005-07, decisión del 2026-11-08): la racha puede subir, pero no se rompe, no gasta ni gana comodín y no hay bonificación.
+  - `StreakState.longest`.
+  - `liveCountedDays` parte de lo ya cerrado, así que una racha reparada se ve en vivo.
+- **Estado guardado:** `streak_states` guarda todo el estado del juego con `rev`. El cierre y la reparación se guardan solo si `rev` no cambió, y un documento de T-060 se lee como versión 0 ([[modelo-de-datos]] v0.2.0).
+- **Avisos en la próxima interacción:** colección `notices`. Al cerrar se guardan RA-01 (comodín usado) y RA-02 (racha reiniciada con oferta de reparar). Se muestran al abrir 🏋️ Hoy o al registrar una sesión, una comida o la movilidad.
+  - Tras varios días sin abrir el bot, solo el más reciente de cada plantilla.
+  - RA-02 solo mientras el plazo siga abierto.
+  - Sin avisos con el juego desactivado (FR-005-06) o con señal de riesgo ese día.
+- **Reparación en vivo** (`days/day-status.ts`): al registrar una sesión o la mitad de comida, si hay oferta abierta y el día tiene las dos cosas, la racha vuelve (`streak_repaired`, RA-03). `sessions/session.ts` · `repairSessionFor` elige la sesión de la misión de regreso.
+- **Eventos con esquema estricto:** `streak_extended`, `freeze_earned`, `freeze_used`, `streak_reset`, `streak_repair_offered`, `streak_repaired` (solo números).
+- **Pruebas:** `gamification/day-close.test.ts` (idempotencia, regreso, señal de riesgo, invariantes con fast-check: SC-005-1 para el total y la racha), `scheduler/streak-close.test.ts` (HU-005-2 escenarios 1 y 2, comodín ganado, reparación con exprés en descanso y con sesión completa, plazo vencido, señal de riesgo, juego desactivado) y las de los repositorios.
+- **Pendiente:** la bonificación de regreso (HU-005-4) queda calculada en el cierre (`comebackBonus`, `comebackPending`). Su XP y BR-01 llegan con T-062, porque la bonificación es XP.
+
+## [2026-11-09] implementar | T-062 XP, niveles y semana cumplida
+- **Libro de XP** (`xp_ledger`, FR-005-03, `days/xp.ts`):
+  - Cada hecho que da XP tiene su clave (`refId`): el mismo hecho no suma dos veces (índice único `userId+refId`, [[modelo-de-datos]] v0.3.0).
+  - Monto de P-038 con el tope diario P-039 del día al que se suma (RN-GAM-005, RN-DQC-006).
+  - Un día con señal de riesgo no da XP (FR-005-07).
+  - Solo se guardan movimientos positivos (RN-GAM-006).
+- **Qué suma:**
+  - La sesión al terminarla, según su versión.
+  - La mitad de comida, la misión de descanso y el día completo, una vez por día.
+  - El récord personal (pendiente desde T-044).
+  - La bonificación de regreso al cerrar el día (RN-GAM-013, HU-005-4), con BR-01 en la próxima interacción.
+  - La semana cumplida al cerrar el domingo.
+- **Niveles** (RN-GAM-007): al cruzar un umbral de P-040 se emite `level_up`, se guarda el logro del nivel (`L2`…`L10`, `achievement_unlocked`) y queda RE-02 para la próxima interacción. Por ahora RE-02 va sin su botón [Ver progreso]: `/progreso` llega con M8.
+- **Semana cumplida** (RN-GAM-004, HU-005-5, `scheduler/close-week.ts`):
+  - Al cerrar el último día de la semana se cuentan las sesiones completadas frente al compromiso y se guarda en `weeks`.
+  - Cumplida: XP, SM-01 y racha de semanas +1 (`nextWeekStreak`). No cumplida: la racha de semanas vuelve a 0, sin aviso ni lenguaje de fracaso.
+  - Una semana sin plan guardado se evalúa con el plan que se habría generado (`plannedWeekDays`), sin guardarlo.
+- **Racha de semanas en la línea** (SPEC-005 §10, decisión del 2026-11-08): DC-04 va debajo de DC-03 desde la primera semana cumplida.
+- **Textos nuevos** (redactados por Claude, [[plantillas-de-mensajes]] v0.14.0), pendientes de revisión del PO en el PR:
+  - DC-04 "Semanas cumplidas seguidas: {semanas}".
+  - SM-01 "Semana cumplida: {sesiones} de {compromiso} sesiones.", sin mencionar puntos porque el tope del domingo puede dejarlos en 0.
+- **Eventos con esquema estricto:** `xp_awarded` (evento, monto), `level_up` (nivel), `week_closed` (cumplida, sesiones, compromiso) y `achievement_unlocked` (código).
+- **Pruebas:** `scheduler/xp-week.test.ts` (HU-005-3 escenarios 1 y 2, tope diario, idempotencia, señal de riesgo, HU-005-4, HU-005-5 cumplida y no cumplida) y `weekly.test.ts` (`nextWeekStreak`).
+
+## [2026-11-09] decision | M6 · misiones, logros, liga, temporadas y sobreuso
+- **Misiones semanales (T-063):** se avisan al generarse (MI-01) y al cumplirse (MI-02, con su XP), en la próxima interacción. Sin comando nuevo.
+- **Logros (T-063):** cada logro del catálogo se anuncia con un texto genérico (LG-01). El Reto 66 conserva RE-01 y RE-05.
+- **Liga personal y temporadas (T-064, *Could*):** se hace la liga personal (mejor semana propia, RE-03). Las **temporadas quedan fuera de la Fase 0** hasta que el PO defina temas, metas e insignias (RN-GAM-010 sigue en la bóveda; HU-005-8 escenario 2 queda pendiente).
+- **Sobreuso (T-065):** [Ajustar plan] de CU-06 muestra el plan de la semana (PN-01) mientras no exista T-045. [Sí, descanso] responde HN-02. CU-06 no cambia.
+
+## [2026-11-09] implementar | T-063 Misiones semanales, Reto 66 y logros (Should)
+- **Misiones** (`scheduler/quests.ts`, RN-GAM-008, HU-005-6):
+  - Al cerrar un día se asegura que la semana del día siguiente tenga sus 3 misiones (colección `quests`, una por semana, [[modelo-de-datos]] v0.4.0). La primera semana van con el mínimo; después, P-041 × lo logrado la semana anterior (`weeks` guarda ahora `nutritionHalfDays`).
+  - Con cada cierre se revisan las misiones de la semana del día cerrado (`questsReached`). Una cumplida suma su XP una vez (P-038).
+  - Eventos `quest_generated` (metas) y `quest_completed` (tipo).
+- **Logros** (`days/achievements.ts`, RN-GAM-011, RN-GAM-012, HU-005-7): cada logro se guarda una vez en la bitácora y se anuncia en la próxima interacción.
+  - Reto 66 con RE-01 por capítulo (P-044) y RE-05 al llegar a P-043.
+  - El resto con LG-01: primera sesión, primera en casa o exprés, primer día completo, 100/200/365 días, primera semana cumplida, 4 y 12 semanas seguidas, semana de proteína, regreso tras 7+ días, racha reparada, primer récord y 10 récords.
+  - Los números salen del catálogo ([[catalogo-de-logros-y-niveles]]): los códigos (`DQC_100`, `WEEKS_4`) y las condiciones ("7 días seguidos", "7+ días").
+- **Lectura propia, para revisión del PO:** con el juego desactivado o una señal de riesgo ese día, el logro **se guarda pero no se anuncia**. La decisión del 2026-11-08 dice "ni logros" ese día, pero los logros por umbral (Reto 66, 100 días) no se repiten, así que no guardarlos sería perderlos (constitución I).
+- **Corrección:** de los avisos pendientes solo se resumen los que se reemplazan (RA-01, RA-02, MI-01). Antes también se resumían los logros, y si caían dos el mismo día se perdía uno.
+- **Textos nuevos** (redactados por Claude, [[plantillas-de-mensajes]] v0.15.0), pendientes de revisión del PO: MI-01, MI-02 (con los rótulos de su nota) y LG-01.
+- **Pruebas:** `scheduler/quests-achievements.test.ts` (generación, dificultad, misión cumplida una vez, Reto 66 capítulo 1 y hábito forjado, LG-01 una vez, señal de riesgo) y `weekly.test.ts` (`questsReached`). Además, las pruebas de fin de sesión y de comida buscan su mensaje entre los avisos de logros que ahora lo siguen.
+
+## [2026-11-09] implementar | T-064 Liga personal (Could; sin temporadas)
+- **Liga personal** (`scheduler/close-week.ts`, RN-GAM-009, HU-005-8 escenario 1): al cerrar la semana se compara solo con las semanas anteriores del mismo usuario (`compareWithOwnHistory`), en días que cuentan.
+  - Si supera su mejor semana y hay al menos una anterior: RE-03 en la próxima interacción.
+  - La primera vez, además, el logro `BEST_WEEK` en la bitácora; después solo RE-03.
+  - No existe ninguna comparación entre usuarios.
+- **Temporadas (RN-GAM-010):** no se implementan. Quedan como `[NEEDS CLARIFICATION]` en [[spec-005-dia-que-cuenta-y-gamificacion]] §10 hasta que el PO defina temas, metas e insignias. `seasonOf` sigue en el dominio con sus pruebas.
+- **Pruebas:** `scheduler/league.test.ts` (nueva mejor semana, segunda mejor semana sin repetir el logro, semana que no supera, primera semana).
+
+## [2026-11-09] implementar | T-065 Señal de sobreuso y respuesta de cuidado CU-06 (Should)
+- **Más de P-063 sesiones en un día** (`sessions/finish.ts`, RN-SEG-008, HU-009-5): al completar la sesión n.º P-063 + 1 del día se responde CU-06 y se emite `overuse_signal` (`sessions_per_day`), una sola vez ese día.
+- **Todos los descansos entrenados durante P-064 semanas** (`scheduler/close-week.ts`): `weeks` guarda los descansos del plan y en cuántos se completó una sesión ([[modelo-de-datos]] v0.5.0). Al cerrar la semana, `overuseSignal` del dominio decide; si hay señal, CU-06 queda para la próxima interacción y se emite `overuse_signal` (`rest_days`).
+- CU-06 es una respuesta de cuidado: sale aunque el juego esté desactivado.
+- **Botones de CU-06** (decisión del PO, 2026-11-09): [Sí, descanso] responde HN-02; [Ajustar plan] muestra el plan de la semana (PN-01) hasta que exista T-045.
+- **Para revisión del PO** (CU-06 está marcada `[VALIDAR-PROFESIONAL]`): el texto dice "vienes entrenando también en tus descansos", que encaja con la señal semanal pero no del todo con la de varias sesiones en un mismo día. No se cambió; si se quiere, una variante para ese caso necesita revisión profesional.
+- **Pruebas:** `scheduler/overuse.test.ts` (tercera sesión del día, dos sesiones sin señal, botones de CU-06, dos semanas entrenando todos los descansos, una semana con descanso).
+
+## [2026-11-09] hito | M6 · Día que cuenta y juego (SPEC-005): T-060 a T-065 hechas
+- [[spec-005-dia-que-cuenta-y-gamificacion]] sigue en `borrador`: falta HU-005-8 escenario 2 (temporadas), fuera de la Fase 0 por decisión del PO, y los nombres de los niveles se validan en H1.
+- **Pendientes que quedan:**
+  - Temporadas (RN-GAM-010).
+  - Días en pausa con `/pausa` (T-073).
+  - Envío proactivo de los avisos del cierre con la bandeja (T-070/T-071).
+  - [Ver progreso] y [Ver bitácora] con `/progreso` y `/logros` (M8).
+  - T-045 (ajustar días) para [Ajustar plan] de CU-06.
+
+## [2026-11-09] implementar | M6 · correcciones tras la revisión de código
+Revisión de todo el código de M6 con un agente revisor. Corregido:
+- **Arranque con una base existente:** `ensureIndexes` falla si un índice cambió de opciones (`quests` pasó a único en T-063). Ahora borra y recrea ese índice, sin tocar los datos. Hay prueba con el índice viejo.
+- **Cierre resistente a fallos (FR-005-02):** los efectos del cierre (XP, avisos, semana, misiones, logros) van antes de guardar el estado. Todos tienen clave, así que si algo falla, el ciclo siguiente repite el día sin duplicar ni perder nada. Los eventos de medición pueden repetirse en ese caso.
+- **Un usuario con error ya no detiene el cierre de los demás:** se registra `day_close_failed` y se sigue.
+- **RN-GAM-003:**
+  - Un segundo día sin contar ya no borra una oferta de reparación vigente, y `streak_reset` solo sale si había racha.
+  - La reparación se intenta también después del cierre, para cuando la misión se hizo antes de que existiera la oferta. Si choca con el cierre (`rev`), se reintenta una vez.
+- **Misiones y señal de riesgo (FR-005-07):** ese día no se evalúan, así que la misión se cumple con un cierre posterior y no pierde su XP. El XP y el aviso van antes de marcarla cumplida.
+- **RN-DQC-001:** al terminar una sesión, el día se guarda con el tipo del plan y no siempre como entreno. Así "completo" ya no depende del orden en que se registran la sesión y la comida.
+
+Pendiente, sin cambiar:
+- **Para decisión del PO (RN-GAM-005, P-039):** el tope diario recorta los bonos del cierre (semana cumplida, misiones, regreso), que se suman al día cerrado. Un domingo con 85 XP en vivo y una misión deja 25 de 100 para la semana cumplida. Cambiarlo es una regla nueva.
+- **Riesgos bajos** (Fase 0 corre en un solo proceso):
+  - Detectar la subida de nivel y marcar avisos no es atómico.
+  - Un cierre en curso podría recrear datos de un usuario que se borra en ese mismo instante.
+  - Si el proceso cae entre guardar el XP del regreso y su aviso, BR-01 no se repite.
+  - Terminar una sesión marca la sesión completada antes de sumar el día (patrón de T-043): si falla a mitad, el día no cuenta.

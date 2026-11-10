@@ -3,9 +3,9 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.5.0
+version: 0.6.0
 creado: 2026-10-18
-actualizado: 2026-10-19
+actualizado: 2026-11-09
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
 fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71, F82, F93, F96, F97, F99]
 relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
@@ -102,7 +102,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 |---|---|---|---|
 | RN-GAM-001 | La racha es el número de días que cuentan consecutivos hasta el último día cerrado. | — | `F51` |
 | RN-GAM-002 | Se gana 1 comodín por cada P-033 días que cuentan consecutivos, con un máximo de P-034; se aplica automáticamente a un día que no cuenta y mantiene la racha. | P-033, P-034 | `F45`, `F51` |
-| RN-GAM-003 | Si la racha se rompe sin comodín, durante P-035 horas se ofrece repararla con una misión de regreso (sesión C + mitad de comida); como máximo una reparación cada P-036 días. | P-035, P-036 | `F46` |
+| RN-GAM-003 | Si la racha se rompe sin comodín, durante P-035 horas se ofrece repararla con una misión de regreso (una sesión completada —la exprés, versión C, basta— + mitad de comida, el mismo día); en un día de descanso, la oferta abre la exprés de la sesión que faltó; como máximo una reparación cada P-036 días. | P-035, P-036 | `F46` |
 | RN-GAM-004 | Una semana (lunes a domingo) está cumplida si las sesiones completadas alcanzan el compromiso: planificadas − P-037 si son 3 o más; si no, las planificadas. | P-037, P-070 | ADR-005 |
 | RN-GAM-005 | El XP por evento sigue la tabla P-038, con un tope diario de P-039. | P-038, P-039 | [[sistema-de-gamificacion]] |
 | RN-GAM-006 | El XP acumulado **nunca disminuye**. | — | FB-001-17 |

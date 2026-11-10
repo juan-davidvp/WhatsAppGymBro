@@ -1,7 +1,9 @@
 import { SESSION_NAMES, renderTemplate, templateById } from '@gymbro/content';
 import {
+  PARAMETERS,
   addDays,
   isSessionCompleted,
+  overuseSignal,
   loggingGraceEnd,
   logSessionAsPlanned,
   operationalDate,
@@ -12,9 +14,12 @@ import {
   type SessionExercise,
   type SessionVariant,
 } from '@gymbro/domain';
-import { recordDayActivity, sessionSource } from '../days/day-status.js';
+import { recordDayActivity, sessionSource, withWeekLine } from '../days/day-status.js';
+import { unlockAchievement } from '../days/achievements.js';
+import { overuseCareReply, takeNotices } from '../days/notices.js';
+import { grantXp } from '../days/xp.js';
 import { button, plain, type Reply } from '../onboarding/replies.js';
-import { ensureWeek } from '../plans/weekly-plan.js';
+import { ensureWeek, plannedDayType } from '../plans/weekly-plan.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
 import type { TrainingDeps } from './deps.js';
 import { checkRecord } from './records.js';
@@ -60,13 +65,28 @@ export async function finishSession(
     await deps.events.emit('session_partial', subject, { variant: session.variant, sets: logged });
     return [{ ...plain('SE-04', { series: logged }), edit: true }];
   }
+  // RN-DQC-001: el tipo del día lo pone el plan, no la actividad. Entrenar en un
+  // descanso cuenta igual (RN-DQC-006) y el día no cambia de tipo según el orden.
   const result = await recordDayActivity(
     user,
     session.date,
-    'TRAINING',
+    await plannedDayType(user, session.date, deps),
     sessionSource(session.id),
     deps,
   );
+  // RN-GAM-005 (HU-005-3): XP de la sesión según su versión, con el tope del día.
+  await grantXp(
+    user,
+    session.date,
+    { type: 'SESSION', variant: session.variant },
+    `session:${session.id}`,
+    deps,
+  );
+  // RN-GAM-011: primera sesión y primera en casa o exprés (versión B o C).
+  await unlockAchievement(user, 'FIRST_SESSION', session.date, session.variant, deps);
+  if (session.variant !== 'GYM') {
+    await unlockAchievement(user, 'FIRST_HOME', session.date, session.variant, deps);
+  }
   await deps.events.emit('session_completed', subject, {
     variant: session.variant,
     sets: logged,
@@ -76,7 +96,32 @@ export async function finishSession(
   const variables: Record<string, string | number> = { n: result.total, racha: result.streak };
   if (template !== 'SE-03') variables['series'] = logged;
   if (template === 'SE-01') variables['record_txt'] = await extras(updated);
-  return [{ ...plain(template, variables), edit: true }];
+  return [
+    { ...withWeekLine(plain(template, variables), result), edit: true },
+    ...(await overuseCare(user, session.date, deps)),
+    ...(await takeNotices(user, deps)),
+  ];
+}
+
+/**
+ * T-065 · RN-SEG-008 (HU-009-5): al pasar de P-063 sesiones completadas en el
+ * día, la respuesta de cuidado CU-06 y `overuse_signal`, una sola vez ese día.
+ */
+async function overuseCare(
+  user: UserRecord,
+  date: LocalDate,
+  deps: TrainingDeps,
+): Promise<Reply[]> {
+  const sessions = await deps.workouts.onDate(user.id, date);
+  const done = sessions.filter((s) => s.status === 'completed').length;
+  if (done !== PARAMETERS.safety.maxSessionsPerDay + 1) return [];
+  if (!overuseSignal({ sessionsToday: done, recentWeeks: [] })) return [];
+  await deps.events.emit(
+    'overuse_signal',
+    { userId: user.id, timezone: user.timezone },
+    { reason: 'sessions_per_day' },
+  );
+  return [overuseCareReply()];
 }
 
 /** HU-003-2: "La hice tal cual" registra todas las series como estaban planeadas, en 1 toque. */

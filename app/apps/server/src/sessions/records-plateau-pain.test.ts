@@ -1,4 +1,4 @@
-import { EXERCISES, renderTemplate, templateById } from '@gymbro/content';
+import { EXERCISES, renderTemplate, renderWeekLine, templateById } from '@gymbro/content';
 import {
   PARAMETERS,
   alternateGoal,
@@ -94,8 +94,9 @@ describe('HU-003-4 · RN-ENT-005 · T-044 · récords personales', () => {
     const texts = flow.calls
       .filter((c) => c.method === 'editMessageText' || c.method === 'sendMessage')
       .map((c) => String(c.payload['text']));
+    const weekLine = renderWeekLine(['COUNTED', ...Array<'FUTURE'>(6).fill('FUTURE')]);
     expect(texts).toContain(
-      renderTemplate('SE-01', { series: total, record_txt: recordTxt, n: 1, racha: 1 }),
+      `${renderTemplate('SE-01', { series: total, record_txt: recordTxt, n: 1, racha: 1 })}\n${weekLine}`,
     );
   });
 });

@@ -293,6 +293,13 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: [],
   },
   {
+    id: 'DC-04',
+    kind: 'response',
+    when: 'Racha de semanas (desde la primera semana cumplida)',
+    text: 'Semanas cumplidas seguidas: {semanas}',
+    buttons: [],
+  },
+  {
     id: 'RA-01',
     kind: 'response',
     when: 'Comodín usado',
@@ -304,7 +311,7 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     kind: 'response',
     when: 'Racha reiniciada',
     text: 'Tu racha arranca de nuevo, pero tus {total} días que cuentan siguen ahí. ¿Reparamos con una exprés?',
-    buttons: [],
+    buttons: ["Exprés 15'"],
   },
   {
     id: 'RA-03',
@@ -318,6 +325,34 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     kind: 'response',
     when: 'Bonificación de regreso',
     text: 'Volviste. Eso vale +{xp} puntos.',
+    buttons: [],
+  },
+  {
+    id: 'SM-01',
+    kind: 'response',
+    when: 'Semana cumplida (al cerrar el domingo)',
+    text: 'Semana cumplida: {sesiones} de {compromiso} sesiones.',
+    buttons: [],
+  },
+  {
+    id: 'MI-01',
+    kind: 'response',
+    when: 'Misiones de la semana (al generarlas)',
+    text: 'Misiones de la semana. Sesiones: {entreno} · Días con la mitad de comida: {comida} · Días que cuentan: {constancia}',
+    buttons: [],
+  },
+  {
+    id: 'MI-02',
+    kind: 'response',
+    when: 'Misión de la semana cumplida',
+    text: 'Misión de la semana cumplida: {mision} ({meta}).',
+    buttons: [],
+  },
+  {
+    id: 'LG-01',
+    kind: 'response',
+    when: 'Logro desbloqueado (fuera del Reto 66)',
+    text: 'Logro: **{nombre}**. Quedó en tu bitácora.',
     buttons: [],
   },
   {

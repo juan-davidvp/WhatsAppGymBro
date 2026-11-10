@@ -1,7 +1,9 @@
 import {
   PARAMETERS,
-  closeDay,
   type ExerciseAdjustment,
+  type PlayerState,
+  type QuestKind,
+  type XpLedgerEntry,
   type PlannedSession,
   type WeeklyPlan,
   type ConsentCategory,
@@ -34,6 +36,8 @@ import {
   type FavoriteMealsRepository,
   type MealRecord,
   type MealsRepository,
+  type NoticeRecord,
+  type NoticesRepository,
   type ProcessedUpdatesRepository,
   type RiskSignalsRepository,
   type SetEntriesRepository,
@@ -42,6 +46,11 @@ import {
   type UserProfile,
   type UserRecord,
   type UsersRepository,
+  type QuestsRepository,
+  type WeekRecord,
+  type WeeksRepository,
+  type XpLedgerRecord,
+  type XpLedgerRepository,
 } from '../../ports/repositories.js';
 import { setIdempotencyKey } from './idempotency.js';
 import { COLLECTIONS } from './schema.js';
@@ -79,6 +88,16 @@ export function processedUpdatesRepository(db: Db): ProcessedUpdatesRepository {
 
 interface UserDocument extends Omit<UserRecord, 'id'> {
   _id: ObjectId;
+}
+
+/** Documentos anteriores a T-032 no tienen `profile` ni los contadores del onboarding. */
+function toUserRecord({ _id, ...rest }: UserDocument): UserRecord {
+  return {
+    id: _id.toHexString(),
+    ...rest,
+    profile: { ...EMPTY_PROFILE, ...(rest.profile as Partial<UserProfile> | undefined) },
+    onboarding: { ...ONBOARDING_COUNTERS, ...rest.onboarding },
+  };
 }
 
 export function usersRepository(db: Db): UsersRepository {
@@ -121,14 +140,7 @@ export function usersRepository(db: Db): UsersRepository {
       );
       if (!document) document = await collection.findOne({ telegramUserId });
       if (!document) throw new Error('No se pudo crear el usuario');
-      const { _id, ...rest } = document;
-      // Documentos anteriores a T-032 no tienen `profile` ni los contadores del onboarding.
-      return {
-        id: _id.toHexString(),
-        ...rest,
-        profile: { ...EMPTY_PROFILE, ...(rest.profile as Partial<UserProfile> | undefined) },
-        onboarding: { ...ONBOARDING_COUNTERS, ...rest.onboarding },
-      };
+      return toUserRecord(document);
     },
     async confirmAdult(userId, at) {
       await collection.updateOne(
@@ -155,6 +167,12 @@ export function usersRepository(db: Db): UsersRepository {
         { _id: new ObjectId(userId), 'onboarding.completedAt': null },
         { $set: { 'onboarding.completedAt': at, 'onboarding.step': 'summary' } },
       );
+    },
+    async listActive() {
+      const docs = await collection
+        .find({ status: 'active', 'onboarding.completedAt': { $ne: null } })
+        .toArray();
+      return docs.map(toUserRecord);
     },
     async restartOnboarding(userId, step) {
       await collection.updateOne(
@@ -303,48 +321,253 @@ export function daysRepository(db: Db): DaysRepository {
       const doc = await collection.findOne({ userId, date });
       return (doc?.['sources'] as string[] | undefined) ?? [];
     },
+    async dayType(userId, date) {
+      const doc = await collection.findOne({ userId, date }, { projection: { dayType: 1 } });
+      return (doc?.['dayType'] as DayType | undefined) ?? null;
+    },
     async history(userId) {
       const docs = await collection
-        .find({ userId }, { projection: { _id: 0, date: 1, counted: 1 } })
+        .find(
+          { userId },
+          { projection: { _id: 0, date: 1, counted: 1, complete: 1, nutritionHalf: 1 } },
+        )
         .toArray();
-      return docs.map((d) => ({ date: d['date'] as LocalDate, counted: d['counted'] === true }));
+      return docs.map((d) => ({
+        date: d['date'] as LocalDate,
+        counted: d['counted'] === true,
+        complete: d['complete'] === true,
+        nutritionHalf: d['nutritionHalf'] === true,
+      }));
     },
-    async close(userId: string, date: LocalDate, at: Date) {
-      const result = await collection.updateOne(
-        { userId, date, status: 'open' },
-        { $set: { status: 'closed', closedAt: at } },
-      );
-      return { closedNow: result.modifiedCount === 1 };
+    async close(userId, date, dayType, status, at) {
+      try {
+        const result = await collection.updateOne(
+          { userId, date, status: { $ne: 'closed' } },
+          {
+            $set: {
+              dayType,
+              trainingHalf: status.trainingHalf,
+              nutritionHalf: status.nutritionHalf,
+              restMissionMet: status.nutritionHalf || status.activeRecovery,
+              counted: status.counts,
+              complete: status.complete,
+              status: 'closed',
+              closedAt: at,
+            },
+            $setOnInsert: { userId, date, sources: [] },
+          },
+          { upsert: true },
+        );
+        return { closedNow: result.modifiedCount === 1 || result.upsertedCount === 1 };
+      } catch (error) {
+        // Ya estaba cerrado: el upsert choca con el índice único y el día no cambia.
+        if (isDuplicateKey(error)) return { closedNow: false };
+        throw error;
+      }
     },
   };
   return repository;
 }
 
-interface StreakStateDocument {
-  userId: string;
+/** `streak_states` (modelo de datos §2): el estado del juego en campos planos. */
+interface StreakStateFields {
   totalCountedDays: number;
   lastClosedDate: LocalDate | null;
+  current: number;
+  longest: number;
+  countedRun: number;
+  freezes: number;
+  repairAvailableUntil: string | null;
+  repairRestoreTo: number | null;
+  lastRepairDate: LocalDate | null;
+  comebackPending: boolean;
+  weekStreak: number;
+}
+
+interface StreakStateDocument extends Partial<StreakStateFields> {
+  userId: string;
+  rev?: number;
+}
+
+function toStreakFields(state: PlayerState): StreakStateFields {
+  const { streak } = state;
+  return {
+    totalCountedDays: state.counted.total,
+    lastClosedDate: state.counted.lastClosedDate,
+    current: streak.current,
+    longest: streak.longest,
+    countedRun: streak.countedRun,
+    freezes: streak.freezes,
+    repairAvailableUntil: streak.repair?.offeredUntil ?? null,
+    repairRestoreTo: streak.repair?.restoreTo ?? null,
+    lastRepairDate: streak.lastRepairDate,
+    comebackPending: state.comeback.pending,
+    weekStreak: state.weekStreak,
+  };
+}
+
+/** Documentos de T-060 solo tienen el total y el último día cerrado: el resto parte de cero. */
+function fromStreakDocument(doc: StreakStateDocument): PlayerState {
+  const lastClosedDate = doc.lastClosedDate ?? null;
+  const repair =
+    doc.repairAvailableUntil && doc.repairRestoreTo !== null && doc.repairRestoreTo !== undefined
+      ? { offeredUntil: doc.repairAvailableUntil, restoreTo: doc.repairRestoreTo }
+      : null;
+  return {
+    counted: { total: doc.totalCountedDays ?? 0, lastClosedDate },
+    streak: {
+      current: doc.current ?? 0,
+      longest: doc.longest ?? 0,
+      countedRun: doc.countedRun ?? 0,
+      freezes: doc.freezes ?? 0,
+      repair,
+      lastRepairDate: doc.lastRepairDate ?? null,
+      lastClosedDate,
+    },
+    comeback: { pending: doc.comebackPending ?? false },
+    weekStreak: doc.weekStreak ?? 0,
+  };
 }
 
 export function streakStatesRepository(db: Db): StreakStatesRepository {
   const collection = db.collection<StreakStateDocument>('streak_states');
   return {
-    async applyDayClose(userId, day) {
-      await insertIfAbsent(() =>
-        collection.insertOne({ userId, totalCountedDays: 0, lastClosedDate: null }),
+    async get(userId) {
+      const doc = await collection.findOne({ userId });
+      return doc ? { state: fromStreakDocument(doc), rev: doc.rev ?? 0 } : null;
+    },
+    async save(userId, rev, state) {
+      const fields = toStreakFields(state);
+      if (rev === 0) {
+        const { inserted } = await insertIfAbsent(() =>
+          collection.insertOne({ userId, rev: 1, ...fields }),
+        );
+        if (inserted) return true;
+      }
+      // Actualización condicional: si otro proceso cambió el estado antes, no se aplica dos veces.
+      // Un documento de T-060 todavía no tiene `rev`: cuenta como versión 0.
+      const filter =
+        rev === 0 ? { userId, $or: [{ rev: 0 }, { rev: { $exists: false } }] } : { userId, rev };
+      const result = await collection.updateOne(filter, { $set: { ...fields, rev: rev + 1 } });
+      return result.modifiedCount === 1;
+    },
+  };
+}
+
+export function xpLedgerRepository(db: Db): XpLedgerRepository {
+  const collection = db.collection<XpLedgerRecord & { userId: string }>('xp_ledger');
+  const toEntry = ({ date, event, variant, amount }: XpLedgerRecord): XpLedgerEntry => ({
+    date,
+    event,
+    ...(variant ? { variant } : {}),
+    amount,
+  });
+  return {
+    async add(userId, entry) {
+      // RN-GAM-006 y RN-GAM-014: nunca se guarda un movimiento que no sume.
+      if (!(entry.amount > 0)) return { inserted: false };
+      return insertIfAbsent(() => collection.insertOne({ userId, ...entry }));
+    },
+    async onDate(userId, date) {
+      return (await collection.find({ userId, date }).toArray()).map(toEntry);
+    },
+    async total(userId) {
+      const [sum] = await collection
+        .aggregate<{ total: number }>([
+          { $match: { userId } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ])
+        .toArray();
+      return sum?.total ?? 0;
+    },
+  };
+}
+
+export function weeksRepository(db: Db): WeeksRepository {
+  const collection = db.collection<WeekRecord & { userId: string }>('weeks');
+  return {
+    async save(userId, week) {
+      await insertIfAbsent(() => collection.insertOne({ userId, ...week }));
+    },
+    async list(userId) {
+      const docs = await collection.find({ userId }).sort({ weekStart: 1 }).toArray();
+      return docs.map((d) => ({
+        weekStart: d.weekStart,
+        planned: d.planned,
+        completed: d.completed,
+        commitment: d.commitment,
+        fulfilled: d.fulfilled,
+        countedDays: d.countedDays,
+        nutritionHalfDays: d.nutritionHalfDays ?? 0,
+        restDaysPlanned: d.restDaysPlanned ?? 0,
+        restDaysTrained: d.restDaysTrained ?? 0,
+      }));
+    },
+  };
+}
+
+interface QuestDocument {
+  userId: string;
+  weekStart: LocalDate;
+  items: { code: QuestKind; target: number; progress: number; done: boolean }[];
+}
+
+export function questsRepository(db: Db): QuestsRepository {
+  const collection = db.collection<QuestDocument>('quests');
+  return {
+    async get(userId, weekStart) {
+      const doc = await collection.findOne({ userId, weekStart });
+      return doc ? doc.items.map((i) => ({ kind: i.code, target: i.target, done: i.done })) : null;
+    },
+    async create(userId, weekStart, quests) {
+      const items = quests.map((q) => ({
+        code: q.kind,
+        target: q.target,
+        progress: 0,
+        done: false,
+      }));
+      const { inserted } = await insertIfAbsent(() =>
+        collection.insertOne({ userId, weekStart, items }),
       );
-      const current = await collection.findOne({ userId });
-      const next = closeDay(
-        { total: current?.totalCountedDays ?? 0, lastClosedDate: current?.lastClosedDate ?? null },
-        day,
+      return { created: inserted };
+    },
+    async markDone(userId, weekStart, kind) {
+      const result = await collection.updateOne(
+        { userId, weekStart, items: { $elemMatch: { code: kind, done: false } } },
+        { $set: { 'items.$.done': true } },
       );
-      // Actualización condicional: si otro proceso cerró este día antes, no se suma dos veces.
-      await collection.updateOne(
-        { userId, lastClosedDate: current?.lastClosedDate ?? null },
-        { $set: { totalCountedDays: next.total, lastClosedDate: next.lastClosedDate } },
+      return result.modifiedCount === 1;
+    },
+  };
+}
+
+interface NoticeDocument extends NoticeRecord {
+  userId: string;
+  shownAt: Date | null;
+}
+
+export function noticesRepository(db: Db): NoticesRepository {
+  const collection = db.collection<NoticeDocument>('notices');
+  return {
+    async add(userId, notice) {
+      await insertIfAbsent(() => collection.insertOne({ userId, ...notice, shownAt: null }));
+    },
+    async takePending(userId, at) {
+      const docs = await collection
+        .find({ userId, shownAt: null })
+        .sort({ createdAt: 1, _id: 1 })
+        .toArray();
+      if (docs.length === 0) return [];
+      await collection.updateMany(
+        { _id: { $in: docs.map((d) => d._id) }, shownAt: null },
+        { $set: { shownAt: at } },
       );
-      const after = await collection.findOne({ userId });
-      return { totalCountedDays: after?.totalCountedDays ?? 0 };
+      return docs.map(({ key, templateId, variables, createdAt }) => ({
+        key,
+        templateId,
+        variables,
+        createdAt,
+      }));
     },
   };
 }

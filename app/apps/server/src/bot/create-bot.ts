@@ -19,6 +19,11 @@ import type {
   BodyMeasurementsRepository,
   GoalsRepository,
   DaysRepository,
+  NoticesRepository,
+  QuestsRepository,
+  StreakStatesRepository,
+  WeeksRepository,
+  XpLedgerRepository,
   AchievementsRepository,
   ExerciseAdjustmentsRepository,
   FavoriteMealsRepository,
@@ -68,6 +73,16 @@ export interface BotDependencies {
   plans: PlansRepository;
   setEntries: SetEntriesRepository;
   days: DaysRepository;
+  /** Estado del juego que guarda el cierre de días (T-060, T-061). */
+  streaks: StreakStatesRepository;
+  /** Avisos del cierre para la próxima interacción (T-061). */
+  notices: NoticesRepository;
+  /** Libro de XP (T-062, FR-005-03). */
+  xp: XpLedgerRepository;
+  /** Semanas cerradas (T-062, RN-GAM-004). */
+  weeks: WeeksRepository;
+  /** Misiones semanales (T-063, RN-GAM-008). */
+  quests: QuestsRepository;
   workouts: WorkoutSessionsRepository;
   records: PersonalRecordsRepository;
   achievements: AchievementsRepository;

@@ -35,6 +35,17 @@ export function evaluateWeek(week: {
   return { evaluated: true, commitment, fulfilled: week.completed >= commitment };
 }
 
+/**
+ * RN-GAM-004 (HU-005-5): semanas cumplidas seguidas. Una semana no evaluada (en
+ * pausa o sin sesiones planificadas) no cambia la racha. Con señal de riesgo al
+ * cerrarla (FR-005-07), puede subir pero no romperse.
+ */
+export function nextWeekStreak(current: number, week: WeekResult, riskPaused = false): number {
+  if (!week.evaluated) return current;
+  if (week.fulfilled) return current + 1;
+  return riskPaused ? current : 0;
+}
+
 export type QuestKind = 'TRAINING' | 'NUTRITION' | 'CONSISTENCY';
 
 export interface WeeklyQuest {
@@ -67,6 +78,16 @@ export function generateWeeklyQuests(lastWeek: WeekAchieved | null): WeeklyQuest
     { kind: 'NUTRITION', target: target(lastWeek?.nutritionHalfDays ?? 0) },
     { kind: 'CONSISTENCY', target: target(lastWeek?.countedDays ?? 0) },
   ];
+}
+
+/** RN-GAM-008: misiones cuya meta ya se alcanzó con lo logrado en la semana hasta ahora. */
+export function questsReached(quests: readonly WeeklyQuest[], achieved: WeekAchieved): QuestKind[] {
+  const value: Readonly<Record<QuestKind, number>> = {
+    TRAINING: achieved.sessions,
+    NUTRITION: achieved.nutritionHalfDays,
+    CONSISTENCY: achieved.countedDays,
+  };
+  return quests.filter((q) => value[q.kind] >= q.target).map((q) => q.kind);
 }
 
 /**

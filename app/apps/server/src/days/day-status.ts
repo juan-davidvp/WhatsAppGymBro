@@ -1,18 +1,33 @@
+import { renderTemplate, renderWeekLine } from '@gymbro/content';
 import {
   PARAMETERS,
   evaluateDay,
   liveCountedDays,
+  operationalDate,
+  repairStreak,
+  weekMarks,
+  weekStartOf,
   type DayStatus,
   type DayType,
   type LocalDate,
+  type StreakState,
 } from '@gymbro/domain';
-import type { DaysRepository, UserRecord } from '../ports/repositories.js';
+import type { Reply } from '../onboarding/replies.js';
+import type {
+  DaysRepository,
+  StreakStatesRepository,
+  UserRecord,
+  WorkoutSessionsRepository,
+} from '../ports/repositories.js';
+import { unlockAchievement } from './achievements.js';
+import { hadRiskSignal } from './risk.js';
+import { grantXp, type XpDeps } from './xp.js';
 
 /**
- * Registro del día mientras está abierto (lo mínimo de M6 que adelanta M4).
- * Cada actividad se guarda como fuente del día (`session:<id>` completada,
- * `mobility`, `nutrition_half`), el dominio evalúa el día (RN-DQC-002/003) y se calculan el total
- * y la racha en vivo (RN-GAM-001, RN-DQC-007). El cierre programado es de T-060.
+ * Registro del día mientras está abierto. Cada actividad se guarda como fuente
+ * del día (`session:<id>` completada, `mobility`, `nutrition_half`), el dominio
+ * evalúa el día (RN-DQC-002/003) y se calculan el total y la racha en vivo
+ * (RN-GAM-001, RN-DQC-007) sobre lo que ya guardó el cierre programado (T-060).
  */
 
 export const MOBILITY_SOURCE = 'mobility';
@@ -25,6 +40,43 @@ export interface DayResult {
   /** N.º del día que cuenta (total con hoy) y racha en vivo. */
   readonly total: number;
   readonly streak: number;
+  /** HU-005-1: la semana del día en una línea (DC-03). */
+  readonly weekLine: string;
+}
+
+type HistoryDay = Awaited<ReturnType<DaysRepository['history']>>[number];
+
+/**
+ * HU-005-1 y RN-DQC-002 a 005: DC-03 de la semana de `date`, vista en `now`.
+ * Desde la primera semana cumplida, debajo va la racha de semanas (DC-04;
+ * SPEC-005 §10, decisión del PO del 2026-11-08).
+ */
+function weekLineOf(
+  history: readonly HistoryDay[],
+  date: LocalDate,
+  now: Date,
+  timeZone: string,
+  weekStreak = 0,
+): string {
+  const today = operationalDate(now, timeZone);
+  const line = renderWeekLine(weekMarks(weekStartOf(date), history, today, now, timeZone));
+  return weekStreak > 0 ? `${line}\n${renderTemplate('DC-04', { semanas: weekStreak })}` : line;
+}
+
+/** DC-03 (y DC-04) de la semana de hoy (🏋️ Hoy). */
+export async function weekLineFor(
+  user: UserRecord,
+  deps: { days: DaysRepository; streaks: StreakStatesRepository; clock: () => Date },
+): Promise<string> {
+  const now = deps.clock();
+  const history = await deps.days.history(user.id);
+  const weekStreak = (await deps.streaks.get(user.id))?.state.weekStreak;
+  return weekLineOf(history, operationalDate(now, user.timezone), now, user.timezone, weekStreak);
+}
+
+/** Respuesta de "día que cuenta" con la semana en una línea en su propio renglón. */
+export function withWeekLine(reply: Reply, result: Pick<DayResult, 'weekLine'>): Reply {
+  return { ...reply, text: `${reply.text}\n${result.weekLine}` };
 }
 
 /** RN-DQC-002 y RN-DQC-003: entradas del día a partir de sus fuentes. */
@@ -39,19 +91,116 @@ export function dayInputsFrom(type: DayType, sources: readonly string[]) {
   };
 }
 
-/** Añade una actividad al día, lo evalúa y guarda su estado. */
+/** Lo que necesita el registro del día en vivo (T-060 a T-062). */
+export interface DayDeps extends XpDeps {
+  days: DaysRepository;
+  streaks: StreakStatesRepository;
+  workouts: WorkoutSessionsRepository;
+}
+
+/**
+ * Añade una actividad al día, lo evalúa y guarda su estado. Si hay una
+ * reparación abierta y el día ya tiene la misión de regreso, repara la racha
+ * (RN-GAM-003). El total y la racha en vivo parten de lo ya cerrado (T-061).
+ */
 export async function recordDayActivity(
   user: UserRecord,
   date: LocalDate,
   type: DayType,
   source: string,
-  deps: { days: DaysRepository },
+  deps: DayDeps,
 ): Promise<DayResult> {
   const sources = await deps.days.addSource(user.id, date, type, source);
   const status = evaluateDay(dayInputsFrom(type, sources));
   await deps.days.saveStatus(user.id, date, type, status);
-  const live = liveCountedDays(await deps.days.history(user.id), date, user.timezone);
-  return { status, total: live.total, streak: live.current };
+  await grantDayXp(user, date, type, status, deps);
+  await attemptRepair(user, date, deps);
+  const history = await deps.days.history(user.id);
+  const stored = await deps.streaks.get(user.id);
+  const closed = stored ? { total: stored.state.counted.total, streak: stored.state.streak } : null;
+  const live = liveCountedDays(history, date, user.timezone, closed);
+  return {
+    status,
+    total: live.total,
+    streak: live.current,
+    weekLine: weekLineOf(history, date, deps.clock(), user.timezone, stored?.state.weekStreak),
+  };
+}
+
+/**
+ * RN-GAM-005 (HU-005-3): XP de la mitad de comida, de la misión de descanso y del
+ * día completo, una vez por día (la clave incluye la fecha). La sesión suma su XP
+ * al terminarla (`finishSession`).
+ */
+async function grantDayXp(
+  user: UserRecord,
+  date: LocalDate,
+  type: DayType,
+  status: DayStatus,
+  deps: DayDeps,
+): Promise<void> {
+  if (status.nutritionHalf) {
+    await grantXp(user, date, { type: 'NUTRITION_HALF' }, `nutrition:${date}`, deps);
+  }
+  if (type === 'REST' && (status.nutritionHalf || status.activeRecovery)) {
+    await grantXp(user, date, { type: 'REST_MISSION' }, `rest:${date}`, deps);
+  }
+  if (status.complete) {
+    await grantXp(user, date, { type: 'COMPLETE_DAY_BONUS' }, `complete:${date}`, deps);
+    await unlockAchievement(user, 'FIRST_COMPLETE_DAY', date, null, deps);
+  }
+}
+
+/**
+ * RN-GAM-003 (HU-005-2): la misión de regreso es una sesión completada (la exprés
+ * basta) y la mitad de comida, el mismo día y dentro del plazo de P-035 horas. Con
+ * una señal de riesgo ese día no se repara (FR-005-07): la oferta sigue mientras dure el plazo.
+ */
+export async function attemptRepair(
+  user: UserRecord,
+  date: LocalDate,
+  deps: DayDeps,
+): Promise<void> {
+  if (await hadRiskSignal(user, date, deps)) return;
+  const now = deps.clock();
+  const sessions = await deps.workouts.onDate(user.id, date);
+  const sources = await deps.days.sources(user.id, date);
+  const attempt = {
+    date,
+    at: now,
+    sessionCompleted: sessions.some((s) => s.status === 'completed'),
+    nutritionHalf: sources.includes(NUTRITION_HALF_SOURCE),
+  };
+  // Si el cierre programado guarda a la vez (cambia `rev`), se lee otra vez y se reintenta una vez.
+  const MAX_TRIES = 2;
+  let repaired: StreakState | null = null;
+  for (let attemptNo = 0; attemptNo < MAX_TRIES && !repaired; attemptNo += 1) {
+    const stored = await deps.streaks.get(user.id);
+    if (!stored?.state.streak.repair) return;
+    const result = repairStreak(stored.state.streak, attempt);
+    if (!result.repaired) return;
+    const saved = await deps.streaks.save(user.id, stored.rev, {
+      ...stored.state,
+      streak: result.state,
+    });
+    if (saved) repaired = result.state;
+  }
+  if (!repaired) return;
+  const result = { state: repaired };
+  await deps.events.emit(
+    'streak_repaired',
+    { userId: user.id, timezone: user.timezone },
+    { streak: result.state.current },
+  );
+  await unlockAchievement(user, 'STREAK_REPAIRED', date, result.state.current, deps);
+  if (user.settings.gamificationEnabled) {
+    await deps.notices.add(user.id, {
+      key: `streak_repaired:${date}`,
+      templateId: 'RA-03',
+      variables: {},
+      createdAt: now,
+    });
+  }
 }
 
 /** ¿El día ya cuenta? (para no ofrecer otra vez lo que ya se hizo). */
