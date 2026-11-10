@@ -3,7 +3,7 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.5.0
+version: 0.6.0
 creado: 2026-10-18
 actualizado: 2026-11-09
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
@@ -69,8 +69,8 @@ erDiagram
 | `weeks` | `userId`, `weekStart`, `planned`, `completed`, `commitment`, `fulfilled`, `countedDays`, `nutritionHalfDays`, `restDaysPlanned`, `restDaysTrained` | `userId+weekStart` único | RN-GAM-004; base de las misiones de la semana siguiente (RN-GAM-008), de la liga personal (RN-GAM-009) y de la señal de sobreuso (RN-SEG-008) |
 | `quests` | `userId`, `weekStart`, `items[]` {`code`, `target`, `progress`, `done`} | `userId+weekStart` único | RN-GAM-008. Una sola vez por semana; `code` es `TRAINING`·`NUTRITION`·`CONSISTENCY` |
 | `seasons` | `userId`, `code`, `startDate`, `endDate`, `status` | `userId+startDate` | RN-GAM-010 |
-| `proactive_messages` | `userId`, `purpose`, `templateId`, `scheduledFor`, `status` (`pending`·`sent`·`suppressed`·`cancelled`), `suppressedReason`, `sentAt`, `telegramMessageId`, `actionedAt` | `status+scheduledFor`; `userId+sentAt` | RN-MSJ-001 a 017 |
-| `message_stats` | `userId`, `consecutiveIgnored`, `backoffUntil`, `inactivityPausedAt`, `reactivationsUsed`, `pausedUntil`, `actionRateByPurpose` | `userId` único | RN-MSJ-007 a 009, 013 |
+| `proactive_messages` | `userId`, `key` (propósito + día operativo: una salida por propósito y día), `purpose`, `templateId`, `scheduledFor`, `notAfter`, `reactivation`, `status` (`pending`·`sent`·`suppressed`·`cancelled`), `suppressedReason`, `sentAt`, `telegramMessageId`, `actionedAt`, `createdAt` | `status+scheduledFor`; `userId+sentAt`; `userId+key` único | RN-MSJ-001 a 017. La bandeja de salida (FR-007-02): la plantilla se elige al enviar (RN-MSJ-010) |
+| `message_stats` | `userId`, `consecutiveIgnored`, `backoffUntil`, `inactivityPausedAt`, `reactivationsUsed`, `lastReactivationDate`, `pausedUntil`, `blockedAt` | `userId` único | RN-MSJ-007 a 009, 013, 014. La tasa de acción por propósito se calcula desde `proactive_messages` |
 | `imported_activities` | `userId`, `source`, `type` (`steps`·`workout`), `start`, `end`, `value`, `receivedAt` | `userId+start` | RN-INT-003, RN-INT-004 |
 | `ingestion_tokens` | `userId`, `tokenHash`, `createdAt`, `revokedAt` | `tokenHash` único | RN-INT-003 |
 | `risk_signals` | `userId`, `category`, `at` | `userId+at` | Solo categoría (RN-DAT-005) |

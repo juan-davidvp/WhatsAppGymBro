@@ -21,6 +21,8 @@ import type {
   Weekday,
   WeeklyQuest,
   QuestKind,
+  MessagePurpose,
+  SentMessage,
   XpLedgerEntry,
 } from '@gymbro/domain';
 
@@ -122,6 +124,86 @@ export interface TrainingHabitRecord {
 export interface TrainingHabitsRepository {
   /** RN-PLAN-002: un hábito por usuario; se reemplaza. */
   save(habit: TrainingHabitRecord): Promise<void>;
+  /** Hábito del usuario (hora declarada por día), para los mensajes (RN-MSJ-005). */
+  get(userId: string): Promise<TrainingHabitRecord | null>;
+}
+
+// ── Mensajes proactivos (SPEC-007) ───────────────────────────────────────────
+
+export type OutboxStatus = 'pending' | 'sent' | 'suppressed' | 'cancelled';
+
+/** Salida de la bandeja (`proactive_messages`, FR-007-02). */
+export interface OutboxMessage {
+  readonly id: string;
+  readonly userId: string;
+  /** Propósito + día operativo: una salida por propósito y día. */
+  readonly key: string;
+  readonly purpose: MessagePurpose;
+  readonly scheduledFor: Date;
+  readonly notAfter: Date | null;
+  readonly reactivation: boolean;
+  readonly status: OutboxStatus;
+  readonly suppressedReason: string | null;
+  readonly templateId: string | null;
+  readonly sentAt: Date | null;
+  readonly telegramMessageId: number | null;
+  readonly actionedAt: Date | null;
+}
+
+export type NewOutboxMessage = Pick<
+  OutboxMessage,
+  'userId' | 'key' | 'purpose' | 'scheduledFor' | 'notAfter' | 'reactivation'
+>;
+
+export interface OutboxRepository {
+  /** Programa una salida una sola vez por clave; `created` es false si ya existía. */
+  schedule(message: NewOutboxMessage, at: Date): Promise<{ created: boolean }>;
+  /** Salidas pendientes cuya hora ya llegó, en orden de hora. */
+  due(now: Date): Promise<OutboxMessage[]>;
+  /** Pasa una salida pendiente a enviada; false si ya no estaba pendiente. */
+  markSent(
+    id: string,
+    sent: { templateId: string; sentAt: Date; telegramMessageId: number },
+  ): Promise<boolean>;
+  markSuppressed(id: string, reason: string): Promise<boolean>;
+  /** RN-MSJ-014: cancela todas las pendientes del usuario; devuelve cuántas. */
+  cancelPending(userId: string): Promise<number>;
+  /** Enviadas desde `since` (presupuesto, separación y rotación). */
+  sentSince(userId: string, since: Date): Promise<SentMessage[]>;
+  /** Enviada que corresponde a un mensaje de Telegram (para registrar la acción). */
+  byTelegramMessage(userId: string, telegramMessageId: number): Promise<OutboxMessage | null>;
+  markActioned(id: string, at: Date): Promise<boolean>;
+  /** Enviadas y con acción de un propósito (tasa de acción, RN-MSJ-009). */
+  purposeStats(
+    userId: string,
+    purpose: MessagePurpose,
+  ): Promise<{ sent: number; actioned: number }>;
+}
+
+/** `message_stats` (RN-MSJ-007, 008, 013, 014). */
+export interface MessageStatsRecord {
+  readonly consecutiveIgnored: number;
+  readonly backoffUntil: Date | null;
+  readonly inactivityPausedAt: Date | null;
+  readonly reactivationsUsed: number;
+  readonly lastReactivationDate: LocalDate | null;
+  readonly pausedUntil: Date | null;
+  readonly blockedAt: Date | null;
+}
+
+export const EMPTY_MESSAGE_STATS: MessageStatsRecord = {
+  consecutiveIgnored: 0,
+  backoffUntil: null,
+  inactivityPausedAt: null,
+  reactivationsUsed: 0,
+  lastReactivationDate: null,
+  pausedUntil: null,
+  blockedAt: null,
+};
+
+export interface MessageStatsRepository {
+  get(userId: string): Promise<MessageStatsRecord>;
+  update(userId: string, changes: Partial<MessageStatsRecord>): Promise<void>;
 }
 
 export interface GoalRecord {

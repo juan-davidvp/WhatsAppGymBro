@@ -116,6 +116,9 @@ export async function answerToday(
   switch (value) {
     case 'resume':
       return resumeSession(user, deps);
+    // T-070 · [Ahora no] y [Hoy no] de un mensaje proactivo: solo se registra el toque.
+    case 'dismiss':
+      return [];
     // T-065 · botones de CU-06 (RN-SEG-008).
     case 'care_rest':
       return [plain('HN-02')];

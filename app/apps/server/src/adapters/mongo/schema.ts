@@ -43,7 +43,11 @@ export const COLLECTIONS = {
   weeks: [{ keys: ['userId', 'weekStart'], unique: true }],
   quests: [{ keys: ['userId', 'weekStart'], unique: true }],
   seasons: [{ keys: ['userId', 'startDate'] }],
-  proactive_messages: [{ keys: ['status', 'scheduledFor'] }, { keys: ['userId', 'sentAt'] }],
+  proactive_messages: [
+    { keys: ['status', 'scheduledFor'] },
+    { keys: ['userId', 'sentAt'] },
+    { keys: ['userId', 'key'], unique: true },
+  ],
   message_stats: [{ keys: ['userId'], unique: true }],
   imported_activities: [{ keys: ['userId', 'start'] }],
   ingestion_tokens: [{ keys: ['tokenHash'], unique: true }],

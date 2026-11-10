@@ -243,6 +243,10 @@ export const PARAMETERS = {
     dayClosingAt: '20:00',
     /** P-073 · RN-MSJ-016 · toques máximos de la acción que falta */
     dayClosingMaxTaps: 2,
+    /** P-097 · FR-007-08 · intentos de envío ante límite de tasa o fallo temporal */
+    sendMaxAttempts: 3,
+    /** P-098 · FR-007-08 · segundos de la primera espera (luego se duplica) */
+    sendRetryBaseSeconds: 1,
   },
   scheduler: {
     /** P-096 · FR-005-02 · segundos entre ciclos del planificador (plan técnico §6) */

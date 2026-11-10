@@ -29,9 +29,16 @@ import {
   weeksRepository,
   xpLedgerRepository,
 } from './adapters/mongo/repositories.js';
+import {
+  messageStatsRepository,
+  outboxRepository,
+} from './adapters/mongo/messaging-repositories.js';
 import { closeDueDays } from './scheduler/close-days.js';
 import { startScheduler } from './scheduler/loop.js';
-import { createBot } from './bot/create-bot.js';
+import { createBot, type BotDependencies } from './bot/create-bot.js';
+import { dispatchDue } from './messaging/dispatch.js';
+import { scheduleCandidates } from './messaging/schedule.js';
+import { telegramSender } from './messaging/sender.js';
 import { loadConfig } from './config.js';
 import { createEventEmitter } from './events/emitter.js';
 import { createLogger } from './logger.js';
@@ -86,39 +93,40 @@ async function main(): Promise<void> {
     const xp = xpLedgerRepository(db);
     const weeks = weeksRepository(db);
     const quests = questsRepository(db);
+    const habits = trainingHabitsRepository(db);
+    const outbox = outboxRepository(db);
+    const messageStats = messageStatsRepository(db);
 
-    const bot = createBot({
-      token: config.telegramBotToken,
-      logger,
-      clock,
-      deps: {
-        processedUpdates: processedUpdatesRepository(db),
-        users,
-        riskSignals,
-        consents: consentsRepository(db),
-        screenings: screeningsRepository(db),
-        eraser: userDataEraser(db),
-        bodyMeasurements: bodyMeasurementsRepository(db),
-        habits: trainingHabitsRepository(db),
-        goals: goalsRepository(db),
-        plans,
-        setEntries: setEntriesRepository(db),
-        days,
-        streaks,
-        notices,
-        xp,
-        weeks,
-        quests,
-        workouts,
-        records: personalRecordsRepository(db),
-        achievements,
-        painFlags: painFlagsRepository(db),
-        adjustments: exerciseAdjustmentsRepository(db),
-        meals: mealsRepository(db),
-        favorites: favoriteMealsRepository(db),
-        events,
-      },
-    });
+    const deps: BotDependencies = {
+      processedUpdates: processedUpdatesRepository(db),
+      users,
+      riskSignals,
+      consents: consentsRepository(db),
+      screenings: screeningsRepository(db),
+      eraser: userDataEraser(db),
+      bodyMeasurements: bodyMeasurementsRepository(db),
+      habits,
+      goals: goalsRepository(db),
+      plans,
+      setEntries: setEntriesRepository(db),
+      days,
+      streaks,
+      notices,
+      xp,
+      weeks,
+      quests,
+      outbox,
+      messageStats,
+      workouts,
+      records: personalRecordsRepository(db),
+      achievements,
+      painFlags: painFlagsRepository(db),
+      adjustments: exerciseAdjustmentsRepository(db),
+      meals: mealsRepository(db),
+      favorites: favoriteMealsRepository(db),
+      events,
+    };
+    const bot = createBot({ token: config.telegramBotToken, logger, clock, deps });
 
     // T-060 · cierre programado de los días (FR-005-02).
     const scheduler = startScheduler({
@@ -141,6 +149,11 @@ async function main(): Promise<void> {
           logger,
         });
         if (closed > 0) logger.info('days_closed', { count: closed });
+        // T-070 · mensajes proactivos: programar los del día y enviar los vencidos (FR-007-03).
+        const messaging = { ...deps, clock, logger, sender: telegramSender(bot.api) };
+        await scheduleCandidates(messaging);
+        const sent = await dispatchDue(messaging);
+        if (sent > 0) logger.info('messages_sent', { count: sent });
       },
     });
 

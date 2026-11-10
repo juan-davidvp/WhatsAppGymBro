@@ -35,6 +35,10 @@ import { createLogger } from '../logger.js';
 import { COLLECTIONS } from '../adapters/mongo/schema.js';
 import { encodeCallbackData } from './callback-data.js';
 import { TEST_BOT_INFO, TEST_TOKEN, callbackUpdate, textUpdate } from '../testing/telegram.js';
+import {
+  messageStatsRepository,
+  outboxRepository,
+} from '../adapters/mongo/messaging-repositories.js';
 import { createBot } from './create-bot.js';
 
 /** T-021 · la cadena completa del bot con los repositorios MongoDB reales. */
@@ -81,6 +85,8 @@ function realBot() {
       xp: xpLedgerRepository(db),
       weeks: weeksRepository(db),
       quests: questsRepository(db),
+      outbox: outboxRepository(db),
+      messageStats: messageStatsRepository(db),
       workouts: workoutSessionsRepository(db),
       records: personalRecordsRepository(db),
       achievements: achievementsRepository(db),

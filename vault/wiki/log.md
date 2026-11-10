@@ -589,3 +589,36 @@ Pendiente, sin cambiar:
   - Un cierre en curso podría recrear datos de un usuario que se borra en ese mismo instante.
   - Si el proceso cae entre guardar el XP del regreso y su aviso, BR-01 no se repite.
   - Terminar una sesión marca la sesión completada antes de sumar el día (patrón de T-043): si falla a mitad, el día no cuenta.
+
+## [2026-11-10] decision | M7 · mensajes proactivos: alcance aprobado por el PO
+- **RN-MSJ-016 se amplía:** `cierre_del_dia` sale si el día no cuenta, **o si cuenta y solo le falta la mitad de comida para quedar completo** (CD-03/CD-04). Sigue limitado a P-073 toques y al presupuesto. Cierra la duda de SPEC-007 §10. Pendiente: aplicarlo en la bóveda y en el motor con T-071.
+- **`recordatorio_contextual` entra en la Fase 0** con un solo disparador: ayer fue de entreno y no contó, y hoy hay hueco. Tiene la menor prioridad y desvanecimiento RN-MSJ-009. Cierra la otra duda de SPEC-007 §10.
+- **Alcance de T-071:**
+  - `resumen_semanal` sale ya, en texto (RS-01/RS-02). RS-03 espera a la imagen del muro de T-080.
+  - Los reconocimientos siguen como avisos en la próxima interacción hasta M8, que trae /logros y /progreso.
+  - `mantenimiento` pasa a M8, con el registro de peso.
+- **Botones de T-045:** [Ajustar plan] y [Ajustar días] muestran el plan de la semana, como CU-06. RG-03 sale de la rotación hasta T-045.
+- **Trabajo de T-070 en curso** (rama `h4/m7-mensajes-proactivos`, sin commit):
+  - P-097 y P-098 en [[parametros]] v0.10.0.
+  - `proactive_messages` y `message_stats` en [[modelo-de-datos]] v0.6.0.
+  - Puertos `OutboxRepository` y `MessageStatsRepository`, repositorios de Mongo y en memoria, y `telegramPayload` compartido.
+
+## [2026-11-10] implementar | T-070 Bandeja de salida, ciclo, envío con reintentos y supresión de salidas viejas
+- **Bandeja** (`proactive_messages`, FR-007-02): una salida por propósito y día operativo (clave `propósito:fecha`, índice único). Repositorios de MongoDB en `adapters/mongo/messaging-repositories.ts` y dobles en `testing/in-memory-messaging.ts`. `message_stats` está listo para T-072 y T-073 ([[modelo-de-datos]] v0.6.0).
+- **Programación** (`messaging/schedule.ts`): en cada ciclo (P-096), `plan_listo` se programa P-048 minutos antes de la hora habitual del día (la del hábito; si no, la de su franja, P-083). Vale hasta esa hora. Pasada la hora, ya no se programa.
+- **Envío** (`messaging/dispatch.ts`, FR-007-03):
+  - Cada salida vencida se vuelve a evaluar con el motor (RN-MSJ-015) y el estado del momento.
+  - El motor evalúa la **hora real de envío**: una salida atrasada no cae en silencio ni rompe el presupuesto o la separación. Vieja → `stale`.
+  - La plantilla se elige con la rotación (RN-MSJ-010) y los botones salen de la plantilla (RN-MSJ-012).
+  - Un error con una salida no detiene las demás.
+- **Telegram** (`messaging/sender.ts`, FR-007-08): reintenta ante 429 (con el `retry_after` de Telegram) o fallos 5xx y de red, hasta P-097 intentos y con espera exponencial desde P-098. Un 403 (bot bloqueado) no se reintenta: se maneja en T-073. El formato de las respuestas se comparte (`telegramPayload`).
+- **Eventos:** `message_scheduled`, `message_suppressed` (motivo) y `message_sent` (plantilla), con esquema estricto.
+- **Pruebas:**
+  - `messaging/cycle.test.ts`: programar y enviar una vez, sesión ya empezada, salida vieja, hora pasada y silencio.
+  - **G06 = 0:** 3 semanas de ciclos cada 30 min con horas habituales cambiantes, verificando cada envío por separado.
+  - `messaging/sender.test.ts` y pruebas de la bandeja contra MongoDB.
+- **Para decisión del PO:** con la franja de la mañana (06:00, P-083) y el silencio por defecto (21:30–07:00, P-047), `plan_listo` cae a las 05:00, dentro del silencio, y **nunca sale**. Opciones:
+  - acercar el aviso al fin del silencio si todavía es antes de la hora habitual;
+  - pedir otra hora de silencio en el onboarding;
+  - aceptar que quien entrena temprano no recibe `plan_listo`.
+- **Pendiente:** `repositories.ts` de MongoDB supera las 800 líneas; conviene partirlo por módulo en una tarea de limpieza.

@@ -1,5 +1,11 @@
 import { alertCategorySchema } from '@gymbro/content';
-import { CONSENT_CATEGORIES, ONBOARDING_STEPS, WEEK_DAYS, XP_EVENT_TYPES } from '@gymbro/domain';
+import {
+  CONSENT_CATEGORIES,
+  MESSAGE_PURPOSES,
+  ONBOARDING_STEPS,
+  WEEK_DAYS,
+  XP_EVENT_TYPES,
+} from '@gymbro/domain';
 import { z } from 'zod';
 import { EVENT_NAMES, STUDY_PHASES, type EventName } from './catalog.js';
 
@@ -162,6 +168,13 @@ export const EVENT_PROPS_SCHEMAS = {
     consistency: z.number().int().positive(),
   }),
   quest_completed: z.strictObject({ kind: z.enum(['TRAINING', 'NUTRITION', 'CONSISTENCY']) }),
+  /** SPEC-007 §7 (T-070): propósito, plantilla y motivo; nunca el texto enviado. */
+  message_scheduled: z.strictObject({ purpose: z.enum(MESSAGE_PURPOSES) }),
+  message_suppressed: z.strictObject({ purpose: z.enum(MESSAGE_PURPOSES), reason: tokenSchema }),
+  message_sent: z.strictObject({
+    purpose: z.enum(MESSAGE_PURPOSES),
+    templateId: z.string().regex(/^[A-Z]{2}-\d{2}$/),
+  }),
   /** SPEC-009 (T-065, RN-SEG-008): qué disparó la señal de sobreuso. */
   overuse_signal: z.strictObject({ reason: z.enum(['sessions_per_day', 'rest_days']) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;

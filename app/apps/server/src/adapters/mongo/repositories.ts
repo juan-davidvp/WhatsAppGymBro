@@ -43,6 +43,7 @@ import {
   type SetEntriesRepository,
   type SetEntryRecord,
   type StreakStatesRepository,
+  type TrainingHabitRecord,
   type UserProfile,
   type UserRecord,
   type UsersRepository,
@@ -67,7 +68,9 @@ function isDuplicateKey(error: unknown): boolean {
 }
 
 /** Inserta; si la clave única ya existe, no hace nada. */
-async function insertIfAbsent(insert: () => Promise<unknown>): Promise<{ inserted: boolean }> {
+export async function insertIfAbsent(
+  insert: () => Promise<unknown>,
+): Promise<{ inserted: boolean }> {
   try {
     await insert();
     return { inserted: true };
@@ -675,6 +678,10 @@ export function trainingHabitsRepository(db: Db): TrainingHabitsRepository {
   return {
     async save(habit) {
       await collection.replaceOne({ userId: habit.userId }, { ...habit }, { upsert: true });
+    },
+    async get(userId) {
+      const doc = await collection.findOne({ userId }, { projection: { _id: 0 } });
+      return doc ? (doc as unknown as TrainingHabitRecord) : null;
     },
   };
 }
