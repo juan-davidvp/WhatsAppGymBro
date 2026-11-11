@@ -81,10 +81,22 @@ export function outboxRepository(db: Db): OutboxRepository {
         .toArray();
       return docs.map(toOutboxMessage);
     },
+    async claim(id) {
+      const result = await collection.updateOne(pendingById(id), { $set: { status: 'sending' } });
+      return result.modifiedCount === 1;
+    },
     async markSent(id, sent) {
-      const result = await collection.updateOne(pendingById(id), {
-        $set: { status: 'sent', ...sent },
-      });
+      const result = await collection.updateOne(
+        { _id: new ObjectId(id), status: 'sending' },
+        { $set: { status: 'sent', ...sent } },
+      );
+      return result.modifiedCount === 1;
+    },
+    async markFailed(id) {
+      const result = await collection.updateOne(
+        { _id: new ObjectId(id), status: 'sending' },
+        { $set: { status: 'failed' } },
+      );
       return result.modifiedCount === 1;
     },
     async markSuppressed(id, reason) {
@@ -95,7 +107,7 @@ export function outboxRepository(db: Db): OutboxRepository {
     },
     async cancelPending(userId) {
       const result = await collection.updateMany(
-        { userId, status: 'pending' },
+        { userId, status: { $in: ['pending', 'sending'] } },
         { $set: { status: 'cancelled' } },
       );
       return result.modifiedCount;
@@ -137,13 +149,9 @@ export function outboxRepository(db: Db): OutboxRepository {
       return result.modifiedCount === 1;
     },
     async purposeStats(userId, purpose) {
-      const sent = await collection.countDocuments({ userId, purpose, status: 'sent' });
-      const actioned = await collection.countDocuments({
-        userId,
-        purpose,
-        status: 'sent',
-        actionedAt: { $ne: null },
-      });
+      const settled = { userId, purpose, status: 'sent' as const };
+      const sent = await collection.countDocuments({ ...settled, outcome: { $ne: null } });
+      const actioned = await collection.countDocuments({ ...settled, outcome: 'actioned' });
       return { sent, actioned };
     },
   };

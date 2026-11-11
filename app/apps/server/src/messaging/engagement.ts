@@ -62,6 +62,9 @@ async function recordAction(
 ): Promise<void> {
   const message = await deps.outbox.byTelegramMessage(user.id, telegramMessageId);
   if (!message?.sentAt || !message.templateId) return;
+  // M03: la acción cuenta dentro de P-067 h; un toque más tarde es solo una interacción.
+  const windowMs = PARAMETERS.metrics.actionWindowHours * HOUR_MS;
+  if (now.getTime() - message.sentAt.getTime() > windowMs) return;
   if (!(await deps.outbox.markActioned(message.id, now))) return;
   await deps.events.emit(
     'message_actioned',
@@ -112,7 +115,11 @@ async function settleOne(
     templateId: message.templateId ?? '',
   });
   const next = registerMessageOutcome(stats, { interacted: false, at: now });
-  await deps.messageStats.update(message.userId, next);
+  // Solo los dos campos del retroceso: no pisar un toque o una /pausa simultáneos.
+  await deps.messageStats.update(message.userId, {
+    consecutiveIgnored: next.consecutiveIgnored,
+    backoffUntil: next.backoffUntil,
+  });
   if (next.backoffUntil !== stats.backoffUntil) {
     await deps.events.emit('backoff_applied', subject, { days: PARAMETERS.messages.backoffDays });
   }

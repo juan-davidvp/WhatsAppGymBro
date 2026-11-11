@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { toTelegramHtml } from '../bot/create-bot.js';
 import { evaluateClosedWeek } from '../scheduler/close-week.js';
 import { proactiveSetup } from '../testing/proactive.js';
-import { sent } from '../testing/telegram.js';
+import { callbackUpdate, sent } from '../testing/telegram.js';
 import { BotBlockedError } from './sender.js';
 
 /**
@@ -68,6 +68,16 @@ describe('RN-MSJ-013 · T-073 · /pausa (HU-007-4 escenario 1)', () => {
     expect((await stats(t)).pausedUntil).toEqual(new Date('2026-10-21T20:00:00Z'));
     t.goTo(WED_17);
     expect(await t.tick()).toBe(1);
+  });
+
+  it('un [Reanudar] viejo con la pausa ya terminada no alarga la pausa guardada', async () => {
+    const t = await proactiveSetup();
+    await t.act({ text: '/pausa' });
+    await t.act('1 día');
+    await t.act({ text: '/pausa' }); // PA-03 con [Reanudar]
+    t.goTo('2026-10-28T15:00:00Z'); // la pausa terminó el martes 20
+    await t.act('Reanudar');
+    expect((await stats(t)).pausedUntil).toEqual(new Date('2026-10-20T15:00:00Z'));
   });
 
   it('la semana que toca una pausa no se evalúa (ni cumplida ni rota); sin pausa, sí', async () => {
@@ -172,6 +182,47 @@ describe('HU-007-4 escenario 2 · T-073 · /ajustes de mensajes', () => {
     t.goTo(WED_17);
     expect(await t.tick()).toBe(0);
     expect(t.outboxOf('plan_listo')[0]).toMatchObject({ suppressedReason: 'disabled_purpose' });
+  });
+});
+
+describe('T-073 · revisión de código · datos de botón de /ajustes', () => {
+  it('un valor sin índice válido no cambia nada (vuelve a AJ-01)', async () => {
+    const t = await proactiveSetup();
+    await t.act({ text: '/ajustes' });
+    for (const value of ['i', 'q', 't', 'i9', 'x1']) {
+      await t.bot.handleUpdate(callbackUpdate(`v1:aj:${value}`, t.nextUpdateId()));
+    }
+    expect(userOf(t).settings).toMatchObject({
+      intensity: 'NORMAL',
+      quietHours: { start: '21:30' },
+    });
+    expect(t.eventsNamed('message_settings_changed')).toEqual([]);
+  });
+});
+
+describe('FR-007-08 · revisión de código · un proactivo sale como mucho una vez', () => {
+  it('una salida reclamada (el proceso cayó a mitad del envío) no se vuelve a enviar', async () => {
+    const t = await proactiveSetup();
+    await t.setHabitTime('18:00');
+    t.goTo('2026-10-21T21:00:00Z');
+    await t.tick();
+    const row = t.outboxOf('plan_listo')[0];
+    await t.deps.outbox.claim(row?.id ?? '');
+    t.goTo(WED_17);
+    expect(await t.tick()).toBe(0);
+    expect(t.sent).toEqual([]);
+  });
+
+  it('si Telegram falla después de los reintentos, queda fallida y no se reintenta', async () => {
+    const t = await proactiveSetup();
+    await t.setHabitTime('18:00');
+    t.deps.sender = { send: () => Promise.reject(new Error('timeout')) };
+    t.goTo(WED_17);
+    expect(await t.tick()).toBe(0);
+    expect(t.outboxOf('plan_listo')[0]).toMatchObject({ status: 'failed' });
+    t.goTo('2026-10-21T22:01:00Z');
+    expect(await t.tick()).toBe(0);
+    expect(t.outboxOf('plan_listo')).toHaveLength(1);
   });
 });
 

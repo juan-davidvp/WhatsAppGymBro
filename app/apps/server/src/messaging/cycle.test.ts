@@ -1,6 +1,7 @@
 import { SESSION_NAMES, renderTemplate, templateById } from '@gymbro/content';
 import {
   PARAMETERS,
+  daysBetween,
   isInQuietHours,
   messageBudget,
   operationalDate,
@@ -190,7 +191,6 @@ describe('SC-007-1 · G06 · T-072 · 60 días con comportamientos aleatorios: 0
       expect(t.eventsNamed('backoff_applied').length).toBeGreaterThan(0);
       expect(t.eventsNamed('inactivity_pause_started').length).toBeGreaterThan(0);
       expect(t.eventsNamed('reactivation_sent').length).toBeGreaterThan(0);
-      const cooldownMs = PARAMETERS.messages.templateCooldownDays * 86_400_000;
       sent.forEach((message, i) => {
         const at = message.sentAt ?? new Date(0);
         expect(isInQuietHours(at, quietHours, TZ)).toBe(false);
@@ -207,13 +207,14 @@ describe('SC-007-1 · G06 · T-072 · 60 días con comportamientos aleatorios: 0
         );
         expect(sameDay.length).toBeLessThanOrEqual(budget.perDay);
         expect(sameWeek.length).toBeLessThanOrEqual(budget.perWeek);
-        // RN-MSJ-010: la misma plantilla no vuelve en P-058 días.
+        // RN-MSJ-010: la misma plantilla no vuelve en P-058 días operativos.
         const repeated = sent
           .slice(0, i)
           .filter(
             (m) =>
               m.templateId === message.templateId &&
-              at.getTime() - (m.sentAt?.getTime() ?? 0) < cooldownMs,
+              daysBetween(operationalDate(m.sentAt ?? new Date(0), TZ), date) <
+                PARAMETERS.messages.templateCooldownDays,
           );
         expect(repeated).toEqual([]);
       });

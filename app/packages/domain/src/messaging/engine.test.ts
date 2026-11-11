@@ -295,14 +295,22 @@ describe('RN-MSJ-010 · la misma plantilla no se repite en P-058 días', () => {
       sent(new Date(now.getTime() - 86_400_000), 'PL-01'),
       sent(new Date(now.getTime() - 2 * 86_400_000), 'PL-02'),
     ];
-    expect(pickTemplate(['PL-01', 'PL-02', 'PL-03'], history, now, () => 0)).toBe('PL-03');
+    expect(pickTemplate(['PL-01', 'PL-02', 'PL-03'], history, now, TZ, () => 0)).toBe('PL-03');
   });
 
   it('pasada la ventana la plantilla vuelve a estar disponible', () => {
     const now = local(D, '17:00');
     const old = sent(new Date(now.getTime() - (M.templateCooldownDays + 1) * 86_400_000), 'PL-01');
-    expect(pickTemplate(['PL-01'], [old], now, () => 0.99)).toBe('PL-01');
-    expect(pickTemplate(['PL-01'], [sent(now, 'PL-01')], now, () => 0)).toBeNull();
+    expect(pickTemplate(['PL-01'], [old], now, TZ, () => 0.99)).toBe('PL-01');
+    expect(pickTemplate(['PL-01'], [sent(now, 'PL-01')], now, TZ, () => 0)).toBeNull();
+  });
+
+  it('cuenta días operativos: la de hace P-058 días vuelve aunque se enviara unos segundos más tarde', () => {
+    const now = local(D, '19:00');
+    const lastWeek = new Date(now.getTime() - M.templateCooldownDays * 86_400_000 + 20_000);
+    expect(pickTemplate(['RS-04'], [sent(lastWeek, 'RS-04')], now, TZ, () => 0)).toBe('RS-04');
+    const sixDaysAgo = local(addDays(D, -(M.templateCooldownDays - 1)), '08:00');
+    expect(pickTemplate(['RS-04'], [sent(sixDaysAgo, 'RS-04')], now, TZ, () => 0)).toBeNull();
   });
 });
 

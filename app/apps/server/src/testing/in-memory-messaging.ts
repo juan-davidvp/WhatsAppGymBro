@@ -49,10 +49,16 @@ export function inMemoryMessaging() {
           .sort((a, b) => a.scheduledFor.getTime() - b.scheduledFor.getTime()),
       );
     },
+    claim(id) {
+      return Promise.resolve(update(id, (m) => m.status === 'pending', { status: 'sending' }));
+    },
     markSent(id, sent) {
       return Promise.resolve(
-        update(id, (m) => m.status === 'pending', { status: 'sent', ...sent }),
+        update(id, (m) => m.status === 'sending', { status: 'sent', ...sent }),
       );
+    },
+    markFailed(id) {
+      return Promise.resolve(update(id, (m) => m.status === 'sending', { status: 'failed' }));
     },
     markSuppressed(id, reason) {
       return Promise.resolve(
@@ -65,7 +71,7 @@ export function inMemoryMessaging() {
     cancelPending(userId) {
       let count = 0;
       outbox.forEach((m, i) => {
-        if (m.userId === userId && m.status === 'pending') {
+        if (m.userId === userId && (m.status === 'pending' || m.status === 'sending')) {
           outbox[i] = { ...m, status: 'cancelled' };
           count += 1;
         }
@@ -113,12 +119,13 @@ export function inMemoryMessaging() {
       );
     },
     purposeStats(userId, purpose) {
-      const sent = outbox.filter(
-        (m) => m.userId === userId && m.purpose === purpose && m.status === 'sent',
+      const settled = outbox.filter(
+        (m) =>
+          m.userId === userId && m.purpose === purpose && m.status === 'sent' && m.outcome !== null,
       );
       return Promise.resolve({
-        sent: sent.length,
-        actioned: sent.filter((m) => m.actionedAt !== null).length,
+        sent: settled.length,
+        actioned: settled.filter((m) => m.outcome === 'actioned').length,
       });
     },
   };

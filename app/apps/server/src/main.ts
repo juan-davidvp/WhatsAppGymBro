@@ -162,8 +162,8 @@ async function main(): Promise<void> {
 
     const stop = (signal: string) => {
       logger.info('bot_stopping', { signal });
-      scheduler.stop();
-      void bot.stop();
+      // Primero termina el ciclo en curso (no deja un envío a medias) y luego el bot.
+      void scheduler.stop().then(() => bot.stop());
     };
     process.once('SIGINT', () => stop('SIGINT'));
     process.once('SIGTERM', () => stop('SIGTERM'));

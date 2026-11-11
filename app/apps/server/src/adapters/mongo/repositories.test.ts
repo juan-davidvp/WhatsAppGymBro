@@ -271,6 +271,11 @@ describe('FR-007-02 · T-070 · bandeja de salida', () => {
       sentAt: new Date('2026-10-21T22:00:00Z'),
       telegramMessageId: 9,
     };
+    // Como mucho una vez: solo una reclamación gana y solo una reclamada se marca enviada.
+    expect(await outbox.markSent(due?.id ?? '', sent)).toBe(false);
+    expect(await outbox.claim(due?.id ?? '')).toBe(true);
+    expect(await outbox.claim(due?.id ?? '')).toBe(false);
+    expect(await outbox.due(new Date('2026-10-21T22:00:00Z'))).toEqual([]);
     expect(await outbox.markSent(due?.id ?? '', sent)).toBe(true);
     expect(await outbox.markSent(due?.id ?? '', sent)).toBe(false);
     expect(await outbox.sentSince('u70', at)).toEqual([
@@ -279,6 +284,9 @@ describe('FR-007-02 · T-070 · bandeja de salida', () => {
     const found = await outbox.byTelegramMessage('u70', 9);
     expect(await outbox.markActioned(found?.id ?? '', sent.sentAt)).toBe(true);
     expect(await outbox.markActioned(found?.id ?? '', sent.sentAt)).toBe(false);
+    // M03: la tasa cuenta las de ventana cerrada, por su resultado.
+    expect(await outbox.purposeStats('u70', 'plan_listo')).toEqual({ sent: 0, actioned: 0 });
+    await outbox.setOutcome(found?.id ?? '', 'actioned');
     expect(await outbox.purposeStats('u70', 'plan_listo')).toEqual({ sent: 1, actioned: 1 });
   });
 
@@ -296,7 +304,11 @@ describe('FR-007-02 · T-070 · bandeja de salida', () => {
     await outbox.schedule({ ...base, key: 'b' }, at);
     const [first] = await outbox.due(at);
     expect(await outbox.markSuppressed(first?.id ?? '', 'quiet_hours')).toBe(true);
+    const [second] = await outbox.due(at);
+    await outbox.claim(second?.id ?? '');
+    // Una reclamada (envío a medias) también se cancela.
     expect(await outbox.cancelPending('u71')).toBe(1);
+    expect(await outbox.markFailed(second?.id ?? '')).toBe(false);
     expect(await outbox.due(at)).toEqual([]);
   });
 
@@ -325,6 +337,7 @@ describe('FR-007-02 · T-070 · bandeja de salida', () => {
       at,
     );
     const [due] = await outbox.due(at);
+    await outbox.claim(due?.id ?? '');
     await outbox.markSent(due?.id ?? '', { templateId: 'RG-01', sentAt: at, telegramMessageId: 5 });
     expect(await outbox.awaitingOutcome(new Date('2026-10-22T09:59:00Z'))).toEqual([]);
     const [waiting] = await outbox.awaitingOutcome(new Date('2026-10-22T12:00:00Z'));

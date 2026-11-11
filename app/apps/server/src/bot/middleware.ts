@@ -62,7 +62,9 @@ export function trackInteraction(
   deps: EngagementDeps & { logger: Logger },
 ): MiddlewareFn<BotContext> {
   return async (ctx, next) => {
-    if (ctx.user) {
+    // Bloquear o desbloquear el bot llega como `my_chat_member`: no es una interacción.
+    const acted = Boolean(ctx.message ?? ctx.editedMessage ?? ctx.callbackQuery);
+    if (ctx.user && acted) {
       try {
         await recordInteraction(ctx.user, ctx.callbackQuery?.message?.message_id ?? null, deps);
       } catch (error) {

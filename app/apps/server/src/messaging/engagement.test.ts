@@ -52,6 +52,40 @@ describe('FR-007-06 · RN-MSJ-007 · T-072 · acción, interacción e ignorados'
     expect(t.eventsNamed('message_ignored')).toEqual([]);
   });
 
+  it('un toque después de la ventana P-067 es solo una interacción, no una acción (M03)', async () => {
+    const t = await proactiveSetup();
+    expect(await wednesdayPlanReady(t)).toBe(1);
+    t.goTo(AFTER_WINDOW);
+    await t.tick(); // queda ignorado
+    t.goTo('2026-10-22T15:00:00Z');
+    const gym = t.sent[0]?.reply.buttons[0]?.data ?? '';
+    await t.bot.handleUpdate(callbackUpdate(gym, t.nextUpdateId(), FIRST_MESSAGE_ID));
+    expect(t.eventsNamed('message_actioned')).toEqual([]);
+    expect(t.outboxOf('plan_listo')[0]).toMatchObject({ outcome: 'ignored', actionedAt: null });
+    expect((await stats(t)).lastInteractionAt).toEqual(new Date('2026-10-22T15:00:00Z'));
+  });
+
+  it('bloquear o desbloquear el bot (my_chat_member) no cuenta como interacción', async () => {
+    const t = await proactiveSetup();
+    const before = (await stats(t)).lastInteractionAt;
+    t.goTo('2026-10-22T15:00:00Z');
+    const member = (status: string) => ({
+      user: { id: 1, is_bot: true, first_name: 'bot' },
+      status,
+    });
+    await t.bot.handleUpdate({
+      update_id: t.nextUpdateId(),
+      my_chat_member: {
+        chat: { id: 42, type: 'private', first_name: 'Juan' },
+        from: { id: 42, is_bot: false, first_name: 'Juan' },
+        date: 0,
+        old_chat_member: member('member'),
+        new_chat_member: member('kicked'),
+      },
+    } as never);
+    expect((await stats(t)).lastInteractionAt).toEqual(before);
+  });
+
   it('sin ninguna interacción en P-067 h queda ignorado (PO, 2026-11-11) y suma uno', async () => {
     const t = await proactiveSetup();
     expect(await wednesdayPlanReady(t)).toBe(1);
@@ -193,12 +227,13 @@ describe('RN-MSJ-009 · T-072 · menos recordatorios con el hábito', () => {
     );
     const old = t.outboxOf('plan_listo')[0];
     if (!old) throw new Error('sin salida previa');
+    await t.deps.outbox.claim(old.id);
     await t.deps.outbox.markSent(old.id, {
       templateId: 'PL-02',
       sentAt: new Date('2026-10-14T22:00:00Z'),
       telegramMessageId: 1,
     });
-    if (actioned) await t.deps.outbox.markActioned(old.id, new Date('2026-10-14T22:10:00Z'));
+    await t.deps.outbox.setOutcome(old.id, actioned ? 'actioned' : 'ignored');
   }
 
   it('tras P-055 semanas cumplidas, recordatorio_contextual se suprime (disabled_purpose)', async () => {

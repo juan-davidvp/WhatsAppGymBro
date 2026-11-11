@@ -133,7 +133,8 @@ export async function answerSettings(
   if (value === 'quiet') return [quietScreen(settings)];
   if (value === 'types') return [typesScreen(settings)];
 
-  const [kind, index] = [value.charAt(0), Number(value.slice(1))];
+  const match = /^([iqt])(\d{1,2})$/.exec(value);
+  const [kind, index] = match ? [match[1], Number(match[2])] : ['', -1];
   const intensity = kind === 'i' ? INTENSITIES[index] : undefined;
   if (intensity) {
     const next = await change(user, { intensity }, 'intensity', deps);

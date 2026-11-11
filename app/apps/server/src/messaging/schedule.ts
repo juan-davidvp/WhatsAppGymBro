@@ -187,6 +187,13 @@ async function planReadyCandidate(
   return [candidate(user, 'plan_listo', date, at, notAfter)];
 }
 
+/**
+ * Si salir del silencio lo pasa al día operativo siguiente, ese mensaje del día
+ * ya no tiene sentido (se compondría con la fecha equivocada).
+ */
+const sameDay = ({ user, today }: UserCycle, at: Date) =>
+  operationalDate(at, user.timezone) === today;
+
 /** Hora de los mensajes del día sin hora propia: la de `plan_listo`, fuera del silencio. */
 function habitMoment({ user, today, habit }: UserCycle): Date {
   const start = usualStart(user, today, habit);
@@ -214,6 +221,7 @@ async function comebackCandidate(
   });
   if (action === 'none') return [];
   const at = habitMoment(cycle);
+  if (!sameDay(cycle, at)) return [];
   const notAfter = nextQuietStart(user, today, at);
   return [candidate(user, 'regreso', today, at, notAfter, action === 'send_reactivation')];
 }
@@ -226,6 +234,7 @@ async function contextualReminderCandidate(
   const { user, today } = cycle;
   if (!(await contextualReminderApplies(user, today, deps))) return [];
   const at = habitMoment(cycle);
+  if (!sameDay(cycle, at)) return [];
   return [candidate(user, 'recordatorio_contextual', today, at, nextQuietStart(user, today, at))];
 }
 

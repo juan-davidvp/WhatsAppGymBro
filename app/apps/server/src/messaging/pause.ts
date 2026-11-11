@@ -69,7 +69,11 @@ export async function answerPause(
   const now = deps.clock();
   if (value === 'change') return [optionsReply(true)];
   if (value === 'resume') {
-    await deps.messageStats.update(user.id, { pausedUntil: now });
+    // Un [Reanudar] viejo con la pausa ya terminada no alarga la pausa guardada.
+    const { pausedUntil } = await deps.messageStats.get(user.id);
+    if (pausedUntil && pausedUntil > now) {
+      await deps.messageStats.update(user.id, { pausedUntil: now });
+    }
     return [{ text: renderTemplate('PA-04'), buttons: [], edit: true }];
   }
   const days = Number(DAYS_VALUE.exec(value)?.[1]);

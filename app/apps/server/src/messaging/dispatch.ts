@@ -126,11 +126,15 @@ async function dispatchOne(
     composition.options.map((o) => o.templateId),
     history,
     now,
+    user.timezone,
     deps.random ?? Math.random,
   );
   const option = composition.options.find((o) => o.templateId === templateId);
   if (!templateId || !option) return suppress(message, user, 'cooldown', deps);
 
+  // Como mucho una vez: si el proceso cae entre el envío y el registro, la salida
+  // queda reclamada y no se vuelve a enviar al reiniciar.
+  if (!(await deps.outbox.claim(message.id))) return false;
   let messageId: number;
   try {
     ({ messageId } = await deps.sender.send(user.chatId, {
@@ -138,9 +142,12 @@ async function dispatchOne(
       buttons: proactiveButtons(templateId, message.purpose),
     }));
   } catch (error) {
-    if (!(error instanceof BotBlockedError)) throw error;
-    await markBlocked(user, deps);
-    return false;
+    if (error instanceof BotBlockedError) {
+      await markBlocked(user, deps);
+      return false;
+    }
+    await deps.outbox.markFailed(message.id);
+    throw error;
   }
   await deps.outbox.markSent(message.id, { templateId, sentAt: now, telegramMessageId: messageId });
   await deps.events.emit(

@@ -134,7 +134,8 @@ export interface TrainingHabitsRepository {
 
 // ── Mensajes proactivos (SPEC-007) ───────────────────────────────────────────
 
-export type OutboxStatus = 'pending' | 'sent' | 'suppressed' | 'cancelled';
+/** `sending`: reclamada para enviar; `failed`: Telegram no la aceptó (no se reintenta). */
+export type OutboxStatus = 'pending' | 'sending' | 'sent' | 'suppressed' | 'cancelled' | 'failed';
 
 /**
  * Resultado de una enviada al cerrar su ventana P-067 (RN-MSJ-007): con acción en
@@ -172,13 +173,20 @@ export interface OutboxRepository {
   schedule(message: NewOutboxMessage, at: Date): Promise<{ created: boolean }>;
   /** Salidas pendientes cuya hora ya llegó, en orden de hora. */
   due(now: Date): Promise<OutboxMessage[]>;
-  /** Pasa una salida pendiente a enviada; false si ya no estaba pendiente. */
+  /**
+   * Reclama una pendiente para enviarla (pasa a `sending`); false si otro ya la
+   * reclamó. Así un mensaje sale como mucho una vez, aunque el proceso caiga.
+   */
+  claim(id: string): Promise<boolean>;
+  /** Pasa una salida reclamada a enviada; false si ya no estaba reclamada. */
   markSent(
     id: string,
     sent: { templateId: string; sentAt: Date; telegramMessageId: number },
   ): Promise<boolean>;
   markSuppressed(id: string, reason: string): Promise<boolean>;
-  /** RN-MSJ-014: cancela todas las pendientes del usuario; devuelve cuántas. */
+  /** Una reclamada que Telegram no aceptó después de los reintentos. */
+  markFailed(id: string): Promise<boolean>;
+  /** RN-MSJ-014: cancela las pendientes y reclamadas del usuario; devuelve cuántas. */
   cancelPending(userId: string): Promise<number>;
   /** Enviadas desde `since` (presupuesto, separación y rotación). */
   sentSince(userId: string, since: Date): Promise<SentMessage[]>;
@@ -189,7 +197,7 @@ export interface OutboxRepository {
   awaitingOutcome(sentBefore: Date): Promise<OutboxMessage[]>;
   /** Fija el resultado una sola vez; false si ya lo tenía. */
   setOutcome(id: string, outcome: OutboxOutcome): Promise<boolean>;
-  /** Enviadas y con acción de un propósito (tasa de acción, RN-MSJ-009). */
+  /** Enviadas con su ventana P-067 cerrada y, de ellas, con acción (tasa de acción, RN-MSJ-009, M03). */
   purposeStats(
     userId: string,
     purpose: MessagePurpose,

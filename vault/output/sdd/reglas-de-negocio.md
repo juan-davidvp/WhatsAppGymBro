@@ -128,7 +128,7 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | RN-MSJ-007 | Si P-050 mensajes proactivos seguidos no tienen interacción, el presupuesto semanal se reduce a la mitad durante P-051 días. | P-050, P-051 | `F49` |
 | RN-MSJ-008 | Tras P-052 días de entreno planificados sin actividad se envía 1 `regreso`; tras P-053 días sin actividad se envía un `regreso` final y se pausan los proactivos. Solo se reactivan con una interacción del usuario o con 1 mensaje en el siguiente lunes o día 1 del mes, como máximo P-054 veces. | P-052–P-054 | `F48`, `F51` |
 | RN-MSJ-009 | Tras P-055 semanas cumplidas seguidas, `recordatorio_contextual` se desactiva por defecto; `plan_listo` se mantiene si su tasa de acción es al menos P-056. | P-055, P-056 | ADR-011 |
-| RN-MSJ-010 | La misma plantilla no se envía dos veces al mismo usuario en P-058 días; cada envío registra el `template_id`. | P-058 | `F50` |
+| RN-MSJ-010 | La misma plantilla no se envía dos veces al mismo usuario en P-058 días operativos (no en horas: el resumen de un domingo vuelve a estar disponible el domingo siguiente); cada envío registra el `template_id`. | P-058 | `F50` |
 | RN-MSJ-011 | Ninguna plantilla contiene expresiones de la lista prohibida de [[voz-y-marca]]; lo verifica una prueba automática. | — | FB-001-17 |
 | RN-MSJ-012 | Todo mensaje proactivo incluye al menos una acción de 1 toque. | — | FB-001-08 |
 | RN-MSJ-013 | `/pausa` detiene los mensajes proactivos entre 1 y P-059 días (opciones P-099); los comandos siguen funcionando y se puede reanudar antes. La semana que toca una pausa no se evalúa: ni cumplida ni rota (SPEC-005 §8). Los días se cierran igual (decisión del PO, 2026-11-11). | P-059, P-099 | ADR-011 |

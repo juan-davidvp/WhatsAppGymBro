@@ -4,6 +4,7 @@ import type { Intensity } from '../goals/maintenance.js';
 import { weekStartOf } from '../gamification/weekly.js';
 import {
   addDays,
+  daysBetween,
   localParts,
   minutesOfDay,
   weekdayOf,
@@ -217,18 +218,28 @@ export function evaluateProactive(input: {
 }
 
 /**
- * RN-MSJ-010: elige una plantilla del propósito que no se haya enviado en P-058
- * días; `random` (0–1) se recibe para rotar sin E/S. Null si todas están en espera.
+ * RN-MSJ-010: elige una plantilla del propósito que no se haya enviado en los
+ * últimos P-058 días operativos (no en horas: el resumen del domingo a las 19:00
+ * vuelve a estar disponible el domingo siguiente aunque el ciclo empiece unos
+ * segundos antes). `random` (0–1) se recibe para rotar sin E/S. Null si todas
+ * están en espera.
  */
 export function pickTemplate(
   templateIds: readonly string[],
   history: readonly SentMessage[],
   now: Date,
+  timeZone: string,
   random: () => number,
 ): string | null {
-  const since = now.getTime() - PARAMETERS.messages.templateCooldownDays * DAY_MS;
+  const today = operationalDate(now, timeZone);
   const recent = new Set(
-    history.filter((m) => m.sentAt.getTime() > since).map((m) => m.templateId),
+    history
+      .filter(
+        (m) =>
+          daysBetween(operationalDate(m.sentAt, timeZone), today) <
+          PARAMETERS.messages.templateCooldownDays,
+      )
+      .map((m) => m.templateId),
   );
   const available = templateIds.filter((id) => !recent.has(id));
   if (available.length === 0) return null;

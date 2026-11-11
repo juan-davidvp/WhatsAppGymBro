@@ -704,3 +704,20 @@ Pendiente, sin cambiar:
   - `pauseTouchesWeek` en el dominio (RN-MSJ-013).
   - `setStatus` y `purposesEnabled` contra MongoDB.
 
+## [2026-11-11] implementar | M7 · correcciones de la revisión de código
+Revisión del diff completo de M7 (T-070 a T-073): sin hallazgos críticos ni altos. Se corrigen los 5 medios y 3 de los bajos.
+
+- **Bloquear o desbloquear el bot no es una interacción.** Telegram lo avisa como `my_chat_member`. Antes reiniciaba los ignorados, sacaba de la pausa y podía desbloquear a quien acababa de bloquear. Ahora solo cuentan los mensajes, ediciones y toques.
+- **La acción cuenta dentro de P-067 h (M03).** Un toque posterior es solo una interacción. La tasa de acción de `plan_listo` (RN-MSJ-009) se calcula con el resultado de las ventanas cerradas.
+- **RN-MSJ-010 en días operativos** (aclaración en [[reglas-de-negocio]]). Medida en horas, el resumen del domingo con una sola plantilla podía quedar suprimido como `cooldown` si el ciclo empezaba unos segundos antes que la semana anterior.
+- **[Reanudar] solo actúa con la pausa en curso.** Un botón viejo alargaba la pausa guardada y dejaba sin evaluar la semana actual.
+- **Un proactivo sale como mucho una vez.** La salida se reclama (`sending`) antes de enviarla. Si el proceso cae a mitad del envío, no se reenvía al reiniciar. Si Telegram falla tras los reintentos, queda `failed`. Al detenerse, el proceso espera el ciclo en curso. [[modelo-de-datos]]: estados `sending` y `failed`.
+- **Bajos corregidos:**
+  - Un `regreso` o `recordatorio_contextual` que al salir del silencio pasaría al día siguiente ya no se programa.
+  - Al registrar un ignorado solo se escriben los campos del retroceso.
+  - Los índices de `/ajustes` se validan con una expresión estricta.
+- **Pendiente:**
+  - El ciclo de cada minuto relee mucho por usuario. Basta para la Fase 0 (principio XI); antes de la alfa conviene saltar los candidatos cuya clave ya existe.
+  - Un `retry_after` largo de Telegram detiene el ciclo; habría que poner un tope (nuevo parámetro).
+  - `pausedAt` y `pausedUntil` guardan solo la última pausa.
+

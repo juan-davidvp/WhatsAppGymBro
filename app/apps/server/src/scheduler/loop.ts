@@ -17,7 +17,8 @@ export interface SchedulerOptions {
 export interface Scheduler {
   /** Corre un tic ahora (si no hay otro en curso). */
   runOnce(): Promise<void>;
-  stop(): void;
+  /** Deja de programar tics y espera a que termine el que esté en curso. */
+  stop(): Promise<void>;
 }
 
 const MS_PER_SECOND = 1000;
@@ -42,6 +43,9 @@ export function startScheduler(options: SchedulerOptions): Scheduler {
   timer.unref();
   return {
     runOnce,
-    stop: () => clearInterval(timer),
+    stop: async () => {
+      clearInterval(timer);
+      await running;
+    },
   };
 }
