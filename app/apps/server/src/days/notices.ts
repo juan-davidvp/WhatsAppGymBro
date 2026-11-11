@@ -1,5 +1,5 @@
-import { renderTemplate } from '@gymbro/content';
-import { plain, templateReply, type Reply } from '../onboarding/replies.js';
+import { renderTemplate, templateById } from '@gymbro/content';
+import { button, plain, templateReply, type Reply } from '../onboarding/replies.js';
 import type {
   NoticeRecord,
   NoticesRepository,
@@ -61,5 +61,22 @@ function noticeReply(notice: NoticeRecord): Reply {
       renderTemplate(REPAIR_OFFER, notice.variables),
     );
   }
-  return plain(notice.templateId, notice.variables);
+  return withLogbookButtons(plain(notice.templateId, notice.variables), notice.templateId);
+}
+
+/** [Ver bitácora] y [Ver progreso] de RE-01 a RE-05 (T-081); sin ellos, el aviso va solo. */
+const PROGRESS_BUTTONS: Readonly<Record<string, string>> = {
+  'Ver bitácora': 'log',
+  'Ver progreso': 'p',
+};
+
+function withLogbookButtons(reply: Reply, templateId: string): Reply {
+  const labels = templateById(templateId).buttons;
+  if (labels.length === 0 || !labels.every((label) => PROGRESS_BUTTONS[label])) return reply;
+  return {
+    ...reply,
+    buttons: labels.map((label) =>
+      button(label, { action: 'pg', value: PROGRESS_BUTTONS[label] ?? 'p' }),
+    ),
+  };
 }

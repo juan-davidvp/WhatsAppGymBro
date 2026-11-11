@@ -188,6 +188,9 @@ export const EVENT_PROPS_SCHEMAS = {
   backoff_applied: z.strictObject({ days: z.number().int().positive() }),
   inactivity_pause_started: z.strictObject({ inactiveDays: z.number().int().nonnegative() }),
   reactivation_sent: z.strictObject({ count: z.number().int().positive() }),
+  /** T-081 (HU-006-2, HU-006-3): vistas, sin datos. */
+  progress_viewed: z.strictObject({}),
+  achievement_log_viewed: z.strictObject({}),
   /** T-073 (RN-MSJ-013, RN-MSJ-014, HU-007-4). */
   pause_set: z.strictObject({ days: z.number().int().positive() }),
   message_settings_changed: z.strictObject({

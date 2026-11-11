@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.17.0
+version: 0.18.0
 creado: 2026-10-18
 actualizado: 2026-11-11
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -152,12 +152,11 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | HN-04 | Ningún día posible | Esta semana no queda un día que respete tu descanso. Seguimos con el plan el próximo día de entreno, sin deuda. |
 | HN-05 | Sesión movida | Listo: {sesion} pasa al {dia}. |
 | KB-01 | Teclado persistente (al terminar el inicio) | Abajo tienes Hoy, Comida y Progreso a un toque. |
-| KB-02 | Sección aún no disponible | Esa sección todavía no está lista. Por ahora tienes Hoy, Comida y /plan. |
 
 > - Hoy en día de entreno usa PL-01 (§1.1) con sus botones.
 > - HN-03 lleva un botón por cada día de esta semana al que se puede mover la sesión (RN-PLAN-007, RN-PLAN-008).
 > - Teclado persistente ([[flujos-de-usuario]] §1): `🏋️ Hoy` · `🍽️ Comida` · `📈 Progreso`.
-> - KB-02 responde a Progreso hasta que llegue M8.
+> - `📈 Progreso` abre PG-01 (§2.7).
 
 
 ### 2.4 Tarjeta de sesión (T-041, T-042)
@@ -187,6 +186,8 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | plan | Tu plan de la semana |
 | privacidad | Tu autorización y la política de datos |
 | borrar_datos | Borrar todos tus datos |
+| progreso | Tu progreso y tu peso |
+| logros | Tu bitácora de logros |
 | pausa | Pausar mis mensajes unos días |
 | ajustes | Cuánto y cuándo te escribo |
 
@@ -246,6 +247,37 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 > - Después de cada cambio se vuelve a AJ-01, con AJ-03 como aviso breve sobre el botón.
 
 `{tipo}` (nombres de los propósitos en AJ-01 y AJ-02): `plan_listo` Plan del día · `cierre_del_dia` Cierre del día · `recordatorio_contextual` Recordatorio · `regreso` Regreso · `resumen_semanal` Resumen de la semana
+
+### 2.7 Progreso y bitácora (`/progreso`, `/logros`, T-081)
+
+| ID | Momento | Texto |
+|---|---|---|
+| PG-01 | `/progreso` o `📈 Progreso` | Llevas **{dias_que_cuentan}** días que cuentan · racha de {racha} · nivel {nivel}, {nombre_nivel}. [Registrar peso] [Ver bitácora] |
+| PG-02 | Línea del objetivo | Objetivo: {barra} {porcentaje} % |
+| PG-03 | Línea del objetivo `ser_constante` | Objetivo: {barra} {semanas} de {meta} semanas cumplidas |
+| PG-04 | Línea del Reto 66 | Reto 66: {dias} de {meta} días que cuentan |
+| PG-05 | Reto 66 cumplido | Reto 66: hábito forjado ✅ |
+| PG-06 | Línea del peso | Peso, media de {dias} días: {peso} kg |
+| PG-07 | Peso sin datos suficientes | Peso: con {minimo} registros en {dias} días ves tu media. |
+| PG-08 | Línea de fuerza | Fuerza (1RM estimado): {lista} |
+| PG-09 | [Registrar peso] con un peso previo | Tu peso de hoy: **{peso}** kg. [Guardar] |
+| PG-10 | [Registrar peso] sin peso previo | Escribe tu peso en kg (por ejemplo, 72,5). |
+| PG-11 | Peso guardado | Peso guardado: {peso} kg. |
+| PG-12 | Respuesta a PG-10 que no es un peso | No entendí ese peso. Escríbelo en kg, por ejemplo 72,5. |
+| BI-01 | `/logros` o [Ver bitácora] | Tu bitácora: {total} entre logros y récords. |
+| BI-02 | Bitácora vacía | Tu bitácora está vacía por ahora. Tu primer logro llega con tu primera sesión. |
+| BI-03 | Línea de un logro | {fecha} · {nombre} |
+| BI-04 | Línea de un récord | {fecha} · Récord {ejercicio}: {carga} × {reps}{e1rm} |
+| BI-05 | Línea de un récord anterior a T-081 | {fecha} · Récord {ejercicio} |
+
+> - PG-01 suma, en líneas aparte y en este orden: PG-02 o PG-03 (si hay objetivo con meta), PG-04 o PG-05, PG-06 o PG-07 y PG-08 (si hay series con carga).
+> - Modo sin números (FR-006-05): no van PG-06, PG-07 ni la barra de un objetivo de peso, ni [Registrar peso]. Tampoco hay [Registrar peso] sin la autorización de medidas corporales (RN-DAT-001).
+> - `{barra}` tiene 10 celdas como CM-04; `{porcentaje}` va sin decimales (RN-OBJ-011). `{peso}` lleva una cifra decimal con coma.
+> - PG-08: por cada patrón (sentadilla, bisagra, empuje y tirón), el ejercicio con más series y su mejor 1RM estimado, separados por " · ": "Sentadilla 93 kg · Peso muerto 120 kg" (decisión del PO, 2026-11-11).
+> - PG-09 parte del último peso y lleva [−{n}] y [+{n}] por cada paso de P-100 (coma decimal), más [Guardar]; se edita en cada toque (decisión del PO, 2026-11-11). PG-10 se usa solo cuando todavía no hay ningún peso y pide responder a ese mensaje. Al guardar: PG-11 como aviso breve y PG-01 actualizado.
+> - BI-01 sigue con una línea por entrada (BI-03, BI-04 o BI-05), de la más antigua a la más reciente, con las últimas P-101. `{e1rm}` es " (e1RM {n} kg)" si la serie tenía carga, o vacío.
+
+`{mes}` (abreviaturas de `{fecha}` "12-nov" en BI-03 a BI-05): ene · feb · mar · abr · may · jun · jul · ago · sep · oct · nov · dic
 
 ## 3. Onboarding (textos base)
 

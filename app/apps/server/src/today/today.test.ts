@@ -184,8 +184,8 @@ describe('RN-DQC-003 · T-041 · Hoy en un día de descanso', () => {
 });
 
 describe('FR-001-11 · T-041 · teclado persistente', () => {
-  it('Progreso todavía no está: KB-02', async () => {
+  it('Progreso abre PG-01 (T-081)', async () => {
     const flow = await runFlow([...ONBOARDED_GYM_LXV, { text: '📈 Progreso' }]);
-    expect(flow.last()?.text).toBe(templateById('KB-02').text);
+    expect(flow.last()?.buttons.map((b) => b.text)).toEqual(templateById('PG-01').buttons);
   });
 });

@@ -43,7 +43,6 @@ import type {
   UserDataEraser,
   UsersRepository,
 } from '../ports/repositories.js';
-import { plain } from '../onboarding/replies.js';
 import { planView } from '../plans/plan-view.js';
 import { answerSessionCard } from '../sessions/card-actions.js';
 import { finishSession, logAsPlanned } from '../sessions/finish.js';
@@ -56,6 +55,14 @@ import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { answerSettings, settingsCommand } from '../messaging/message-settings.js';
 import { answerPause, pauseCommand } from '../messaging/pause.js';
+import { logbookScreen } from '../progress/logbook.js';
+import { progressScreen } from '../progress/progress-screen.js';
+import {
+  answerWeightButton,
+  answerWeightText,
+  isWeightRequest,
+  weightPrompt,
+} from '../progress/weight.js';
 import {
   deduplicate,
   loadUser,
@@ -179,16 +186,21 @@ function mainKeyboard(): Keyboard {
 /** Texto y opciones de envío de una respuesta (respuestas y mensajes proactivos, T-070). */
 export function telegramPayload(reply: Reply): {
   text: string;
-  options: { reply_markup?: InlineKeyboard | Keyboard; parse_mode?: 'HTML' };
+  options: {
+    reply_markup?: InlineKeyboard | Keyboard | { force_reply: true };
+    parse_mode?: 'HTML';
+  };
 } {
   const formatted = reply.text.includes('**')
     ? { text: toTelegramHtml(reply.text), parse_mode: 'HTML' as const }
     : { text: reply.text };
   const markup = reply.mainKeyboard
     ? { reply_markup: mainKeyboard() }
-    : reply.buttons.length > 0
-      ? { reply_markup: inlineKeyboard(reply) }
-      : {};
+    : reply.forceReply
+      ? { reply_markup: { force_reply: true as const } }
+      : reply.buttons.length > 0
+        ? { reply_markup: inlineKeyboard(reply) }
+        : {};
   return {
     text: formatted.text,
     options: { ...markup, ...(formatted.parse_mode ? { parse_mode: formatted.parse_mode } : {}) },
@@ -275,6 +287,14 @@ export function createBot({
     if (ctx.user) await sendAll(ctx, settingsCommand(ctx.user));
   });
 
+  handlers.command('progreso', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, [await progressScreen(ctx.user, useCases)]);
+  });
+
+  handlers.command('logros', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await logbookScreen(ctx.user, useCases));
+  });
+
   handlers.command('privacidad', async (ctx) => {
     if (ctx.user) await sendAll(ctx, [privacyCommand(ctx.user)]);
   });
@@ -347,11 +367,16 @@ export function createBot({
         return answerPause(user, action.value, useCases);
       case 'aj':
         return answerSettings(user, action.value, useCases);
+      case 'pg':
+        if (action.value === 'log') return logbookScreen(user, useCases);
+        if (action.value === 'p') return [await progressScreen(user, useCases, true)];
+        if (action.value === 'w') return weightPrompt(user, useCases);
+        return answerWeightButton(user, action.value, useCases);
       case 'nav':
         if (action.target === 'plan') return planView(user, useCases);
         if (action.target === 'today') return todayScreen(user, useCases);
         if (action.target === 'food') return mealMenu(user, useCases);
-        return [plain('KB-02')];
+        return [await progressScreen(user, useCases)];
     }
   }
 
@@ -363,8 +388,13 @@ export function createBot({
     const text = ctx.message.text;
     if (user && text === MAIN_KEYBOARD[0]) return sendAll(ctx, await todayScreen(user, useCases));
     if (user && text === MAIN_KEYBOARD[1]) return sendAll(ctx, await mealMenu(user, useCases));
-    if (user && text !== undefined && (MAIN_KEYBOARD as readonly string[]).includes(text)) {
-      return sendAll(ctx, [plain('KB-02')]);
+    if (user && text === MAIN_KEYBOARD[2]) {
+      return sendAll(ctx, [await progressScreen(user, useCases)]);
+    }
+    // HU-006-2: el primer peso se escribe respondiendo a PG-10 (ruta de texto definida).
+    const repliedTo = ctx.message.reply_to_message;
+    if (user && text !== undefined && repliedTo?.from?.is_bot && isWeightRequest(repliedTo.text)) {
+      return sendAll(ctx, await answerWeightText(user, text, useCases));
     }
     if (user && !isOnboardingComplete(user)) {
       const replies =

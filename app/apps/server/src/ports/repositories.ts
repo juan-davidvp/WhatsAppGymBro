@@ -113,6 +113,8 @@ export interface BodyMeasurementsRepository {
   /** RN-OBJ-012: el peso es opcional; un registro por día (el último gana). */
   recordWeight(userId: string, date: LocalDate, weightKg: number): Promise<void>;
   latestWeightKg(userId: string): Promise<number | null>;
+  /** RN-OBJ-010: pesos desde `from` (incluido), del más viejo al más reciente. */
+  weightsSince(userId: string, from: LocalDate): Promise<{ date: LocalDate; kg: number }[]>;
 }
 
 export interface TrainingHabitRecord {
@@ -569,10 +571,29 @@ export interface PersonalRecordsRepository {
     value: number;
     date: LocalDate;
     setKey: string;
+    /** HU-006-3: carga y repeticiones de la serie, para la bitácora (T-081). */
+    loadKg: number;
+    reps: number;
   }): Promise<{ inserted: boolean }>;
   count(userId: string): Promise<number>;
+  /** HU-006-3: récords del usuario, del más viejo al más reciente. */
+  list(userId: string): Promise<PersonalRecordEntry[]>;
   /** Récords de una sesión (para el fin de sesión). */
   countForSession(userId: string, sessionId: string): Promise<number>;
+}
+
+/** Récord guardado; los anteriores a T-081 no tienen carga ni repeticiones. */
+export interface PersonalRecordEntry {
+  readonly exerciseCode: string;
+  readonly date: LocalDate;
+  readonly loadKg: number | null;
+  readonly reps: number | null;
+}
+
+/** Logro de la bitácora (RN-GAM-011). */
+export interface AchievementEntry {
+  readonly code: string;
+  readonly at: Date;
 }
 
 export interface AchievementsRepository {
@@ -584,6 +605,8 @@ export interface AchievementsRepository {
     value: string | number | null;
     context: string | null;
   }): Promise<{ added: boolean }>;
+  /** HU-006-3: logros del usuario, del más viejo al más reciente. */
+  list(userId: string): Promise<AchievementEntry[]>;
 }
 
 export interface PainFlagsRepository {

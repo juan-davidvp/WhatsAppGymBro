@@ -721,3 +721,40 @@ Revisión del diff completo de M7 (T-070 a T-073): sin hallazgos críticos ni al
   - Un `retry_after` largo de Telegram detiene el ciclo; habría que poner un tope (nuevo parámetro).
   - `pausedAt` y `pausedUntil` guardan solo la última pausa.
 
+## [2026-11-11] decision | M8 · alcance y diseño de Progreso (PO)
+- **Alcance:**
+  - M8 cubre T-080 a T-082.
+  - La Mini App (T-083) pasa a la Fase 1, lo que resuelve Q9.
+  - T-084 (relación comida–entreno) queda para después.
+- **Peso (HU-006-2):** se registra con botones desde el último peso (P-100: ± 0,1 y ± 0,5 kg). Solo el primero se escribe, respondiendo a PG-10. Esto prevalece sobre "escribe un número" (constitución II).
+- **Muro (T-080):** 12 semanas, imagen sin texto (los datos van en el pie), SVG → PNG con `@resvg/resvg-js`.
+- **Ejercicios clave de `/progreso`:** uno por patrón (sentadilla, bisagra, empuje y tirón), el más entrenado, con su mejor 1RM estimado.
+- **Cambios en la bóveda:**
+  - [[parametros]] v0.12.0: P-100 y P-101.
+  - [[modelo-de-datos]] v0.9.0: `personal_records` con `loadKg` y `reps`.
+  - [[plantillas-de-mensajes]] v0.18.0: §2.7, comandos `progreso` y `logros`, y sale KB-02.
+  - [[spec-006-progreso-logros-y-mantenimiento]] §10.
+
+## [2026-11-11] implementar | T-081 /progreso, registro de peso y /logros
+- **Dominio** (`progress/progress.ts`): `strengthHighlights` da un ejercicio por patrón con su mejor 1RM estimado (RN-ENT-005). `stepWeight` suma o resta los pasos de P-100, con una prueba de propiedad.
+- **`/progreso` y `📈 Progreso`** (`progress/progress-screen.ts`):
+  - PG-01: días que cuentan, racha y nivel.
+  - Barra del objetivo (PG-02/03, RN-OBJ-011), solo si tiene meta.
+  - Reto 66 (PG-04/05).
+  - Media móvil del peso o "datos insuficientes" (PG-06/07, RN-OBJ-010).
+  - Fuerza (PG-08).
+  - En el modo sin números no hay peso, barra de peso ni [Registrar peso] (FR-006-05), y [Registrar peso] exige la autorización de medidas corporales (RN-DAT-001). Emite `progress_viewed`.
+- **Peso** (`progress/weight.ts`):
+  - PG-09 con [−0,5] [−0,1] [+0,1] [+0,5] [Guardar]; el peso viaja en el botón, sin estado guardado.
+  - Sin peso previo, PG-10 pide responder al mensaje (`force_reply`), y un texto que no es un peso recibe PG-12.
+  - Al guardar emite `weight_logged {source: 'progress'}`.
+- **`/logros` y [Ver bitácora]** (`progress/logbook.ts`, RN-GAM-011):
+  - Logros y récords de los más viejos a los más recientes, con las últimas P-101 entradas.
+  - Los récords guardan ahora carga y repeticiones para mostrar "80 kg × 5 (e1RM 93 kg)"; los anteriores salen sin ese dato (BI-05).
+  - Emite `achievement_log_viewed`.
+  - Los avisos RE-01 a RE-05 llevan ya sus botones [Ver bitácora]/[Ver progreso].
+- **Repositorios:** `weightsSince`, `records.list` y `achievements.list`, en MongoDB y en memoria, con pruebas.
+- **Pruebas:**
+  - `progress/progress.test.ts` (12): pantalla, teclado, media móvil, barra del objetivo, fuerza, modo sin números, peso escrito y con botones, bitácora vacía y en orden, [Ver bitácora].
+  - En el dominio, `progress.test.ts`.
+

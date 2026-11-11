@@ -95,6 +95,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     value: number;
     date: string;
     setKey: string;
+    loadKg?: number;
+    reps?: number;
   }[] = [];
   const achievements: {
     userId: string;
@@ -241,6 +243,14 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
           .filter((w) => w.userId === userId)
           .sort((a, b) => (a.date < b.date ? 1 : -1));
         return Promise.resolve(mine[0]?.weightKg ?? null);
+      },
+      weightsSince(userId, from) {
+        return Promise.resolve(
+          weights
+            .filter((w) => w.userId === userId && w.date >= from)
+            .sort((a, b) => (a.date < b.date ? -1 : 1))
+            .map((w) => ({ date: w.date, kg: w.weightKg })),
+        );
       },
     },
     habits: {
@@ -609,6 +619,19 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
             .length,
         );
       },
+      list(userId) {
+        return Promise.resolve(
+          records
+            .filter((r) => r.userId === userId)
+            .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+            .map((r) => ({
+              exerciseCode: r.exerciseCode,
+              date: r.date,
+              loadKg: r.loadKg ?? null,
+              reps: r.reps ?? null,
+            })),
+        );
+      },
     },
     achievements: {
       appendOnce(input) {
@@ -617,6 +640,14 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         }
         achievements.push(input);
         return Promise.resolve({ added: true });
+      },
+      list(userId) {
+        return Promise.resolve(
+          achievements
+            .filter((a) => a.userId === userId)
+            .sort((a, b) => a.at.getTime() - b.at.getTime())
+            .map((a) => ({ code: a.code, at: a.at })),
+        );
       },
     },
     painFlags: {

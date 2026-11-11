@@ -816,6 +816,8 @@ describe('RN-ENT-005 · T-044 · historia de un ejercicio, récords y bitácora'
       value: 9,
       date: '2026-10-19',
       setKey: 'set:abc:A:0',
+      loadKg: 40,
+      reps: 9,
     };
     expect(await records.record(record)).toEqual({ inserted: true });
     expect(await records.record(record)).toEqual({ inserted: false });
@@ -824,12 +826,55 @@ describe('RN-ENT-005 · T-044 · historia de un ejercicio, récords y bitácora'
     expect(await records.countForSession('u23', 'abc')).toBe(1);
   });
 
-  it('RN-GAM-011 · cada logro se anota una sola vez', async () => {
+  it('HU-006-3 · los récords se listan en orden; los de antes de T-081 vienen sin carga', async () => {
+    const records = personalRecordsRepository(db);
+    await records.record({
+      userId: 'u23b',
+      exerciseCode: 'B',
+      type: 'e1rm',
+      value: 80,
+      date: '2026-10-21',
+      setKey: 'set:ghi:B:0',
+      loadKg: 80,
+      reps: 5,
+    });
+    await db.collection('personal_records').insertOne({
+      userId: 'u23b',
+      exerciseCode: 'A',
+      type: 'reps',
+      value: 12,
+      date: '2026-10-19',
+      setKey: 'set:old:A:0',
+    });
+    expect(await records.list('u23b')).toEqual([
+      { exerciseCode: 'A', date: '2026-10-19', loadKg: null, reps: null },
+      { exerciseCode: 'B', date: '2026-10-21', loadKg: 80, reps: 5 },
+    ]);
+  });
+
+  it('RN-GAM-011 · cada logro se anota una sola vez y la bitácora los lista en orden', async () => {
     const achievements = achievementsRepository(db);
     const entry = { userId: 'u24', code: 'FIRST_PR', at: now, value: 'A', context: 'reps' };
     expect(await achievements.appendOnce(entry)).toEqual({ added: true });
     expect(await achievements.appendOnce({ ...entry, value: 'B' })).toEqual({ added: false });
     expect(await db.collection('achievements').countDocuments({ userId: 'u24' })).toBe(1);
+    const earlier = new Date(now.getTime() - 86_400_000);
+    await achievements.appendOnce({ ...entry, code: 'FIRST_SESSION', at: earlier });
+    expect(await achievements.list('u24')).toEqual([
+      { code: 'FIRST_SESSION', at: earlier },
+      { code: 'FIRST_PR', at: now },
+    ]);
+  });
+
+  it('RN-OBJ-010 · los pesos desde una fecha, del más viejo al más reciente', async () => {
+    const measurements = bodyMeasurementsRepository(db);
+    await measurements.recordWeight('u24b', '2026-10-20', 72.4);
+    await measurements.recordWeight('u24b', '2026-10-10', 73);
+    await measurements.recordWeight('u24b', '2026-10-18', 72.8);
+    expect(await measurements.weightsSince('u24b', '2026-10-15')).toEqual([
+      { date: '2026-10-18', kg: 72.8 },
+      { date: '2026-10-20', kg: 72.4 },
+    ]);
   });
 });
 

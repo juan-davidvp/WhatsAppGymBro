@@ -673,6 +673,13 @@ export function bodyMeasurementsRepository(db: Db): BodyMeasurementsRepository {
       );
       return (doc?.['weightKg'] as number | undefined) ?? null;
     },
+    async weightsSince(userId, from) {
+      const docs = await collection
+        .find({ userId, date: { $gte: from }, weightKg: { $type: 'number' } })
+        .sort({ date: 1 })
+        .toArray();
+      return docs.map((d) => ({ date: d['date'] as LocalDate, kg: d['weightKg'] as number }));
+    },
   };
 }
 
@@ -896,6 +903,15 @@ export function personalRecordsRepository(db: Db): PersonalRecordsRepository {
     async countForSession(userId, sessionId) {
       return collection.countDocuments({ userId, setKey: { $regex: `^set:${sessionId}:` } });
     },
+    async list(userId) {
+      const docs = await collection.find({ userId }).sort({ date: 1, _id: 1 }).toArray();
+      return docs.map((d) => ({
+        exerciseCode: d['exerciseCode'] as string,
+        date: d['date'] as LocalDate,
+        loadKg: typeof d['loadKg'] === 'number' ? d['loadKg'] : null,
+        reps: typeof d['reps'] === 'number' ? d['reps'] : null,
+      }));
+    },
   };
 }
 
@@ -909,6 +925,10 @@ export function achievementsRepository(db: Db): AchievementsRepository {
         { upsert: true },
       );
       return { added: result.upsertedCount === 1 };
+    },
+    async list(userId) {
+      const docs = await collection.find({ userId }).sort({ at: 1, _id: 1 }).toArray();
+      return docs.map((d) => ({ code: d['code'] as string, at: d['at'] as Date }));
     },
   };
 }

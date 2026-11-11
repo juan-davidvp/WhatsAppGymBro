@@ -40,6 +40,8 @@ export async function checkRecord(
     value: entry.loadKg > 0 && record.kind === 'e1rm' ? entry.loadKg : entry.reps,
     date: session.date,
     setKey,
+    loadKg: entry.loadKg,
+    reps: entry.reps,
   });
   if (!stored.inserted) return null;
   // RN-GAM-005: el récord suma su XP (P-038); quedó pendiente en T-044 y llega con T-062.
