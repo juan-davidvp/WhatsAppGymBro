@@ -23,7 +23,7 @@ import { GOAL_BY_LABEL, button, buttonValue, type Reply } from './replies.js';
  */
 
 /** Métrica principal de cada objetivo (objetivos-y-progreso §2). */
-const METRIC_BY_GOAL: Readonly<Record<GoalType, GoalMetric>> = {
+export const METRIC_BY_GOAL: Readonly<Record<GoalType, GoalMetric>> = {
   gain_muscle: 'weight_kg',
   lose_fat: 'weight_kg',
   gain_strength: 'e1rm_kg',

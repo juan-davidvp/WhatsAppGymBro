@@ -26,6 +26,7 @@ import type {
   UsersRepository,
 } from '../ports/repositories.js';
 import { comebackInputs, contextualReminderApplies } from './comeback.js';
+import { maintenanceAlertDue } from './compose-goal.js';
 import type { ComposeDeps } from './compose.js';
 import { refreshLearnedStarts } from './learned-time.js';
 
@@ -93,7 +94,20 @@ async function candidatesFor(
     ...(await contextualReminderCandidate(cycle, deps)),
     dayClosingCandidate(user, today),
     ...weeklySummaryCandidate(user, today),
+    ...(await maintenanceCandidate(cycle, deps)),
   ];
+}
+
+/** RN-MAN-003 · `mantenimiento`: los lunes, si la zona quedó atrás P-012 semanas. */
+async function maintenanceCandidate(
+  cycle: UserCycle,
+  deps: ScheduleDeps,
+): Promise<NewOutboxMessage[]> {
+  const { user, today } = cycle;
+  if (weekdayOf(today) !== 'monday' || !(await maintenanceAlertDue(user, today, deps))) return [];
+  const at = habitMoment(cycle);
+  if (!sameDay(cycle, at)) return [];
+  return [candidate(user, 'mantenimiento', today, at, nextQuietStart(user, today, at))];
 }
 
 async function schedule(
@@ -103,6 +117,14 @@ async function schedule(
   deps: ScheduleDeps,
 ): Promise<boolean> {
   const { created } = await deps.outbox.schedule(candidate, now);
+  // RN-MAN-003: la salida de la zona se registra una vez por semana, al programarse.
+  if (created && candidate.purpose === 'mantenimiento') {
+    await deps.events.emit(
+      'maintenance_band_exited',
+      { userId: user.id, timezone: user.timezone },
+      {},
+    );
+  }
   if (created) {
     await deps.events.emit(
       'message_scheduled',

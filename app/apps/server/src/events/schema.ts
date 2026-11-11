@@ -188,6 +188,23 @@ export const EVENT_PROPS_SCHEMAS = {
   backoff_applied: z.strictObject({ days: z.number().int().positive() }),
   inactivity_pause_started: z.strictObject({ inactiveDays: z.number().int().nonnegative() }),
   reactivation_sent: z.strictObject({ count: z.number().int().positive() }),
+  /** T-082 (HU-006-4 a 6). */
+  goal_completed: z.strictObject({
+    type: z.enum([
+      'gain_muscle',
+      'lose_fat',
+      'gain_strength',
+      'recomposition',
+      'consistency',
+      'maintain',
+    ]),
+  }),
+  goal_partially_completed: z.strictObject({
+    progressPct: z.number().int().min(0).max(100),
+  }),
+  maintenance_entered: z.strictObject({ source: z.enum(['choice', 'timeout']) }),
+  maintenance_band_exited: z.strictObject({}),
+  phase_reviewed: z.strictObject({ withinLimits: z.boolean() }),
   /** T-080 (HU-006-1): si salió con la imagen del muro. */
   weekly_summary_sent: z.strictObject({ withImage: z.boolean() }),
   /** T-081 (HU-006-2, HU-006-3): vistas, sin datos. */

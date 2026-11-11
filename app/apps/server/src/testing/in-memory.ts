@@ -16,6 +16,7 @@ import {
   type XpLedgerRecord,
   type StoredWeeklyPlan,
   type GoalRecord,
+  type StoredGoal,
   type ScreeningType,
   type TrainingHabitRecord,
   type UserRecord,
@@ -65,7 +66,11 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
   const screenings: ScreeningRow[] = [];
   const weights: { userId: string; date: string; weightKg: number }[] = [];
   const habits: TrainingHabitRecord[] = [];
-  const goals: (GoalRecord & { status: 'active' | 'changed' })[] = [];
+  const goals: (GoalRecord & {
+    status: StoredGoal['status'];
+    closedAt: Date | null;
+    progressPct: number | null;
+  })[] = [];
   const weeks: (StoredWeeklyPlan & { userId: string })[] = [];
   const setEntries: (SetEntryRecord & { idempotencyKey: string })[] = [];
   const days: {
@@ -269,8 +274,25 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
       activate(goal) {
         for (const g of goals)
           if (g.userId === goal.userId && g.status === 'active') g.status = 'changed';
-        goals.push({ ...goal, status: 'active' });
+        goals.push({ ...goal, status: 'active', closedAt: null, progressPct: null });
         return Promise.resolve();
+      },
+      close(userId, status, at, progressPct) {
+        const found = goals.find((g) => g.userId === userId && g.status === 'active');
+        if (!found) return Promise.resolve(false);
+        Object.assign(found, { status, closedAt: at, progressPct });
+        return Promise.resolve(true);
+      },
+      latest(userId) {
+        const mine = goals.filter((g) => g.userId === userId);
+        const last = mine.at(-1);
+        return Promise.resolve(last ? { ...last } : null);
+      },
+      extendActive(userId, extraWeeks) {
+        const found = goals.find((g) => g.userId === userId && g.status === 'active');
+        if (!found) return Promise.resolve(false);
+        Object.assign(found, { horizonWeeks: found.horizonWeeks + extraWeeks });
+        return Promise.resolve(true);
       },
       active(userId) {
         const found = goals.find((g) => g.userId === userId && g.status === 'active');

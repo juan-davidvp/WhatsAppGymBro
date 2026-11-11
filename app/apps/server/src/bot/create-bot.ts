@@ -55,6 +55,7 @@ import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { answerSettings, settingsCommand } from '../messaging/message-settings.js';
 import { answerPause, pauseCommand } from '../messaging/pause.js';
+import { answerGoal } from '../goals/goal-actions.js';
 import { logbookScreen } from '../progress/logbook.js';
 import { progressScreen } from '../progress/progress-screen.js';
 import {
@@ -367,6 +368,8 @@ export function createBot({
         return answerPause(user, action.value, useCases);
       case 'aj':
         return answerSettings(user, action.value, useCases);
+      case 'gl':
+        return answerGoal(user, action.value, useCases);
       case 'pg':
         if (action.value === 'log') return logbookScreen(user, useCases);
         if (action.value === 'p') return [await progressScreen(user, useCases, true)];

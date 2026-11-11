@@ -58,7 +58,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | T-032 ✅ | Onboarding completo con reanudación | HU-001-1 a 5 | T-031, T-010, T-011 | SC-001-1 medido en local |
 | T-033 ✅ | Respuestas de cuidado y suite de *red-team* | HU-009-4/7 | T-017, T-021 | 0 fallos críticos en ≥ 50 casos |
 | T-034 ✅ | `/borrar_datos` con borrado total | HU-009-6, RN-DAT-003 | T-020 | SC-009-2 |
-| T-035 | *Could:* cambiar de objetivo conservando el historial | HU-001-6, RN-OBJ-007 | T-032 | Escenarios pasan; el objetivo anterior queda `cambiado` |
+| T-035 | *Could:* cambiar de objetivo conservando el historial — lo esencial llega con T-082 ([Nueva meta]); falta abrirlo desde `/ajustes` | HU-001-6, RN-OBJ-007 | T-032 | Escenarios pasan; el objetivo anterior queda `cambiado` |
 
 ## M4 · Plan y entrenamiento (SPEC-002, SPEC-003)
 
@@ -107,7 +107,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 |---|---|---|---|---|
 | T-080 ✅ | Imagen del muro (SVG → PNG) y resumen semanal | HU-006-1 | T-062, T-071 | Imagen generada y enviada en local |
 | T-081 ✅ | `/progreso`, registro de peso y `/logros` | HU-006-2/3 | T-062 | Escenarios pasan |
-| T-082 | *Should:* objetivo cumplido, revisión de fase y mantenimiento | HU-006-4 a 6 | T-081 | Escenarios pasan |
+| T-082 ✅ | *Should:* objetivo cumplido, revisión de fase y mantenimiento | HU-006-4 a 6 | T-081 | Escenarios pasan |
 | T-083 | *Should:* Mini App de progreso con validación de datos de inicio — **pasa a la Fase 1** (PO, 2026-11-11, Q9) | HU-006-7 | T-081 | Abre desde el botón de menú y rechaza datos no válidos |
 | T-084 | *Could:* vista "tu relación comida–entreno" | HU-006-8 | T-081, T-052 | Escenarios pasan |
 

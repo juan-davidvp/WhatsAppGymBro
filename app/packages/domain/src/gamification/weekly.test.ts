@@ -209,3 +209,28 @@ describe('RN-GAM-012 · Reto 66', () => {
     expect(habitForged(days - 2, days - 1)).toBe(false);
   });
 });
+
+describe('RN-MAN-002 · en mantenimiento la semana se cumple con P-010 sesiones (PO, 2026-11-11)', () => {
+  it('con 4 planificadas, 2 sesiones cumplen la semana en mantenimiento y no fuera de él', () => {
+    const minimum = PARAMETERS.maintenance.minWeeklySessions;
+    expect(
+      evaluateWeek({ planned: 4, completed: minimum, paused: false, maintenance: true }),
+    ).toEqual({
+      evaluated: true,
+      commitment: minimum,
+      fulfilled: true,
+    });
+    expect(evaluateWeek({ planned: 4, completed: minimum, paused: false }).evaluated).toBe(true);
+    expect(evaluateWeek({ planned: 4, completed: minimum, paused: false })).toMatchObject({
+      fulfilled: false,
+    });
+  });
+
+  it('con menos planificadas que P-010, el compromiso no sube', () => {
+    expect(evaluateWeek({ planned: 1, completed: 1, paused: false, maintenance: true })).toEqual({
+      evaluated: true,
+      commitment: 1,
+      fulfilled: true,
+    });
+  });
+});

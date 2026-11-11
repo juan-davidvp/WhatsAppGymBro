@@ -777,3 +777,27 @@ Revisión del diff completo de M7 (T-070 a T-073): sin hallazgos críticos ni al
   - Generé una imagen de ejemplo con el renderizador real.
 - **Pendiente:** verificar el envío a Telegram con el bot real. El criterio de T-080 dice "enviada en local", y aquí no hay token; quedó probado con la API simulada.
 
+## [2026-11-11] decision | T-082 · nueva meta y compromiso en mantenimiento (PO)
+- **[Nueva meta], [Ajustar] y [Extender]** reutilizan la propuesta del onboarding (ON-05 y ON-06/07). Extender suma P-001 semanas; en la pregunta se nombró P-006 por error, que es el IMC mínimo. El objetivo anterior se cierra con su estado (RN-OBJ-007). Cubre lo esencial de T-035.
+- **Mantenimiento:** solo cambia el umbral de la semana cumplida (P-010); el plan sigue con los días declarados.
+- [[plantillas-de-mensajes]] v0.20.0: §2.8 con GO-01 a GO-10, textos nuevos para revisión del PO.
+
+## [2026-11-11] implementar | T-082 Objetivo cumplido, revisión de fase y mantenimiento
+- **Revisión diaria** (`goals/goal-review.ts`, al cerrar cada día):
+  - RN-OBJ-006: la media móvil en la meta P-007 semanas cierra el objetivo como cumplido. Llega GO-01 como aviso con el capítulo, se anota GOAL_DONE y se emite `goal_completed`.
+  - RN-OBJ-008: el fin del plazo sin la meta lo cierra como completado parcial, con el % y GO-02, sin lenguaje de fracaso; emite `goal_partially_completed`.
+  - RN-OBJ-013: cada P-057 semanas revisa la fase y emite `phase_reviewed`; con el ritmo fuera de límites llega GO-03.
+  - RN-MAN-001: si en P-009 días no elige, entra solo en mantenimiento.
+- **Mantenimiento** (RN-MAN-002, RN-MAN-005, FR-006-04): es un objetivo `maintain` con el peso de entrada (zona ± P-011 %, GO-04, o GO-05 sin peso). La intensidad pasa a Baja y se emite `maintenance_entered`. La semana se cumple con P-010 sesiones (`evaluateWeek` con `maintenance`).
+- **`mantenimiento` proactivo** (RN-MAN-003, `messaging/compose-goal.ts`): los lunes, si la media de las últimas P-012 semanas quedó fuera de la zona, sale MA-01 a MA-03 por el motor (`maintenance_band_exited`). [Ver opciones] muestra GO-09; [Mover mi zona] centra la zona (GO-10).
+- **Botones** (`goals/goal-actions.ts`):
+  - [Mantener], [Nueva meta] (ON-05/21 → ON-06/07 o GO-07 → GO-08), [Extender] (GO-06) y [Ajustar].
+  - La propuesta de meta del onboarding se extrajo para reutilizarla, sin cambiar su comportamiento.
+  - Los avisos GO llevan sus botones.
+- **Repositorios:** `goals.close`, `latest` y `extendActive`.
+- **Pruebas:** `goals/goals.test.ts` (11) y RN-MAN-002 en el dominio.
+- **Pendiente:**
+  - El logro MAINTENANCE_4W (4 semanas cumplidas en mantenimiento).
+  - Las temporadas de maestría (RN-MAN-004), que están fuera de la Fase 0.
+  - Que `/ajustes` permita cambiar de objetivo (resto de T-035).
+

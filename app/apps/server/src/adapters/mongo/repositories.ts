@@ -16,6 +16,7 @@ import {
   EMPTY_PROFILE,
   type BodyMeasurementsRepository,
   type GoalRecord,
+  type StoredGoal,
   type PlansRepository,
   type AchievementsRepository,
   type ExerciseAdjustmentsRepository,
@@ -724,6 +725,27 @@ export function goalsRepository(db: Db): GoalsRepository {
         horizonWeeks,
       } = doc as unknown as GoalRecord;
       return { userId: id, type, metric, startValue, targetValue, startDate, horizonWeeks };
+    },
+    async close(userId, status, at, progressPct) {
+      const result = await collection.updateOne(
+        { userId, status: 'active' },
+        { $set: { status, closedAt: at, progressPct } },
+      );
+      return result.modifiedCount === 1;
+    },
+    async latest(userId) {
+      const doc = await collection.findOne({ userId }, { sort: { _id: -1 } });
+      if (!doc) return null;
+      const { _id, ...goal } = doc;
+      void _id;
+      return goal as unknown as StoredGoal;
+    },
+    async extendActive(userId, extraWeeks) {
+      const result = await collection.updateOne(
+        { userId, status: 'active' },
+        { $inc: { horizonWeeks: extraWeeks } },
+      );
+      return result.modifiedCount === 1;
     },
   };
 }

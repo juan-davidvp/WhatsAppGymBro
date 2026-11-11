@@ -139,7 +139,14 @@ export function quietHoursLabel(range: { start: string; end: string }): string {
   return `${range.start}–${range.end}`;
 }
 
-function goalProposalReply(offer: WeightGoalOffer): Reply {
+/** Botón de la propuesta de meta: en el onboarding (`ob`) o al fijar una nueva (T-082). */
+export type ProposalAction = (value: string) => CallbackAction;
+
+/** ON-06 con [Me sirve] [Más conservadora] [Más ambiciosa]. */
+export function goalProposalReply(
+  offer: WeightGoalOffer,
+  act: ProposalAction = ob('goal_proposal'),
+): Reply {
   const [accept, conservative, ambitious] = templateById('ON-06').buttons;
   return {
     text: renderTemplate('ON-06', {
@@ -147,9 +154,9 @@ function goalProposalReply(offer: WeightGoalOffer): Reply {
       semanas: offer.horizonWeeks,
     }),
     buttons: [
-      button(accept ?? '', ob('goal_proposal')(acceptValue(offer))),
-      button(conservative ?? '', ob('goal_proposal')(buttonValue('ON-06', conservative ?? ''))),
-      button(ambitious ?? '', ob('goal_proposal')(buttonValue('ON-06', ambitious ?? ''))),
+      button(accept ?? '', act(acceptValue(offer))),
+      button(conservative ?? '', act(buttonValue('ON-06', conservative ?? ''))),
+      button(ambitious ?? '', act(buttonValue('ON-06', ambitious ?? ''))),
     ],
   };
 }
@@ -159,7 +166,10 @@ function acceptValue(offer: WeightGoalOffer): string {
   return `ok_${Math.round(offer.targetKg * 10)}_${offer.horizonWeeks}`;
 }
 
-async function weightGoalInputs(user: UserRecord, deps: OnboardingDeps) {
+export async function weightGoalInputs(
+  user: UserRecord,
+  deps: Pick<OnboardingDeps, 'bodyMeasurements'>,
+) {
   const type = user.profile.goalType;
   const weightKg = await deps.bodyMeasurements.latestWeightKg(user.id);
   const heightCm = user.profile.heightCm;
@@ -426,38 +436,60 @@ async function answerGoalProposal(
 ): Promise<StepOutcome> {
   const inputs = await weightGoalInputs(user, deps);
   if (!inputs) return done();
+  const outcome = await resolveGoalProposal(inputs, value, ob('goal_proposal'), deps, user);
+  if ('reply' in outcome) return stay(outcome.reply);
+  await deps.goals.activate({
+    userId: user.id,
+    type: inputs.type,
+    metric: 'weight_kg',
+    startValue: inputs.weightKg,
+    targetValue: outcome.accepted.targetKg,
+    startDate: operationalDate(deps.clock(), user.timezone),
+    horizonWeeks: outcome.accepted.horizonWeeks,
+  });
+  await deps.events.emit('goal_set', subjectOf(user), {
+    type: inputs.type,
+    horizonWeeks: outcome.accepted.horizonWeeks,
+    withTarget: true,
+  });
+  return done();
+}
+
+export type ProposalOutcome =
+  | { readonly accepted: { readonly targetKg: number; readonly horizonWeeks: number } }
+  | { readonly reply: Reply };
+
+/**
+ * Respuesta a ON-06/ON-07 (HU-001-2; también T-082): la meta aceptada se revalida
+ * (RN-OBJ-004 y RN-OBJ-005; una insegura no se acepta) o se muestra otra propuesta.
+ */
+export async function resolveGoalProposal(
+  inputs: {
+    readonly type: 'lose_fat' | 'gain_muscle';
+    readonly weightKg: number;
+    readonly heightCm: number;
+  },
+  value: string,
+  act: ProposalAction,
+  deps: Pick<OnboardingDeps, 'events'>,
+  user: UserRecord,
+): Promise<ProposalOutcome> {
   const offers = weightGoalOffers(inputs);
   const subject = subjectOf(user);
-
   const accepted = /^ok_(\d{1,5})_(\d{1,2})$/.exec(value);
   if (accepted) {
     const goal = { targetKg: Number(accepted[1]) / 10, horizonWeeks: Number(accepted[2]) };
-    // RN-OBJ-004 y RN-OBJ-005: la meta del botón se revalida; una insegura no se guarda.
     if (!isSafeWeightGoal({ ...inputs, ...goal })) {
-      return stay(goalProposalReply(offers.proposal));
+      return { reply: goalProposalReply(offers.proposal, act) };
     }
-    await deps.goals.activate({
-      userId: user.id,
-      type: inputs.type,
-      metric: 'weight_kg',
-      startValue: inputs.weightKg,
-      targetValue: goal.targetKg,
-      startDate: operationalDate(deps.clock(), user.timezone),
-      horizonWeeks: goal.horizonWeeks,
-    });
-    await deps.events.emit('goal_set', subject, {
-      type: inputs.type,
-      horizonWeeks: goal.horizonWeeks,
-      withTarget: true,
-    });
-    return done();
+    return { accepted: goal };
   }
   if (value === 'cons') {
     await deps.events.emit('goal_adjusted', subject, {
       direction: 'conservative',
       limited: false,
     });
-    return stay(goalProposalReply(offers.conservative));
+    return { reply: goalProposalReply(offers.conservative, act) };
   }
   if (value === 'amb') {
     const { ambitious } = offers;
@@ -465,21 +497,23 @@ async function answerGoalProposal(
       direction: 'ambitious',
       limited: !('safe' in ambitious),
     });
-    if ('safe' in ambitious) return stay(goalProposalReply(ambitious.safe));
+    if ('safe' in ambitious) return { reply: goalProposalReply(ambitious.safe, act) };
     const [option1, option2] = templateById('ON-07').buttons;
-    return stay({
-      text: renderTemplate('ON-07', {
-        meta_segura: formatKg(ambitious.saferTarget.targetKg),
-        semanas: ambitious.saferTarget.horizonWeeks,
-        semanas_largas: `${ambitious.longer.horizonWeeks} semanas`,
-      }),
-      buttons: [
-        button(option1 ?? '', ob('goal_proposal')(acceptValue(ambitious.saferTarget))),
-        button(option2 ?? '', ob('goal_proposal')(acceptValue(ambitious.longer))),
-      ],
-    });
+    return {
+      reply: {
+        text: renderTemplate('ON-07', {
+          meta_segura: formatKg(ambitious.saferTarget.targetKg),
+          semanas: ambitious.saferTarget.horizonWeeks,
+          semanas_largas: `${ambitious.longer.horizonWeeks} semanas`,
+        }),
+        buttons: [
+          button(option1 ?? '', act(acceptValue(ambitious.saferTarget))),
+          button(option2 ?? '', act(acceptValue(ambitious.longer))),
+        ],
+      },
+    };
   }
-  return stay(goalProposalReply(offers.proposal));
+  return { reply: goalProposalReply(offers.proposal, act) };
 }
 
 /** ON-21 (RN-SEG-003): objetivos permitidos tras un SCOFF positivo, sin perder grasa. */

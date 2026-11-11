@@ -1,4 +1,5 @@
 import { renderTemplate, templateById } from '@gymbro/content';
+import type { CallbackAction } from '../bot/callback-data.js';
 import { button, plain, templateReply, type Reply } from '../onboarding/replies.js';
 import type {
   NoticeRecord,
@@ -64,19 +65,30 @@ function noticeReply(notice: NoticeRecord): Reply {
   return withLogbookButtons(plain(notice.templateId, notice.variables), notice.templateId);
 }
 
-/** [Ver bitácora] y [Ver progreso] de RE-01 a RE-05 (T-081); sin ellos, el aviso va solo. */
-const PROGRESS_BUTTONS: Readonly<Record<string, string>> = {
-  'Ver bitácora': 'log',
-  'Ver progreso': 'p',
+/**
+ * Botones de los avisos: [Ver bitácora] y [Ver progreso] de RE-01 a RE-05 (T-081)
+ * y los de objetivo de GO-01 a GO-03 (T-082). Un aviso con otros botones va solo.
+ */
+const NOTICE_BUTTONS: Readonly<Record<string, CallbackAction>> = {
+  'Ver bitácora': { action: 'pg', value: 'log' },
+  'Ver progreso': { action: 'pg', value: 'p' },
+  Mantener: { action: 'gl', value: 'keep' },
+  'Nueva meta': { action: 'gl', value: 'new' },
+  Extender: { action: 'gl', value: 'ext' },
+  'Extender plazo': { action: 'gl', value: 'ext' },
+  Ajustar: { action: 'gl', value: 'adj' },
+  'Ajustar meta': { action: 'gl', value: 'adj' },
+  'Seguir así': { action: 'td', value: 'dismiss' },
 };
 
 function withLogbookButtons(reply: Reply, templateId: string): Reply {
   const labels = templateById(templateId).buttons;
-  if (labels.length === 0 || !labels.every((label) => PROGRESS_BUTTONS[label])) return reply;
+  if (labels.length === 0 || !labels.every((label) => NOTICE_BUTTONS[label])) return reply;
   return {
     ...reply,
-    buttons: labels.map((label) =>
-      button(label, { action: 'pg', value: PROGRESS_BUTTONS[label] ?? 'p' }),
-    ),
+    buttons: labels.flatMap((label) => {
+      const action = NOTICE_BUTTONS[label];
+      return action ? [button(label, action)] : [];
+    }),
   };
 }

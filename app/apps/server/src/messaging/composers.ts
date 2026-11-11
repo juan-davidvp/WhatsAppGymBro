@@ -1,6 +1,7 @@
 import type { MessagePurpose } from '@gymbro/domain';
 import type { Composer } from './compose.js';
 import { dayClosing, planReady } from './compose-day.js';
+import { maintenanceAlert } from './compose-goal.js';
 import { comeback, contextualReminder, weeklySummary } from './compose-week.js';
 
 /**
@@ -14,4 +15,5 @@ export const COMPOSERS: Partial<Record<MessagePurpose, Composer>> = {
   regreso: comeback,
   recordatorio_contextual: contextualReminder,
   resumen_semanal: weeklySummary,
+  mantenimiento: maintenanceAlert,
 };

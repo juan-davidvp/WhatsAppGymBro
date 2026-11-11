@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.19.0
+version: 0.20.0
 creado: 2026-10-18
 actualizado: 2026-11-11
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -281,6 +281,31 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 > - BI-01 sigue con una línea por entrada (BI-03, BI-04 o BI-05), de la más antigua a la más reciente, con las últimas P-101. `{e1rm}` es " (e1RM {n} kg)" si la serie tenía carga, o vacío.
 
 `{mes}` (abreviaturas de `{fecha}` "12-nov" en BI-03 a BI-05): ene · feb · mar · abr · may · jun · jul · ago · sep · oct · nov · dic
+
+### 2.8 Objetivo y mantenimiento (T-082)
+
+| ID | Momento | Texto |
+|---|---|---|
+| GO-01 | Objetivo cumplido (RN-OBJ-006) | Sí era posible: cumpliste tu objetivo en {semanas} semanas, con {dias_que_cuentan} días que cuentan y {records} récords. ¿Cómo sigues? [Mantener] [Nueva meta] |
+| GO-02 | Fin del plazo sin la meta (RN-OBJ-008) | Terminó el plazo de tu objetivo y avanzaste un {porcentaje} %. Todo lo que hiciste suma. ¿Cómo seguimos? [Extender] [Ajustar] |
+| GO-03 | Revisión de fase fuera de ritmo (RN-OBJ-013) | Revisé tu fase: vas más rápido de lo que conviene sostener. ¿Cómo seguimos? [Extender plazo] [Ajustar meta] [Seguir así] |
+| GO-04 | Entrada en mantenimiento (RN-MAN-002, RN-MAN-005) | Modo mantenimiento: tu semana se cumple con {sesiones} sesiones y tu zona es de {bajo} a {alto} kg. Te escribo menos. |
+| GO-05 | Entrada en mantenimiento sin peso | Modo mantenimiento: tu semana se cumple con {sesiones} sesiones. Te escribo menos. |
+| GO-06 | Plazo extendido | Listo: tu objetivo sigue {semanas} semanas más. |
+| GO-07 | Objetivo nuevo sin meta de peso | Listo, objetivo nuevo: {objetivo}. Tu plan se ajusta desde la semana que viene. |
+| GO-08 | Objetivo nuevo con meta | Listo, objetivo nuevo: {objetivo}, meta {meta} kg en {semanas} semanas. |
+| GO-09 | [Ver opciones] de MA-01 a MA-03 | ¿Qué prefieres? [Mover mi zona] [Nueva meta] [Está bien así] |
+| GO-10 | Zona movida | Listo: tu zona ahora es de {bajo} a {alto} kg. |
+
+> - GO-01 a GO-03 llegan como aviso en la próxima interacción, igual que los logros (decisión del PO, 2026-11-10).
+> - GO-01: `{semanas}` desde el inicio del objetivo y `{records}` récords desde ese día. Al cumplirse queda el logro GOAL_DONE en la bitácora.
+> - [Mantener], o P-009 días sin elegir, entra en mantenimiento (RN-MAN-001) con GO-04, o GO-05 sin peso.
+> - En mantenimiento la semana se cumple con P-010 sesiones y el plan no cambia (decisión del PO, 2026-11-11). La intensidad pasa a Baja (RN-MAN-005) y la zona es ± P-011 % de la media móvil al entrar.
+> - [Nueva meta] muestra ON-05 (u ON-21 tras un tamizaje positivo). Para ganar músculo o perder grasa, con peso y estatura, sigue con ON-06/ON-07 desde el último peso; si no, GO-07. [Mantener] en ON-05 entra en mantenimiento (decisión del PO, 2026-11-11).
+> - [Extender] y [Extender plazo] suman P-001 semanas al plazo (GO-06).
+> - [Ajustar] y [Ajustar meta] proponen otra meta del mismo objetivo con ON-06/ON-07; al elegirla sale GO-08.
+> - [Seguir así] y [Está bien así] no cambian nada.
+> - [Mover mi zona] centra la zona en la media móvil actual (GO-10).
 
 ## 3. Onboarding (textos base)
 

@@ -5,6 +5,7 @@ import type { MealDeps } from '../meals/meals.js';
 import { button, type Button } from '../onboarding/replies.js';
 import { plannedDayType } from '../plans/weekly-plan.js';
 import type {
+  GoalsRepository,
   MessageStatsRepository,
   OutboxRepository,
   UserRecord,
@@ -21,6 +22,8 @@ import type {
 
 export interface ComposeDeps extends MealDeps {
   weeks: WeeksRepository;
+  /** T-082: el mantenimiento es el objetivo activo `maintain`. */
+  goals: GoalsRepository;
   outbox: OutboxRepository;
   messageStats: MessageStatsRepository;
 }
@@ -92,6 +95,10 @@ const BUTTON_ACTIONS: Readonly<Record<string, CallbackAction>> = {
   'Hoy no': td('dismiss'),
   'Ahora no': td('dismiss'),
   Volver: { action: 'nav', target: 'today' },
+  // T-082 · `mantenimiento` (MA-01 a MA-03).
+  'Ver opciones': { action: 'gl', value: 'opt' },
+  'Está bien así': td('dismiss'),
+  'Nueva meta': { action: 'gl', value: 'new' },
   Sí: { action: 'nav', target: 'today' },
   Retomar: { action: 'nav', target: 'today' },
 };

@@ -15,6 +15,7 @@ import { grantXp, type XpDeps } from '../days/xp.js';
 import { plannedWeekDays } from '../plans/weekly-plan.js';
 import type {
   DaysRepository,
+  GoalsRepository,
   MessageStatsRepository,
   PlansRepository,
   UserRecord,
@@ -37,6 +38,8 @@ export interface CloseWeekDeps extends XpDeps {
   weeks: WeeksRepository;
   /** RN-MSJ-013: la semana que toca una `/pausa` no se evalúa. */
   messageStats: MessageStatsRepository;
+  /** RN-MAN-002: en mantenimiento la semana se cumple con P-010 sesiones. */
+  goals: GoalsRepository;
 }
 
 export interface ClosedWeek {
@@ -68,7 +71,8 @@ export async function evaluateClosedWeek(
   const { pausedAt, pausedUntil } = await deps.messageStats.get(user.id);
   const pause = pausedAt && pausedUntil ? { from: pausedAt, until: pausedUntil } : null;
   const paused = pauseTouchesWeek(pause, weekStart, user.timezone);
-  const result = evaluateWeek({ planned, completed: achieved.sessions, paused });
+  const maintenance = (await deps.goals.active(user.id))?.type === 'maintain';
+  const result = evaluateWeek({ planned, completed: achieved.sessions, paused, maintenance });
   return {
     record: {
       weekStart,

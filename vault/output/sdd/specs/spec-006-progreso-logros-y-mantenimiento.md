@@ -96,4 +96,6 @@ Fotos de progreso, compartir en redes, exportar la imagen en alta resolución.
 - ~~¿La Mini App entra en la Fase 0? (Q9)~~ **Resuelto (PO, 2026-11-11):** pasa a la Fase 1 (T-083). M8 cubre T-080 a T-082; T-084 queda para después.
 - ~~¿Cuántas semanas muestra el muro?~~ **Resuelto (PO, 2026-11-11):** 12 semanas, imagen sin texto (los datos van en el pie), SVG → PNG con `@resvg/resvg-js`.
 - **Resuelto (PO, 2026-11-11):** el peso se registra con botones desde el último (P-100), no escribiéndolo (constitución II); solo el primero se escribe. Sustituye a HU-006-2 escenario 2 "escribe un número".
+- **Resuelto (PO, 2026-11-11):** [Nueva meta], [Ajustar] y [Extender] reutilizan la propuesta del onboarding (ON-05, ON-06/07) y suman P-001 semanas al extender; el objetivo anterior se cierra con su estado y el historial se conserva (RN-OBJ-007). Cubre lo esencial de T-035.
+- **Resuelto (PO, 2026-11-11):** en mantenimiento solo cambia el umbral de la semana cumplida (P-010); el plan sigue con los días declarados.
 - **Resuelto (PO, 2026-11-11):** los "ejercicios clave" de `/progreso` son uno por patrón (sentadilla, bisagra, empuje y tirón), el más entrenado, con su mejor 1RM estimado.

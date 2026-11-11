@@ -23,15 +23,20 @@ export type WeekResult =
 /**
  * RN-GAM-004: una semana está cumplida si las sesiones completadas alcanzan el
  * compromiso. Una semana en pausa o sin sesiones planificadas no se evalúa
- * (SPEC-005 §8): ni cumplida ni rota.
+ * (SPEC-005 §8): ni cumplida ni rota. RN-MAN-002: en mantenimiento el compromiso
+ * es como mucho P-010 sesiones (el plan no cambia; decisión del PO, 2026-11-11).
  */
 export function evaluateWeek(week: {
   readonly planned: number;
   readonly completed: number;
   readonly paused: boolean;
+  readonly maintenance?: boolean;
 }): WeekResult {
   if (week.paused || week.planned <= 0) return { evaluated: false };
-  const commitment = weeklyCommitment(week.planned);
+  const normal = weeklyCommitment(week.planned);
+  const commitment = week.maintenance
+    ? Math.min(normal, PARAMETERS.maintenance.minWeeklySessions)
+    : normal;
   return { evaluated: true, commitment, fulfilled: week.completed >= commitment };
 }
 

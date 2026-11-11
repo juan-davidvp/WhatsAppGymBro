@@ -249,10 +249,30 @@ export interface GoalRecord {
   readonly horizonWeeks: number;
 }
 
+export type ClosedGoalStatus = 'completed' | 'partially_completed';
+
+/** Objetivo guardado con su estado (`goals`, RN-OBJ-006 a 008). */
+export interface StoredGoal extends GoalRecord {
+  readonly status: 'active' | ClosedGoalStatus | 'changed';
+  readonly closedAt: Date | null;
+  readonly progressPct: number | null;
+}
+
 export interface GoalsRepository {
   /** RN-OBJ-001 y RN-OBJ-007: un solo objetivo activo; el anterior queda `changed`. */
   activate(goal: GoalRecord): Promise<void>;
   active(userId: string): Promise<GoalRecord | null>;
+  /** RN-OBJ-006 y RN-OBJ-008: cierra el activo una sola vez; false si no había. */
+  close(
+    userId: string,
+    status: ClosedGoalStatus,
+    at: Date,
+    progressPct: number | null,
+  ): Promise<boolean>;
+  /** El objetivo más reciente, activo o cerrado (RN-MAN-001: ¿espera elegir?). */
+  latest(userId: string): Promise<StoredGoal | null>;
+  /** T-082: suma semanas al plazo del activo; false si no hay activo. */
+  extendActive(userId: string, extraWeeks: number): Promise<boolean>;
 }
 
 export type ScreeningType = 'pre_activity' | 'food_body';
