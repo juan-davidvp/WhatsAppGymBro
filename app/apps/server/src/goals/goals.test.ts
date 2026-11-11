@@ -270,3 +270,88 @@ describe('HU-006-4 · T-082 · [Nueva meta] reutiliza el onboarding (PO, 2026-11
     });
   });
 });
+
+describe('T-082 · revisión de código · objetivo y mantenimiento', () => {
+  it('tras [Extender], el nuevo fin del plazo vuelve a avisar (clave con el plazo)', async () => {
+    const t = await proactiveSetup();
+    await weightGoal(t, { start: 80, target: 76, startDate: '2026-07-01', weeks: 12 });
+    await weighDaily(t, '2026-10-10', TODAY, 78);
+    await reviewGoalDay(userOf(t), TODAY, t.deps);
+    await t.act({ text: '/hoy' });
+    await t.act('Extender');
+    const end = addDays('2026-07-01', (12 + PARAMETERS.goal.horizonWeeksDefault) * 7);
+    await weighDaily(t, addDays(end, -6), end, 78);
+    await reviewGoalDay(userOf(t), end, t.deps);
+    expect(pendingNotices(t).filter((n) => n.templateId === 'GO-02')).toHaveLength(2);
+    expect(await t.deps.goals.latest(t.userId)).toMatchObject({ status: 'partially_completed' });
+  });
+
+  it('RN-OBJ-012 · sin ningún peso, el fin del plazo usa GO-11 (sin %) y guarda null', async () => {
+    const t = await proactiveSetup();
+    await weightGoal(t, { start: 80, target: 76, startDate: '2026-07-01', weeks: 12 });
+    await reviewGoalDay(userOf(t), TODAY, t.deps);
+    expect(pendingNotices(t)[0]).toMatchObject({ templateId: 'GO-11' });
+    expect(await t.deps.goals.latest(t.userId)).toMatchObject({ progressPct: null });
+    expect(t.eventsNamed('goal_partially_completed')).toEqual([{ progressPct: null }]);
+  });
+
+  it('GO-01 no se muestra si GO-04 llegó en el mismo lote; [Mantener] en mantenimiento no lo repite', async () => {
+    const t = await proactiveSetup();
+    await weightGoal(t, { start: 80, target: 76, startDate: '2026-08-10', weeks: 12 });
+    await weighDaily(t, '2026-09-25', TODAY, 75.8);
+    await reviewGoalDay(userOf(t), TODAY, t.deps);
+    const later = addDays(TODAY, PARAMETERS.maintenance.daysToChooseAfterGoal);
+    await reviewGoalDay(userOf(t), later, t.deps);
+    await t.deps.users.updateSettings(t.userId, { intensity: 'NORMAL' });
+    await t.act({ text: '/hoy' });
+    expect(sent(t.calls).some((m) => m.text.startsWith('Sí era posible'))).toBe(false);
+    const before = await t.deps.goals.active(t.userId);
+    await t.bot.handleUpdate({
+      update_id: t.nextUpdateId(),
+      callback_query: {
+        id: 'cb',
+        from: { id: 42, is_bot: false, first_name: 'Juan' },
+        chat_instance: 'ci',
+        data: 'v1:gl:keep',
+        message: { message_id: 7, date: 0, chat: { id: 42, type: 'private' }, text: 'x' },
+      },
+    } as never);
+    expect(await t.deps.goals.active(t.userId)).toEqual(before);
+    expect(userOf(t).settings.intensity).toBe('NORMAL');
+    expect(t.eventsNamed('maintenance_entered')).toHaveLength(1);
+  });
+
+  it('RN-SEG-003 · en el modo sin números el servidor no acepta perder grasa (aunque llegue el botón)', async () => {
+    const t = await proactiveSetup();
+    await t.deps.users.updateSettings(t.userId, { numberFreeMode: true });
+    await t.act({ text: '/hoy' });
+    await t.bot.handleUpdate({
+      update_id: t.nextUpdateId(),
+      callback_query: {
+        id: 'cb',
+        from: { id: 42, is_bot: false, first_name: 'Juan' },
+        chat_instance: 'ci',
+        data: 'v1:gl:t_lose_fat',
+        message: { message_id: 7, date: 0, chat: { id: 42, type: 'private' }, text: 'x' },
+      },
+    } as never);
+    expect((await t.deps.goals.active(t.userId))?.type).not.toBe('lose_fat');
+    expect(userOf(t).profile.goalType).not.toBe('lose_fat');
+  });
+
+  it('en mantenimiento /progreso no muestra una barra de objetivo en 0 %', async () => {
+    const t = await proactiveSetup();
+    await t.deps.goals.activate({
+      userId: t.userId,
+      type: 'maintain',
+      metric: 'weight_kg',
+      startValue: 75,
+      targetValue: 75,
+      startDate: TODAY,
+      horizonWeeks: 12,
+    });
+    await weighDaily(t, '2026-10-13', TODAY, 75.4);
+    await t.act({ text: '/progreso' });
+    expect(sent(t.calls).at(-1)?.text).not.toContain('Objetivo:');
+  });
+});

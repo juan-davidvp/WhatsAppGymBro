@@ -20,8 +20,8 @@ describe('FR-006-01 · T-080 · imagen del muro', () => {
     expect(svg).not.toMatch(/<text/);
   });
 
-  it('se renderiza a PNG en el servidor', () => {
-    const png = wallPng(grid);
+  it('se renderiza a PNG en el servidor', async () => {
+    const png = await wallPng(grid);
     expect(Array.from(png.subarray(0, 8))).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
     expect(png.length).toBeGreaterThan(500);
   });

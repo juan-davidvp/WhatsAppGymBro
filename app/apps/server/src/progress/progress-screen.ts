@@ -82,7 +82,9 @@ async function goalLine(
   withWeight: boolean,
   deps: ProgressDeps,
 ): Promise<string | null> {
-  if (!goal || goal.startValue === null || goal.targetValue === null) return null;
+  // En mantenimiento no hay meta que avanzar (la zona se muestra en GO-04/GO-10).
+  if (!goal || goal.type === 'maintain') return null;
+  if (goal.startValue === null || goal.targetValue === null) return null;
   const { startValue, targetValue } = goal;
   if (goal.metric === 'fulfilled_weeks') {
     const fulfilled = (await deps.weeks.list(user.id)).filter(

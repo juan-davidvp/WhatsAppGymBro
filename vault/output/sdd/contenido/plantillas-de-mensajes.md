@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.20.0
+version: 0.21.0
 creado: 2026-10-18
 actualizado: 2026-11-11
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -296,8 +296,10 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | GO-08 | Objetivo nuevo con meta | Listo, objetivo nuevo: {objetivo}, meta {meta} kg en {semanas} semanas. |
 | GO-09 | [Ver opciones] de MA-01 a MA-03 | ¿Qué prefieres? [Mover mi zona] [Nueva meta] [Está bien así] |
 | GO-10 | Zona movida | Listo: tu zona ahora es de {bajo} a {alto} kg. |
+| GO-11 | Fin del plazo sin datos de peso (RN-OBJ-008, RN-OBJ-012) | Terminó el plazo de tu objetivo. Todo lo que hiciste suma. ¿Cómo seguimos? [Extender] [Ajustar] |
 
-> - GO-01 a GO-03 llegan como aviso en la próxima interacción, igual que los logros (decisión del PO, 2026-11-10).
+> - GO-01 a GO-03 y GO-11 llegan como aviso en la próxima interacción, igual que los logros (decisión del PO, 2026-11-10). Si GO-04 llega en el mismo lote, GO-01 no se muestra (ya entró en mantenimiento).
+> - GO-02 usa la última media móvil desde el inicio del objetivo; sin ninguna (el peso es opcional, RN-OBJ-012), GO-11, sin porcentaje.
 > - GO-01: `{semanas}` desde el inicio del objetivo y `{records}` récords desde ese día. Al cumplirse queda el logro GOAL_DONE en la bitácora.
 > - [Mantener], o P-009 días sin elegir, entra en mantenimiento (RN-MAN-001) con GO-04, o GO-05 sin peso.
 > - En mantenimiento la semana se cumple con P-010 sesiones y el plan no cambia (decisión del PO, 2026-11-11). La intensidad pasa a Baja (RN-MAN-005) y la zona es ± P-011 % de la media móvil al entrar.

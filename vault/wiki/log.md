@@ -801,3 +801,22 @@ Revisión del diff completo de M7 (T-070 a T-073): sin hallazgos críticos ni al
   - Las temporadas de maestría (RN-MAN-004), que están fuera de la Fase 0.
   - Que `/ajustes` permita cambiar de objetivo (resto de T-035).
 
+## [2026-11-11] implementar | M8 · correcciones de la revisión de código
+Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 medios y 3 bajos. Se corrigen todos.
+
+- **Alto, fin del plazo tras [Extender]:** la clave del aviso no cambiaba y el segundo GO-02 se perdía; el usuario quedaba sin objetivo ni forma de fijarlo. Ahora la clave lleva el plazo.
+- **Orden idempotente:** el aviso, el logro y el evento se escriben antes de cerrar el objetivo. Si algo falla, el día se repite con el objetivo todavía activo.
+- **Guardas de estado:**
+  - [Mantener] en mantenimiento solo repite GO-04 (no recentra la zona ni pisa la intensidad elegida, RN-MAN-005).
+  - [Extender] no toca el mantenimiento.
+  - GO-01 no se muestra si GO-04 llegó en el mismo lote.
+- **Mantenimiento:** sin barra de objetivo en 0 % en `/progreso`. RS-01 usa el compromiso de mantenimiento, como el cierre de la semana.
+- **Sin datos de peso (RN-OBJ-012):** el fin del plazo usa la última media móvil desde el inicio. Si no hay ninguna, sale GO-11 (texto nuevo, sin porcentaje, para revisión del PO) y `progressPct` queda en null.
+- **RN-SEG-003 en el servidor:** en el modo sin números no se acepta un objetivo de perder grasa aunque llegue el botón.
+- **Bajos:**
+  - El chequeo del mantenimiento proactivo va después de las comprobaciones baratas y no corre en el modo sin números.
+  - [Mover mi zona] usa la media móvil y respeta el modo sin números.
+  - GO-01 cuenta el día recién cerrado.
+  - `resvg` se carga al usarlo: si falta su binario, el resumen sale en texto en vez de tumbar el proceso.
+- **Pruebas:** 5 nuevas en `goals/goals.test.ts` que reproducen los hallazgos.
+

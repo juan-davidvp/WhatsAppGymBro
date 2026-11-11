@@ -40,7 +40,7 @@ export interface DispatchDeps extends ComposeDeps {
   messageStats: MessageStatsRepository;
   sender: MessageSender;
   /** T-080: PNG del muro de constancia (en producción, `adapters/images/wall.ts`). */
-  renderWall?: (grid: readonly (readonly WallCell[])[]) => Uint8Array;
+  renderWall?: (grid: readonly (readonly WallCell[])[]) => Uint8Array | Promise<Uint8Array>;
   /** Fuente de aleatoriedad de la rotación (en pruebas, fija). */
   random?: () => number;
   logger?: Logger;
@@ -126,7 +126,7 @@ async function dispatchOne(
   if (!decision.send) return suppress(message, user, decision.reason, deps);
 
   // T-080: la imagen se genera al enviar; si falla, sale el texto sin las opciones que la necesitan.
-  const photo = composition.wall ? renderPhoto(composition.wall, user, deps) : null;
+  const photo = composition.wall ? await renderPhoto(composition.wall, user, deps) : null;
   const options = composition.options.filter((o) => photo !== null || !o.needsImage);
   const templateId = pickTemplate(
     options.map((o) => o.templateId),
@@ -174,14 +174,14 @@ async function dispatchOne(
 }
 
 /** PNG del muro; null si no hay generador o falla (se registra y sale el texto). */
-function renderPhoto(
+async function renderPhoto(
   grid: readonly (readonly WallCell[])[],
   user: UserRecord,
   deps: DispatchDeps,
-): Uint8Array | null {
+): Promise<Uint8Array | null> {
   if (!deps.renderWall) return null;
   try {
-    return deps.renderWall(grid);
+    return await deps.renderWall(grid);
   } catch (error) {
     deps.logger?.error('wall_render_failed', { userId: user.id, error });
     return null;

@@ -82,7 +82,7 @@ async function dailyAverages(
   return averages;
 }
 
-async function averageOn(
+export async function averageOn(
   user: UserRecord,
   date: LocalDate,
   deps: Pick<GoalDeps, 'bodyMeasurements'>,
@@ -95,6 +95,8 @@ export async function reviewGoalDay(
   user: UserRecord,
   date: LocalDate,
   deps: GoalDeps,
+  /** Días que cuentan con `date` ya cerrado (el estado se guarda después). */
+  countedTotal?: number,
 ): Promise<void> {
   const active = await deps.goals.active(user.id);
   if (!active) return autoMaintenance(user, date, deps);
@@ -104,10 +106,11 @@ export async function reviewGoalDay(
   const sustainDays = PARAMETERS.goal.weeksToSustainTarget * WEEK_LENGTH;
   const averages = await dailyAverages(user, addDays(date, -(sustainDays - 1)), date, deps);
   if (isGoalAchieved(goal, { today: date, dailyMovingAverages: averages })) {
-    return completeGoal(user, goal, date, deps);
+    return completeGoal(user, goal, date, deps, countedTotal);
   }
   if (date >= addDays(goal.startDate, goal.horizonWeeks * WEEK_LENGTH)) {
-    return closeAtHorizon(user, goal, averages.at(-1)?.movingAvgKg ?? null, deps);
+    const current = await lastAverageSince(user, goal.startDate, date, deps);
+    return closeAtHorizon(user, goal, current, deps);
   }
   if (isPhaseReviewDue(goal.startDate, date)) {
     const current = averages.at(-1)?.movingAvgKg ?? null;
@@ -131,16 +134,30 @@ async function notice(
   await deps.notices.add(user.id, { key, templateId, variables, createdAt: deps.clock() });
 }
 
-/** RN-OBJ-006 y RN-MAN-001: GO-01 con el resumen del capítulo y el logro GOAL_DONE. */
+/** RN-OBJ-010: la última media móvil desde `from` (el peso es opcional, RN-OBJ-012). */
+async function lastAverageSince(
+  user: UserRecord,
+  from: LocalDate,
+  to: LocalDate,
+  deps: Pick<GoalDeps, 'bodyMeasurements'>,
+): Promise<number | null> {
+  return (await dailyAverages(user, from, to, deps)).at(-1)?.movingAvgKg ?? null;
+}
+
+/**
+ * RN-OBJ-006 y RN-MAN-001: GO-01 con el resumen del capítulo y el logro GOAL_DONE.
+ * Los efectos con clave van antes del cierre: si algo falla, el día se repite y
+ * el objetivo sigue activo para volver a intentarlo.
+ */
 async function completeGoal(
   user: UserRecord,
   goal: Goal,
   date: LocalDate,
   deps: GoalDeps,
+  countedTotal?: number,
 ): Promise<void> {
-  if (!(await deps.goals.close(user.id, 'completed', deps.clock(), COMPLETE_PCT))) return;
   const records = (await deps.records.list(user.id)).filter((r) => r.date >= goal.startDate);
-  const total = (await deps.streaks.get(user.id))?.state.counted.total ?? 0;
+  const total = countedTotal ?? (await deps.streaks.get(user.id))?.state.counted.total ?? 0;
   await notice(
     user,
     `goal:${goal.startDate}:done`,
@@ -162,6 +179,7 @@ async function completeGoal(
   if (added) {
     await deps.events.emit('achievement_unlocked', subjectOf(user), { code: GOAL_DONE });
   }
+  if (!(await deps.goals.close(user.id, 'completed', deps.clock(), COMPLETE_PCT))) return;
   await deps.events.emit('goal_completed', subjectOf(user), { type: goal.type });
 }
 
@@ -172,9 +190,13 @@ async function closeAtHorizon(
   current: number | null,
   deps: GoalDeps,
 ): Promise<void> {
-  const pct = Math.round(goalProgress({ ...goal, currentValue: current }) ?? 0);
+  const progress = goalProgress({ ...goal, currentValue: current });
+  const pct = progress === null ? null : Math.round(progress);
+  // La clave lleva el plazo: tras [Extender], el nuevo fin del plazo avisa otra vez.
+  const key = `goal:${goal.startDate}:${goal.horizonWeeks}:partial`;
+  if (pct === null) await notice(user, key, 'GO-11', {}, deps);
+  else await notice(user, key, 'GO-02', { porcentaje: pct }, deps);
   if (!(await deps.goals.close(user.id, 'partially_completed', deps.clock(), pct))) return;
-  await notice(user, `goal:${goal.startDate}:partial`, 'GO-02', { porcentaje: pct }, deps);
   await deps.events.emit('goal_partially_completed', subjectOf(user), { progressPct: pct });
 }
 

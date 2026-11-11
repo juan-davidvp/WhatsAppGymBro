@@ -133,7 +133,8 @@ export const weeklySummary: Composer = async (user, date, deps) => {
   const planned = (await plannedWeekDays(user, weekStart, deps)).filter(
     (d) => d.type === 'TRAINING',
   ).length;
-  const week = evaluateWeek({ planned, completed: achieved.sessions, paused: false });
+  const maintenance = (await deps.goals.active(user.id))?.type === 'maintain';
+  const week = evaluateWeek({ planned, completed: achieved.sessions, paused: false, maintenance });
   if (previous && proteinByDay.length > 0 && week.evaluated) {
     const average = proteinByDay.reduce((a, b) => a + b, 0) / proteinByDay.length;
     options.push({

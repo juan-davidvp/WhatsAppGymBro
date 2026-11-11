@@ -33,8 +33,13 @@ export async function takeNotices(user: UserRecord, deps: NoticeDeps): Promise<R
   // misiones de la semana) solo queda el más reciente; los logros se muestran todos.
   const shown = pending.filter(
     (notice, i) =>
-      !LATEST_ONLY.has(notice.templateId) ||
-      !pending.slice(i + 1).some((later) => later.templateId === notice.templateId),
+      (!LATEST_ONLY.has(notice.templateId) ||
+        !pending.slice(i + 1).some((later) => later.templateId === notice.templateId)) &&
+      // T-082: si ya entró en mantenimiento, la pregunta de GO-01 sobra.
+      !(
+        notice.templateId === GOAL_DONE_NOTICE &&
+        pending.slice(i + 1).some((later) => MAINTENANCE_NOTICES.has(later.templateId))
+      ),
   );
   const repair = (await deps.streaks.get(user.id))?.state.streak.repair ?? null;
   const repairOpen = repair !== null && now.getTime() <= Date.parse(repair.offeredUntil);
@@ -42,6 +47,9 @@ export async function takeNotices(user: UserRecord, deps: NoticeDeps): Promise<R
     .filter((notice) => notice.templateId !== REPAIR_OFFER || repairOpen)
     .map(noticeReply);
 }
+
+const GOAL_DONE_NOTICE = 'GO-01';
+const MAINTENANCE_NOTICES: ReadonlySet<string> = new Set(['GO-04', 'GO-05']);
 
 /** Avisos que un aviso posterior de la misma plantilla deja sin vigencia. */
 const LATEST_ONLY: ReadonlySet<string> = new Set(['RA-01', 'RA-02', 'MI-01']);

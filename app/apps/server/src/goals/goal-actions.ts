@@ -1,5 +1,12 @@
 import { renderTemplate, templateById } from '@gymbro/content';
-import { PARAMETERS, operationalDate, weightGoalOffers, type GoalType } from '@gymbro/domain';
+import {
+  PARAMETERS,
+  foodBodyScreeningOutcome,
+  operationalDate,
+  weightGoalOffers,
+  type GoalType,
+  type LocalDate,
+} from '@gymbro/domain';
 import type { CallbackAction } from '../bot/callback-data.js';
 import {
   goalProposalReply,
@@ -11,6 +18,7 @@ import { GOAL_BY_LABEL, button, type Reply } from '../onboarding/replies.js';
 import { METRIC_BY_GOAL } from '../onboarding/summary.js';
 import type { UserRecord } from '../ports/repositories.js';
 import {
+  averageOn,
   enterMaintenanceMode,
   maintenanceBand,
   maintenanceReply,
@@ -59,9 +67,14 @@ async function weightProposal(user: UserRecord, deps: GoalDeps): Promise<Reply |
 
 async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps): Promise<Reply[]> {
   const today = operationalDate(deps.clock(), user.timezone);
-  if (type === 'maintain') {
-    return [maintenanceReply(await enterMaintenanceMode(user, today, 'choice', deps))];
+  // RN-SEG-003: tras un tamizaje positivo (modo sin números) no hay objetivo de perder grasa.
+  if (
+    user.settings.numberFreeMode &&
+    !foodBodyScreeningOutcome(true).allowedGoalTypes.includes(type)
+  ) {
+    return [objectiveChooser(user)];
   }
+  if (type === 'maintain') return keepMaintaining(user, today, deps);
   await deps.users.updateProfile(user.id, { goalType: type });
   const updated: UserRecord = { ...user, profile: { ...user.profile, goalType: type } };
   const proposal = await weightProposal(updated, deps);
@@ -114,10 +127,41 @@ async function answerProposal(user: UserRecord, value: string, deps: GoalDeps): 
   ];
 }
 
-/** [Extender] y [Extender plazo]: P-001 semanas más (el activo, o el que cerró parcial). */
+/**
+ * [Mantener]: entra en mantenimiento; si ya está, solo repite GO-04/GO-05 (no
+ * vuelve a centrar la zona ni a cambiar la intensidad que el usuario eligió).
+ */
+async function keepMaintaining(
+  user: UserRecord,
+  today: LocalDate,
+  deps: GoalDeps,
+): Promise<Reply[]> {
+  const active = await deps.goals.active(user.id);
+  if (active?.type !== 'maintain') {
+    return [maintenanceReply(await enterMaintenanceMode(user, today, 'choice', deps))];
+  }
+  const sesiones = PARAMETERS.maintenance.minWeeklySessions;
+  if (active.startValue === null || user.settings.numberFreeMode) {
+    return [maintenanceReply({ templateId: 'GO-05', variables: { sesiones } })];
+  }
+  const band = maintenanceBand(active.startValue);
+  return [
+    maintenanceReply({
+      templateId: 'GO-04',
+      variables: { sesiones, bajo: formatKg(band.lowKg), alto: formatKg(band.highKg) },
+    }),
+  ];
+}
+
+/**
+ * [Extender] y [Extender plazo]: P-001 semanas más al objetivo con meta activo, o
+ * al que cerró parcial si no hay otro activo. El mantenimiento no se extiende.
+ */
 async function extend(user: UserRecord, deps: GoalDeps): Promise<Reply[]> {
   const extra = PARAMETERS.goal.horizonWeeksDefault;
-  if (!(await deps.goals.extendActive(user.id, extra))) {
+  const active = await deps.goals.active(user.id);
+  if (active?.type === 'maintain') return [];
+  if (!active || !(await deps.goals.extendActive(user.id, extra))) {
     const latest = await deps.goals.latest(user.id);
     if (latest?.status !== 'partially_completed') return [];
     await deps.goals.activate({
@@ -142,10 +186,13 @@ function maintenanceOptions(): Reply {
   };
 }
 
-/** [Mover mi zona]: la zona se centra en el peso actual (RN-MAN-002). */
+/** [Mover mi zona]: la zona se centra en la media móvil actual (RN-MAN-002, RN-OBJ-010). */
 async function moveZone(user: UserRecord, deps: GoalDeps): Promise<Reply[]> {
+  if (user.settings.numberFreeMode) return [];
   const active = await deps.goals.active(user.id);
-  const current = await deps.bodyMeasurements.latestWeightKg(user.id);
+  const today = operationalDate(deps.clock(), user.timezone);
+  const current =
+    (await averageOn(user, today, deps)) ?? (await deps.bodyMeasurements.latestWeightKg(user.id));
   if (active?.type !== 'maintain' || current === null) return [];
   await deps.goals.activate({ ...active, startValue: current, targetValue: current });
   const band = maintenanceBand(current);
@@ -161,9 +208,7 @@ export async function answerGoal(
   deps: GoalDeps,
 ): Promise<Reply[]> {
   const today = operationalDate(deps.clock(), user.timezone);
-  if (value === 'keep') {
-    return [maintenanceReply(await enterMaintenanceMode(user, today, 'choice', deps))];
-  }
+  if (value === 'keep') return keepMaintaining(user, today, deps);
   if (value === 'new') return [objectiveChooser(user)];
   if (value === 'ext') return extend(user, deps);
   if (value === 'adj') return [(await weightProposal(user, deps)) ?? objectiveChooser(user)];

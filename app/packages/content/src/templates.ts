@@ -950,6 +950,13 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: [],
   },
   {
+    id: 'GO-11',
+    kind: 'response',
+    when: 'Fin del plazo sin datos de peso (RN-OBJ-008, RN-OBJ-012)',
+    text: 'Terminó el plazo de tu objetivo. Todo lo que hiciste suma. ¿Cómo seguimos?',
+    buttons: ['Extender', 'Ajustar'],
+  },
+  {
     id: 'ON-01',
     kind: 'onboarding',
     text: 'Soy Gym Bro. Te armo el plan, te aviso cuándo toca y llevo la cuenta de cada día que entrenas. Funciono con botones.',

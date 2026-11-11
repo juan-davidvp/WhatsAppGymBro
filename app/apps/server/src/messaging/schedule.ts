@@ -104,9 +104,10 @@ async function maintenanceCandidate(
   deps: ScheduleDeps,
 ): Promise<NewOutboxMessage[]> {
   const { user, today } = cycle;
-  if (weekdayOf(today) !== 'monday' || !(await maintenanceAlertDue(user, today, deps))) return [];
+  if (weekdayOf(today) !== 'monday' || user.settings.numberFreeMode) return [];
   const at = habitMoment(cycle);
-  if (!sameDay(cycle, at)) return [];
+  if (!sameDay(cycle, at) || deps.clock() > nextQuietStart(user, today, at)) return [];
+  if (!(await maintenanceAlertDue(user, today, deps))) return [];
   return [candidate(user, 'mantenimiento', today, at, nextQuietStart(user, today, at))];
 }
 

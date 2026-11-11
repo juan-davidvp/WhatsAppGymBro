@@ -200,7 +200,8 @@ export const EVENT_PROPS_SCHEMAS = {
     ]),
   }),
   goal_partially_completed: z.strictObject({
-    progressPct: z.number().int().min(0).max(100),
+    /** null si no había datos de peso (RN-OBJ-012). */
+    progressPct: z.number().int().min(0).max(100).nullable(),
   }),
   maintenance_entered: z.strictObject({ source: z.enum(['choice', 'timeout']) }),
   maintenance_band_exited: z.strictObject({}),

@@ -1,4 +1,3 @@
-import { Resvg } from '@resvg/resvg-js';
 import type { WallCell } from '@gymbro/domain';
 
 /**
@@ -45,7 +44,11 @@ export function wallSvg(grid: readonly (readonly WallCell[])[]): string {
   ].join('');
 }
 
-/** PNG del muro, listo para `sendPhoto`. */
-export function wallPng(grid: readonly (readonly WallCell[])[]): Uint8Array {
+/**
+ * PNG del muro, listo para `sendPhoto`. `resvg` se carga al usarlo: si su binario
+ * nativo falta, el resumen sale en texto en vez de tumbar el proceso al arrancar.
+ */
+export async function wallPng(grid: readonly (readonly WallCell[])[]): Promise<Uint8Array> {
+  const { Resvg } = await import('@resvg/resvg-js');
   return new Resvg(wallSvg(grid), { fitTo: { mode: 'zoom', value: ZOOM } }).render().asPng();
 }
