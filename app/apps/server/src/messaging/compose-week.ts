@@ -5,6 +5,7 @@ import {
   comebackAction,
   evaluateWeek,
   weekStartOf,
+  weekdayOf,
   type LocalDate,
 } from '@gymbro/domain';
 import { plannedWeekDays } from '../plans/weekly-plan.js';
@@ -18,30 +19,56 @@ async function countedTotal(userId: string, deps: Parameters<Composer>[2]): Prom
 }
 
 /**
- * RN-MSJ-008 · `regreso` tras P-052 días de entreno planificados sin actividad,
- * con [Exprés 15'] [Ajustar plan]. Se vuelve a comprobar al enviar: si entrenó
- * o comió entretanto, no queda nada que decir. RG-02 solo si ya hay días que
- * cuentan; RG-03 queda fuera hasta T-045 (PO, 2026-11-10). El final y las
- * reactivaciones (RG-04 a RG-07) llegan con T-072.
+ * RN-MSJ-008 · `regreso`. Se vuelve a decidir al enviar: si entrenó, comió o
+ * tocó algo entretanto, no queda nada que decir.
+ * - Tras P-052 días de entreno planificados sin actividad: RG-01 o RG-02 (si ya
+ *   hay días que cuentan), con [Exprés 15'] [Ajustar plan]. RG-03 queda fuera
+ *   hasta T-045 (PO, 2026-11-10).
+ * - Tras P-053 días sin actividad: el final (RG-04, RG-05) y la pausa.
+ * - En pausa, el lunes RG-06 y el día 1 del mes RG-07 (reactivación).
  */
 export const comeback: Composer = async (user, date, deps) => {
   const day = await dayContext(user, date, deps);
+  if (day.dayCounts || day.sessionStarted) return { day, options: [] };
   const stats = await deps.messageStats.get(user.id);
+  const inputs = await comebackInputs(user, date, deps);
   const action = comebackAction({
     today: date,
-    ...(await comebackInputs(user, date, deps)),
+    ...inputs,
     inactivityPaused: stats.inactivityPausedAt !== null,
     reactivationsUsed: stats.reactivationsUsed,
     lastReactivationDate: stats.lastReactivationDate,
   });
-  if (action !== 'send_comeback' || day.dayCounts || day.sessionStarted) {
-    return { day, options: [] };
+  switch (action) {
+    case 'send_comeback': {
+      const total = await countedTotal(user.id, deps);
+      const options: TemplateOption[] = [{ templateId: 'RG-01', variables: {} }];
+      if (total > 0) options.push({ templateId: 'RG-02', variables: { dias_que_cuentan: total } });
+      return { day, options };
+    }
+    case 'send_final_and_pause':
+      return {
+        day,
+        options: [
+          { templateId: 'RG-04', variables: {} },
+          { templateId: 'RG-05', variables: {} },
+        ],
+        effect: { kind: 'inactivity_pause', inactiveDays: inputs.daysWithoutActivity },
+      };
+    case 'send_reactivation':
+      return { day, options: reactivationOptions(date), effect: { kind: 'reactivation' } };
+    case 'none':
+      return { day, options: [] };
   }
-  const total = await countedTotal(user.id, deps);
-  const options: TemplateOption[] = [{ templateId: 'RG-01', variables: {} }];
-  if (total > 0) options.push({ templateId: 'RG-02', variables: { dias_que_cuentan: total } });
-  return { day, options };
 };
+
+/** RG-06 habla de la semana nueva (lunes) y RG-07 del mes nuevo (día 1). */
+function reactivationOptions(date: LocalDate): TemplateOption[] {
+  return [
+    ...(weekdayOf(date) === 'monday' ? [{ templateId: 'RG-06', variables: {} }] : []),
+    ...(date.endsWith('-01') ? [{ templateId: 'RG-07', variables: {} }] : []),
+  ];
+}
 
 /**
  * `recordatorio_contextual` (PO, 2026-11-10): ayer era de entreno y no contó, y

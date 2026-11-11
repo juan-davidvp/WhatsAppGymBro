@@ -3,9 +3,9 @@ titulo: Modelo de datos de la Fase 0
 tipo: sdd-plan
 hito: H3
 estado: borrador
-version: 0.6.0
+version: 0.7.0
 creado: 2026-10-18
-actualizado: 2026-11-09
+actualizado: 2026-11-11
 deriva_de: [glosario, reglas-de-negocio, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [plan-tecnico, plan-de-medicion, glosario]
@@ -50,10 +50,10 @@ erDiagram
 | `consents` | `userId`, `category` (`health_data`·`body_measurements`·`screening`·`ai_processing`·`analytics`), `granted`, `at`, `policyVersion` | `userId+category` | RN-DAT-001 |
 | `screenings` | `userId`, `type` (`pre_activity`·`food_body`), `result` (`clear`·`flag`), `at` | `userId` | **No se guardan las respuestas**, solo el resultado (minimización); solo con autorización `screening`. Las consecuencias (`lowIntensityStart`, `numberFreeMode`) van en `users.settings` siempre ([[tamizajes]] §3) |
 | `goals` | `userId`, `type`, `metric`, `startValue`, `targetValue`, `startDate`, `horizonWeeks`, `status` (`active`·`completed`·`partially_completed`·`changed`·`paused`), `closedAt`, `progressPct` | `userId+status` | Un solo `active` por usuario (RN-OBJ-001). `startValue` y `targetValue` quedan en null en un objetivo sin meta de peso del onboarding, hasta tener datos |
-| `training_habits` | `userId`, `days[]` {`weekday`, `declaredStart`, `learnedStart`, `location`} | `userId` único | RN-PLAN-002, RN-MSJ-006 |
+| `training_habits` | `userId`, `days[]` {`weekday`, `declaredStart`, `learnedStart`, `location`} | `userId` único | RN-PLAN-002, RN-MSJ-006. `learnedStart` lo actualiza el planificador cuando hay P-049 sesiones de ese día; mientras tanto vale null y se usa la declarada |
 | `weekly_plans` | `userId`, `weekStart`, `days[]` {`date`, `dayType`, `plannedSessionId`}, `nextRotationStart`, `intensity` (`low`·`normal`) | `userId+weekStart` único | RN-PLAN-001 a 009. Se guarda una sola vez por semana; la siguiente continúa la rotación desde `nextRotationStart` (RN-PLAN-007) |
 | `planned_sessions` | `userId`, `date`, `template` (código de sesión, [[catalogo-de-ejercicios-base]] §5), `versions` {`GYM`, `HOME`, `EXPRESS`: {`exercises[]` {`exerciseCode`, `pattern`, `sets`, `reps` {min, max}, `targetReps`, `loadKg`, `restSeconds`}, `estimatedMinutes`}} | `userId+date` | RN-PLAN-003, RN-PLAN-006 |
-| `workout_sessions` | `userId`, `plannedSessionId`, `date`, `template`, `variant`, `status` (`active`·`completed`·`partial`·`abandoned`), `startedAt`, `endedAt`, `loggedAsPlanned`, `progress` (estado de la tarjeta: ejercicios, serie que toca, valores pendientes y series registradas), `rev`, `lastConfirmedAt` | `userId+date` | RN-ENT-004. `rev` sube en cada cambio: un toque de una tarjeta vieja no modifica nada (FR-003-03) |
+| `workout_sessions` | `userId`, `plannedSessionId`, `date`, `template`, `variant`, `status` (`active`·`completed`·`partial`·`abandoned`), `startedAt`, `endedAt`, `loggedAsPlanned`, `progress` (estado de la tarjeta: ejercicios, serie que toca, valores pendientes y series registradas), `rev`, `lastConfirmedAt` | `userId+date`; `userId+startedAt` | RN-ENT-004. La hora habitual aprendida (RN-MSJ-006) sale de las últimas sesiones por `startedAt`. `rev` sube en cada cambio: un toque de una tarjeta vieja no modifica nada (FR-003-03) |
 | `set_entries` | `sessionId`, `userId`, `exerciseCode`, `setIndex`, `reps`, `loadKg`, `edited`, `confirmedAt`, `idempotencyKey` | `idempotencyKey` único | RN-ENT-001; NFR-03 |
 | `personal_records` | `userId`, `exerciseCode`, `type` (`e1rm`·`reps`), `value`, `date`, `setKey` (clave de la serie) | `userId+exerciseCode+type`; `setKey` único | RN-ENT-005. Un récord por serie: repetir el toque no lo duplica |
 | `pain_flags` | `userId`, `exerciseCode`, `zone`, `date`, `sessionId` | `userId+exerciseCode` | RN-SEG-006 (P-062 cuenta sesiones distintas) |
@@ -69,8 +69,8 @@ erDiagram
 | `weeks` | `userId`, `weekStart`, `planned`, `completed`, `commitment`, `fulfilled`, `countedDays`, `nutritionHalfDays`, `restDaysPlanned`, `restDaysTrained` | `userId+weekStart` único | RN-GAM-004; base de las misiones de la semana siguiente (RN-GAM-008), de la liga personal (RN-GAM-009) y de la señal de sobreuso (RN-SEG-008) |
 | `quests` | `userId`, `weekStart`, `items[]` {`code`, `target`, `progress`, `done`} | `userId+weekStart` único | RN-GAM-008. Una sola vez por semana; `code` es `TRAINING`·`NUTRITION`·`CONSISTENCY` |
 | `seasons` | `userId`, `code`, `startDate`, `endDate`, `status` | `userId+startDate` | RN-GAM-010 |
-| `proactive_messages` | `userId`, `key` (propósito + día operativo: una salida por propósito y día), `purpose`, `templateId`, `scheduledFor`, `notAfter`, `reactivation`, `status` (`pending`·`sent`·`suppressed`·`cancelled`), `suppressedReason`, `sentAt`, `telegramMessageId`, `actionedAt`, `createdAt` | `status+scheduledFor`; `userId+sentAt`; `userId+key` único | RN-MSJ-001 a 017. La bandeja de salida (FR-007-02): la plantilla se elige al enviar (RN-MSJ-010) |
-| `message_stats` | `userId`, `consecutiveIgnored`, `backoffUntil`, `inactivityPausedAt`, `reactivationsUsed`, `lastReactivationDate`, `pausedUntil`, `blockedAt` | `userId` único | RN-MSJ-007 a 009, 013, 014. La tasa de acción por propósito se calcula desde `proactive_messages` |
+| `proactive_messages` | `userId`, `key` (propósito + día operativo: una salida por propósito y día), `purpose`, `templateId`, `scheduledFor`, `notAfter`, `reactivation`, `status` (`pending`·`sent`·`suppressed`·`cancelled`), `suppressedReason`, `sentAt`, `telegramMessageId`, `actionedAt`, `outcome` (`actioned`·`interacted`·`ignored`; null mientras corre la ventana P-067), `createdAt` | `status+scheduledFor`; `userId+sentAt`; `userId+key` único; `status+outcome+sentAt` | RN-MSJ-001 a 017. La bandeja de salida (FR-007-02): la plantilla se elige al enviar (RN-MSJ-010). Ignorado = ninguna interacción del usuario (toque o comando) en P-067 h tras el envío (PO, 2026-11-11) |
+| `message_stats` | `userId`, `consecutiveIgnored`, `backoffUntil`, `lastInteractionAt`, `inactivityPausedAt`, `reactivationsUsed` (se reinicia cuando el usuario vuelve, PO 2026-11-11), `lastReactivationDate`, `pausedUntil`, `blockedAt` | `userId` único | RN-MSJ-007 a 009, 013, 014. La tasa de acción por propósito se calcula desde `proactive_messages` |
 | `imported_activities` | `userId`, `source`, `type` (`steps`·`workout`), `start`, `end`, `value`, `receivedAt` | `userId+start` | RN-INT-003, RN-INT-004 |
 | `ingestion_tokens` | `userId`, `tokenHash`, `createdAt`, `revokedAt` | `tokenHash` único | RN-INT-003 |
 | `risk_signals` | `userId`, `category`, `at` | `userId+at` | Solo categoría (RN-DAT-005) |

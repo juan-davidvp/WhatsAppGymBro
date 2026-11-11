@@ -306,6 +306,32 @@ describe('FR-007-02 · T-070 · bandeja de salida', () => {
     const until = new Date('2026-10-25T00:00:00Z');
     await stats.update('u72', { pausedUntil: until });
     expect((await stats.get('u72')).pausedUntil).toEqual(until);
+    await stats.update('u72', { lastInteractionAt: until });
+    expect(await stats.get('u72')).toMatchObject({ pausedUntil: until, lastInteractionAt: until });
+  });
+
+  it('RN-MSJ-007 · T-072 · las enviadas esperan su resultado y lo fijan una sola vez', async () => {
+    const outbox = outboxRepository(db);
+    const at = new Date('2026-10-22T10:00:00Z');
+    await outbox.schedule(
+      {
+        userId: 'u73',
+        key: 'regreso:2026-10-22',
+        purpose: 'regreso',
+        scheduledFor: at,
+        notAfter: null,
+        reactivation: false,
+      },
+      at,
+    );
+    const [due] = await outbox.due(at);
+    await outbox.markSent(due?.id ?? '', { templateId: 'RG-01', sentAt: at, telegramMessageId: 5 });
+    expect(await outbox.awaitingOutcome(new Date('2026-10-22T09:59:00Z'))).toEqual([]);
+    const [waiting] = await outbox.awaitingOutcome(new Date('2026-10-22T12:00:00Z'));
+    expect(waiting).toMatchObject({ key: 'regreso:2026-10-22', outcome: null });
+    expect(await outbox.setOutcome(waiting?.id ?? '', 'ignored')).toBe(true);
+    expect(await outbox.setOutcome(waiting?.id ?? '', 'interacted')).toBe(false);
+    expect(await outbox.awaitingOutcome(new Date('2026-10-22T12:00:00Z'))).toEqual([]);
   });
 });
 
@@ -668,6 +694,39 @@ describe('FR-003-03 · T-041 · sesiones de entreno con versión de estado', () 
     expect((await workouts.byId(created.id))?.status).toBe('completed');
     expect(await workouts.activeOn('u14', '2026-10-19')).toBeNull();
     expect(await workouts.byId('no-es-un-id')).toBeNull();
+  });
+
+  it('RN-MSJ-006 · T-072 · las últimas sesiones completas o parciales, de la más reciente a la más vieja', async () => {
+    const workouts = workoutSessionsRepository(db);
+    const base = {
+      userId: 'u14b',
+      plannedSessionId: 'p1',
+      template: 'FULL_A' as const,
+      variant: 'GYM' as const,
+      endedAt: null,
+      loggedAsPlanned: false,
+      progress: startProgress([
+        { exerciseCode: 'SQ', pattern: 'SQUAT', sets: 1, targetReps: 10, loadKg: 60 },
+      ]),
+      lastConfirmedAt: null,
+      pendingTaps: 0,
+    };
+    const day = (d: number) => `2026-10-${String(d).padStart(2, '0')}`;
+    for (const [d, status] of [
+      [5, 'completed'],
+      [7, 'abandoned'],
+      [9, 'partial'],
+      [12, 'completed'],
+    ] as const) {
+      await workouts.create({
+        ...base,
+        date: day(d),
+        status,
+        startedAt: new Date(`${day(d)}T23:00:00Z`),
+      });
+    }
+    const recent = await workouts.recentStarted('u14b', 2);
+    expect(recent.map((s) => s.date)).toEqual(['2026-10-12', '2026-10-09']);
   });
 });
 

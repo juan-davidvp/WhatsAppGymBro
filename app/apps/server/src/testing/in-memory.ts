@@ -570,6 +570,16 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
       onDate(userId, date) {
         return Promise.resolve(workouts.filter((w) => w.userId === userId && w.date === date));
       },
+      recentStarted(userId, limit) {
+        return Promise.resolve(
+          workouts
+            .filter(
+              (w) => w.userId === userId && (w.status === 'completed' || w.status === 'partial'),
+            )
+            .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
+            .slice(0, limit),
+        );
+      },
       update(id, rev, changes) {
         const index = workouts.findIndex((w) => w.id === id && w.rev === rev);
         const current = workouts[index];

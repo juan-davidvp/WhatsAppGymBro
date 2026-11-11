@@ -34,6 +34,9 @@ const tokenSchema = z.string().regex(TOKEN, 'valor de texto no es una ficha');
 const scalarSchema = z.union([tokenSchema, z.number().finite(), z.boolean(), z.null()]);
 const valueSchema = z.union([scalarSchema, z.array(scalarSchema).max(20)]);
 
+/** ID de plantilla de `plantillas-de-mensajes.md` (`PL-01`). */
+const templateIdSchema = z.string().regex(/^[A-Z]{2}-\d{2}$/);
+
 const propKeySchema = z
   .string()
   .regex(/^[a-z][A-Za-z0-9]{0,39}$/, 'clave no es camelCase')
@@ -171,10 +174,20 @@ export const EVENT_PROPS_SCHEMAS = {
   /** SPEC-007 §7 (T-070): propósito, plantilla y motivo; nunca el texto enviado. */
   message_scheduled: z.strictObject({ purpose: z.enum(MESSAGE_PURPOSES) }),
   message_suppressed: z.strictObject({ purpose: z.enum(MESSAGE_PURPOSES), reason: tokenSchema }),
-  message_sent: z.strictObject({
+  message_sent: z.strictObject({ purpose: z.enum(MESSAGE_PURPOSES), templateId: templateIdSchema }),
+  /** T-072 (RN-MSJ-007, M03): minutos desde el envío hasta el toque. */
+  message_actioned: z.strictObject({
     purpose: z.enum(MESSAGE_PURPOSES),
-    templateId: z.string().regex(/^[A-Z]{2}-\d{2}$/),
+    templateId: templateIdSchema,
+    minutes: z.number().int().nonnegative(),
   }),
+  message_ignored: z.strictObject({
+    purpose: z.enum(MESSAGE_PURPOSES),
+    templateId: templateIdSchema,
+  }),
+  backoff_applied: z.strictObject({ days: z.number().int().positive() }),
+  inactivity_pause_started: z.strictObject({ inactiveDays: z.number().int().nonnegative() }),
+  reactivation_sent: z.strictObject({ count: z.number().int().positive() }),
   /** SPEC-009 (T-065, RN-SEG-008): qué disparó la señal de sobreuso. */
   overuse_signal: z.strictObject({ reason: z.enum(['sessions_per_day', 'rest_days']) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;

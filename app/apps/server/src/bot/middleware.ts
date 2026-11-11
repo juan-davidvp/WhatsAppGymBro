@@ -3,6 +3,7 @@ import { routeFreeText } from '@gymbro/domain';
 import type { Context, MiddlewareFn } from 'grammy';
 import type { EventEmitter } from '../events/emitter.js';
 import type { Logger } from '../logger.js';
+import { recordInteraction, type EngagementDeps } from '../messaging/engagement.js';
 import type {
   ProcessedUpdatesRepository,
   RiskSignalsRepository,
@@ -48,6 +49,26 @@ export function loadUser(users: UsersRepository, clock: () => Date): MiddlewareF
       chatId: ctx.chat?.id ?? from.id,
       now: clock(),
     });
+    await next();
+  };
+}
+
+/**
+ * FR-007-06 (T-072): todo toque o comando cuenta como interacción (reinicia los
+ * ignorados y saca de la pausa por inactividad); un toque en un botón de un
+ * mensaje proactivo es su acción. Si falla, se registra y el update sigue.
+ */
+export function trackInteraction(
+  deps: EngagementDeps & { logger: Logger },
+): MiddlewareFn<BotContext> {
+  return async (ctx, next) => {
+    if (ctx.user) {
+      try {
+        await recordInteraction(ctx.user, ctx.callbackQuery?.message?.message_id ?? null, deps);
+      } catch (error) {
+        deps.logger.error('interaction_track_failed', { updateId: ctx.update.update_id, error });
+      }
+    }
     await next();
   };
 }

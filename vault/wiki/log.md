@@ -652,3 +652,32 @@ Pendiente, sin cambiar:
 - **Pendiente para T-072:**
   - Ampliar la simulación de G06 a 60 días (SC-007-1).
   - Los candidatos se recalculan en cada ciclo aunque ya estén en la bandeja; basta para la Fase 0 (principio XI).
+
+## [2026-11-11] decision | M7 · ignorado y reactivaciones (PO)
+- **Ignorado (RN-MSJ-007):** un proactivo queda ignorado si en P-067 h (2 h) tras el envío no hubo ninguna interacción del usuario, ni toque ni comando. Si entrena desde 🏋️ Hoy sin tocar el mensaje, no cuenta como ignorado. La ventana es la misma de M03.
+- **Reactivaciones (RN-MSJ-008):** el máximo de P-054 es por cada pausa por inactividad. Cuando el usuario vuelve, el contador se reinicia.
+- Registrado en [[spec-007-proactividad-y-mensajes]] §10 y en [[modelo-de-datos]] v0.7.0.
+
+## [2026-11-11] implementar | T-072 Hora habitual aprendida, retroceso, inactividad y desvanecimiento
+- **Modelo** ([[modelo-de-datos]] v0.7.0):
+  - `proactive_messages.outcome` (`actioned`·`interacted`·`ignored`) con índice `status+outcome+sentAt`.
+  - `message_stats.lastInteractionAt`.
+  - Índice `workout_sessions` `userId+startedAt`.
+  - `training_habits.learnedStart` ahora se escribe.
+- **Interacción** (FR-007-06, `bot/middleware.ts` → `messaging/engagement.ts`):
+  - Cada toque o comando guarda la hora, reinicia los ignorados y saca de la pausa por inactividad con las reactivaciones en cero.
+  - Un toque en un botón de un proactivo es su acción: `message_actioned` con los minutos.
+  - Si el registro falla, el update sigue.
+- **Ignorados y retroceso** (RN-MSJ-007): al cerrar la ventana P-067, cada enviada queda `actioned`, `interacted` o `ignored`. Una ignorada emite `message_ignored`. Con P-050 seguidas, el presupuesto semanal queda a la mitad P-051 días (`backoff_applied`).
+- **Hora habitual aprendida** (RN-MSJ-006, `messaging/learned-time.ts`): en cada ciclo, la mediana de inicio de las últimas P-049 sesiones de cada día del hábito; con menos, la declarada. Solo se guarda cuando cambia.
+- **Inactividad** (RN-MSJ-008):
+  - Tras P-053 días sin actividad: `regreso` final (RG-04/05), pausa e `inactivity_pause_started`.
+  - En pausa solo se programa la reactivación: RG-06 el lunes y RG-07 el día 1, con `reactivation_sent`, hasta P-054.
+  - Lo que ya estaba en la bandeja se suprime con `inactive`.
+  - Ahora la interacción también es actividad para `regreso`: el onboarding cuenta.
+- **Desvanecimiento** (RN-MSJ-009): tras P-055 semanas cumplidas seguidas, el motor recibe `recordatorio_contextual` como apagado, y también `plan_listo` si su tasa de acción no llega a P-056.
+- **Rotación** (RN-MSJ-010): ya estaba desde T-070. La simulación la verifica.
+- **Pruebas:**
+  - `messaging/engagement.test.ts` (11): acción, ignorado, interacción en la ventana, retroceso, final y pausa, reactivaciones y regreso a la actividad, tope de P-054, hora aprendida y desvanecimiento.
+  - **SC-007-1:** 60 días con comportamientos aleatorios (semilla fija), incluido un tramo de 15 días de ausencia. 0 violaciones de presupuesto, silencio, separación y rotación, pasando por ignorados, retroceso, pausa y reactivación.
+

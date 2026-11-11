@@ -98,7 +98,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 |---|---|---|---|---|
 | T-070 ✅ | Bandeja de salida, planificador cada minuto, envío con reintentos y supresión de salidas viejas; el motor aplica presupuesto, silencio y separación | HU-007-2, FR-007-02/03/08 | T-016, T-020 | Prueba de integración del ciclo; G06 = 0 |
 | T-071 ✅ | Candidatos: `plan_listo` (también la víspera), `cierre_del_dia`, `regreso`, `recordatorio_contextual`, `resumen_semanal` en texto. `reconocimiento` sigue como aviso y `mantenimiento` pasa a M8 (PO, 2026-11-10) | HU-007-1/3/5 | T-070, T-041 | Escenarios pasan |
-| T-072 | Hora habitual aprendida, retroceso, inactividad, desvanecimiento, rotación | HU-007-1/3/6 | T-071 | SC-007-1 con datos reales simulados |
+| T-072 ✅ | Hora habitual aprendida, retroceso, inactividad, desvanecimiento, rotación | HU-007-1/3/6 | T-071 | SC-007-1 con datos reales simulados |
 | T-073 | `/pausa`, ajustes de mensajes y detección de bloqueo | HU-007-4/7 | T-071 | Escenarios pasan |
 
 ## M8 · Progreso (SPEC-006)

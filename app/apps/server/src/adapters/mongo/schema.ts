@@ -24,7 +24,7 @@ export const COLLECTIONS = {
   training_habits: [{ keys: ['userId'], unique: true }],
   weekly_plans: [{ keys: ['userId', 'weekStart'], unique: true }],
   planned_sessions: [{ keys: ['userId', 'date'] }],
-  workout_sessions: [{ keys: ['userId', 'date'] }],
+  workout_sessions: [{ keys: ['userId', 'date'] }, { keys: ['userId', 'startedAt'] }],
   set_entries: [{ keys: ['idempotencyKey'], unique: true }],
   personal_records: [
     { keys: ['userId', 'exerciseCode', 'type'] },
@@ -47,6 +47,7 @@ export const COLLECTIONS = {
     { keys: ['status', 'scheduledFor'] },
     { keys: ['userId', 'sentAt'] },
     { keys: ['userId', 'key'], unique: true },
+    { keys: ['status', 'outcome', 'sentAt'] },
   ],
   message_stats: [{ keys: ['userId'], unique: true }],
   imported_activities: [{ keys: ['userId', 'start'] }],

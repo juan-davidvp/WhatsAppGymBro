@@ -54,7 +54,13 @@ import { answerMeal, mealMenu } from '../meals/meals.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
-import { deduplicate, loadUser, riskGuard, type BotContext } from './middleware.js';
+import {
+  deduplicate,
+  loadUser,
+  riskGuard,
+  trackInteraction,
+  type BotContext,
+} from './middleware.js';
 
 /**
  * Adaptador de Telegram (grammY). Delgado: traduce el update a un caso de uso y
@@ -234,6 +240,7 @@ export function createBot({
 
   handlers.use(deduplicate(deps.processedUpdates, clock, logger));
   handlers.use(loadUser(deps.users, clock));
+  handlers.use(trackInteraction({ ...deps, clock, logger }));
   handlers.use(riskGuard({ ...deps, clock, logger }));
 
   const useCases = { ...deps, clock, logger };

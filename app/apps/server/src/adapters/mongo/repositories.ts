@@ -862,6 +862,14 @@ export function workoutSessionsRepository(db: Db): WorkoutSessionsRepository {
     async onDate(userId, date) {
       return (await collection.find({ userId, date }).toArray()).map(toWorkoutSession);
     },
+    async recentStarted(userId, limit) {
+      const docs = await collection
+        .find({ userId, status: { $in: ['completed', 'partial'] } })
+        .sort({ startedAt: -1 })
+        .limit(limit)
+        .toArray();
+      return docs.map(toWorkoutSession);
+    },
     async update(id, rev, changes) {
       const doc = await collection.findOneAndUpdate(
         { _id: new ObjectId(id), rev },

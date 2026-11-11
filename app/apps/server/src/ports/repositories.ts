@@ -132,6 +132,12 @@ export interface TrainingHabitsRepository {
 
 export type OutboxStatus = 'pending' | 'sent' | 'suppressed' | 'cancelled';
 
+/**
+ * Resultado de una enviada al cerrar su ventana P-067 (RN-MSJ-007): con acción en
+ * uno de sus botones, con otra interacción del usuario o ignorada (PO, 2026-11-11).
+ */
+export type OutboxOutcome = 'actioned' | 'interacted' | 'ignored';
+
 /** Salida de la bandeja (`proactive_messages`, FR-007-02). */
 export interface OutboxMessage {
   readonly id: string;
@@ -148,6 +154,8 @@ export interface OutboxMessage {
   readonly sentAt: Date | null;
   readonly telegramMessageId: number | null;
   readonly actionedAt: Date | null;
+  /** null mientras corre la ventana P-067. */
+  readonly outcome: OutboxOutcome | null;
 }
 
 export type NewOutboxMessage = Pick<
@@ -173,6 +181,10 @@ export interface OutboxRepository {
   /** Enviada que corresponde a un mensaje de Telegram (para registrar la acción). */
   byTelegramMessage(userId: string, telegramMessageId: number): Promise<OutboxMessage | null>;
   markActioned(id: string, at: Date): Promise<boolean>;
+  /** Enviadas antes de `sentBefore` sin resultado todavía, en orden de envío. */
+  awaitingOutcome(sentBefore: Date): Promise<OutboxMessage[]>;
+  /** Fija el resultado una sola vez; false si ya lo tenía. */
+  setOutcome(id: string, outcome: OutboxOutcome): Promise<boolean>;
   /** Enviadas y con acción de un propósito (tasa de acción, RN-MSJ-009). */
   purposeStats(
     userId: string,
@@ -184,6 +196,8 @@ export interface OutboxRepository {
 export interface MessageStatsRecord {
   readonly consecutiveIgnored: number;
   readonly backoffUntil: Date | null;
+  /** FR-007-06: último toque o comando del usuario. */
+  readonly lastInteractionAt: Date | null;
   readonly inactivityPausedAt: Date | null;
   readonly reactivationsUsed: number;
   readonly lastReactivationDate: LocalDate | null;
@@ -194,6 +208,7 @@ export interface MessageStatsRecord {
 export const EMPTY_MESSAGE_STATS: MessageStatsRecord = {
   consecutiveIgnored: 0,
   backoffUntil: null,
+  lastInteractionAt: null,
   inactivityPausedAt: null,
   reactivationsUsed: 0,
   lastReactivationDate: null,
@@ -393,6 +408,8 @@ export interface WorkoutSessionsRepository {
   /** Sesión activa del usuario en esa fecha, si hay. */
   activeOn(userId: string, date: LocalDate): Promise<WorkoutSessionRecord | null>;
   onDate(userId: string, date: LocalDate): Promise<WorkoutSessionRecord[]>;
+  /** RN-MSJ-006: las últimas `limit` sesiones completas o parciales, de la más reciente a la más vieja. */
+  recentStarted(userId: string, limit: number): Promise<WorkoutSessionRecord[]>;
   /** Guarda cambios solo si `rev` sigue igual; devuelve la sesión nueva o null si cambió antes. */
   update(
     id: string,

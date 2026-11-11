@@ -5,6 +5,7 @@ import {
   type MessageStatsRecord,
   type MessageStatsRepository,
   type OutboxMessage,
+  type OutboxOutcome,
   type OutboxRepository,
   type OutboxStatus,
 } from '../../ports/repositories.js';
@@ -29,6 +30,7 @@ interface OutboxDocument {
   sentAt: Date | null;
   telegramMessageId: number | null;
   actionedAt: Date | null;
+  outcome?: OutboxOutcome | null;
   createdAt: Date;
 }
 
@@ -47,6 +49,7 @@ function toOutboxMessage(doc: OutboxDocument): OutboxMessage {
     sentAt: doc.sentAt,
     telegramMessageId: doc.telegramMessageId,
     actionedAt: doc.actionedAt,
+    outcome: doc.outcome ?? null,
   };
 }
 
@@ -65,6 +68,7 @@ export function outboxRepository(db: Db): OutboxRepository {
           sentAt: null,
           telegramMessageId: null,
           actionedAt: null,
+          outcome: null,
           createdAt: at,
         }),
       );
@@ -115,6 +119,20 @@ export function outboxRepository(db: Db): OutboxRepository {
       const result = await collection.updateOne(
         { _id: new ObjectId(id), status: 'sent', actionedAt: null },
         { $set: { actionedAt: at } },
+      );
+      return result.modifiedCount === 1;
+    },
+    async awaitingOutcome(sentBefore) {
+      const docs = await collection
+        .find({ status: 'sent', outcome: null, sentAt: { $lte: sentBefore } })
+        .sort({ sentAt: 1, _id: 1 })
+        .toArray();
+      return docs.map(toOutboxMessage);
+    },
+    async setOutcome(id, outcome) {
+      const result = await collection.updateOne(
+        { _id: new ObjectId(id), status: 'sent', outcome: null },
+        { $set: { outcome } },
       );
       return result.modifiedCount === 1;
     },

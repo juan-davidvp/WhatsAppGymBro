@@ -83,7 +83,7 @@ RN-MSJ-001 a RN-MSJ-017 · RN-PLAN-009 · RN-MAN-003 · RN-MAN-005.
 
 ## 7. Eventos
 
-`message_scheduled` (propósito, plantilla) · `message_suppressed` (propósito, motivo) · `message_sent` · `message_actioned` (propósito, plantilla, minutos hasta la acción) · `message_ignored` · `backoff_applied` · `inactivity_pause_started` · `reactivation_sent` · `pause_set` (días) · `message_settings_changed` (campo) · `bot_blocked`.
+`message_scheduled` (propósito, plantilla) · `message_suppressed` (propósito, motivo) · `message_sent` · `message_actioned` (propósito, plantilla, minutos hasta la acción) · `message_ignored` (propósito, plantilla) · `backoff_applied` (días) · `inactivity_pause_started` (días sin actividad) · `reactivation_sent` (número de la reactivación) · `pause_set` (días) · `message_settings_changed` (campo) · `bot_blocked`.
 
 ## 8. Casos límite
 
@@ -102,3 +102,4 @@ Optimización con algoritmos de bandido (Fase 1+, cuando haya volumen), notifica
 - **Resuelto (PO, 2026-11-10):** si `plan_listo` cae en silencio (franja de la mañana), sale la noche anterior antes del silencio (RN-MSJ-005, PL-06 a PL-08).
 - **Alcance de M7 (PO, 2026-11-10):** `reconocimiento` sigue como aviso en la próxima interacción y `mantenimiento` pasa a M8. `resumen_semanal` sale en texto hasta T-080.
 - **Para el PO (supuesto de T-071, 2026-11-11):** una semana sin días que cuentan no recibe `resumen_semanal`. RS-04 diría "Cerraste otra semana: 0 días que cuentan" seguido de una frase como "Semana sólida.", que no sería cierta; de esa semana se ocupa `regreso`. ¿Se mantiene así, o se escribe una plantilla para la semana en cero?
+- **Resuelto (PO, 2026-11-11):** un mensaje queda **ignorado** si en P-067 h tras el envío no hubo ninguna interacción del usuario (toque o comando); una interacción en otra parte del bot no lo deja ignorado. Las reactivaciones (P-054) se reinician cuando el usuario vuelve: el máximo es por cada pausa por inactividad.

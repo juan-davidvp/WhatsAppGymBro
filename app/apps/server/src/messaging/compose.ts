@@ -30,10 +30,16 @@ export interface TemplateOption {
   readonly variables: Readonly<Record<string, string | number>>;
 }
 
+/** RN-MSJ-008: lo que cambia en `message_stats` cuando el mensaje sale. */
+export type CompositionEffect =
+  | { readonly kind: 'inactivity_pause'; readonly inactiveDays: number }
+  | { readonly kind: 'reactivation' };
+
 export interface Composition {
   readonly day: DayContext;
   /** Vacío si ya no hay nada que decir (p. ej., no hay sesión planificada). */
   readonly options: readonly TemplateOption[];
+  readonly effect?: CompositionEffect;
 }
 
 /** `date` es el día al que se refiere el mensaje (la clave de la salida). */

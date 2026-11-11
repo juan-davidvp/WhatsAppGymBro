@@ -5,8 +5,9 @@ import type { ComposeDeps } from './compose.js';
 
 /**
  * Entradas de RN-MSJ-008 (`comebackAction`) a partir de lo guardado. Actividad
- * = un día que contó o que tuvo la mitad de comida. Solo se mira la ventana de
- * P-053 días (más allá aplica el `regreso` final) y nunca antes del alta.
+ * = un día que contó, que tuvo la mitad de comida o en el que el usuario tocó un
+ * botón o usó un comando (FR-007-06). Solo se mira la ventana de P-053 días (más
+ * allá aplica el `regreso` final) y nunca antes del alta.
  */
 
 export interface ComebackInputs {
@@ -27,9 +28,15 @@ export async function comebackInputs(
   const windowStart = addDays(today, -window);
   const from = joined > windowStart ? joined : windowStart;
 
+  const { lastInteractionAt } = await deps.messageStats.get(user.id);
+  const interactionDay = lastInteractionAt
+    ? [operationalDate(lastInteractionAt, user.timezone)]
+    : [];
   const active = (await deps.days.history(user.id))
-    .filter((d) => (d.counted || d.nutritionHalf) && d.date <= today)
+    .filter((d) => d.counted || d.nutritionHalf)
     .map((d) => d.date)
+    .concat(interactionDay)
+    .filter((d) => d <= today)
     .sort();
   const lastActivity = active.at(-1) ?? null;
   // Días anteriores a hoy, desde la última actividad (o el alta) y dentro de la ventana.

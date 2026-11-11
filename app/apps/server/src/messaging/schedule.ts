@@ -17,14 +17,17 @@ import {
 import type { Logger } from '../logger.js';
 import { plannedDayType } from '../plans/weekly-plan.js';
 import type {
+  MessageStatsRecord,
   NewOutboxMessage,
   OutboxRepository,
+  TrainingHabitRecord,
   TrainingHabitsRepository,
   UserRecord,
   UsersRepository,
 } from '../ports/repositories.js';
 import { comebackInputs, contextualReminderApplies } from './comeback.js';
 import type { ComposeDeps } from './compose.js';
+import { refreshLearnedStarts } from './learned-time.js';
 
 /**
  * Programación de candidatos (T-070, T-071, FR-007-02): en cada ciclo, por usuario
@@ -59,16 +62,33 @@ export async function scheduleCandidates(deps: ScheduleDeps): Promise<number> {
   return created;
 }
 
+/** Lo que se lee una vez por usuario y ciclo. */
+interface UserCycle {
+  readonly user: UserRecord;
+  readonly today: LocalDate;
+  readonly habit: TrainingHabitRecord | null;
+  readonly stats: MessageStatsRecord;
+}
+
 async function candidatesFor(
   user: UserRecord,
   today: LocalDate,
   deps: ScheduleDeps,
 ): Promise<NewOutboxMessage[]> {
+  const cycle: UserCycle = {
+    user,
+    today,
+    habit: await refreshLearnedStarts(user, deps),
+    stats: await deps.messageStats.get(user.id),
+  };
+  const comeback = await comebackCandidate(cycle, deps);
+  // RN-MSJ-008: en pausa por inactividad solo cabe la reactivación.
+  if (cycle.stats.inactivityPausedAt) return comeback;
   return [
-    ...(await planReadyCandidate(user, today, deps)),
-    ...(await planReadyCandidate(user, addDays(today, 1), deps)),
-    ...(await comebackCandidate(user, today, deps)),
-    ...(await contextualReminderCandidate(user, today, deps)),
+    ...(await planReadyCandidate(cycle, today, deps)),
+    ...(await planReadyCandidate(cycle, addDays(today, 1), deps)),
+    ...comeback,
+    ...(await contextualReminderCandidate(cycle, deps)),
     dayClosingCandidate(user, today),
     ...weeklySummaryCandidate(user, today),
   ];
@@ -95,17 +115,17 @@ async function schedule(
 export const outboxKey = (purpose: MessagePurpose, date: LocalDate) => `${purpose}:${date}`;
 
 /**
- * RN-MSJ-005: hora habitual del día de la semana (la declarada en el hábito; si
- * ese día no estaba en el hábito, la de su franja, P-083).
+ * RN-MSJ-005 y RN-MSJ-006: hora habitual del día de la semana (la aprendida; si
+ * no hay, la declarada en el hábito; si ese día no estaba en el hábito, la de su
+ * franja, P-083).
  */
-export async function usualStart(
+export function usualStart(
   user: UserRecord,
   date: LocalDate,
-  deps: { habits: TrainingHabitsRepository },
-): Promise<LocalTime | null> {
-  const habit = await deps.habits.get(user.id);
+  habit: TrainingHabitRecord | null,
+): LocalTime | null {
   const day = habit?.days.find((d) => d.weekday === weekdayOf(date));
-  if (day) return day.declaredStart;
+  if (day) return day.learnedStart ?? day.declaredStart;
   const slot = user.profile.timeSlot;
   return slot ? PARAMETERS.habit.timeSlotStarts[slot] : null;
 }
@@ -132,6 +152,7 @@ function candidate(
   date: LocalDate,
   scheduledFor: Date,
   notAfter: Date,
+  reactivation = false,
 ): NewOutboxMessage {
   return {
     userId: user.id,
@@ -139,7 +160,7 @@ function candidate(
     purpose,
     scheduledFor,
     notAfter,
-    reactivation: false,
+    reactivation,
   };
 }
 
@@ -150,12 +171,12 @@ function candidate(
  * plan (el de mañana puede ser de la semana siguiente); el compositor lo genera.
  */
 async function planReadyCandidate(
-  user: UserRecord,
+  { user, habit }: UserCycle,
   date: LocalDate,
   deps: ScheduleDeps,
 ): Promise<NewOutboxMessage[]> {
   if ((await plannedDayType(user, date, deps)) !== 'TRAINING') return [];
-  const start = await usualStart(user, date, deps);
+  const start = usualStart(user, date, habit);
   if (!start) return [];
   const { at, eve } = planReadySendAt(date, start, user.settings.quietHours, user.timezone);
   const notAfter = eve
@@ -165,21 +186,23 @@ async function planReadyCandidate(
 }
 
 /** Hora de los mensajes del día sin hora propia: la de `plan_listo`, fuera del silencio. */
-async function habitMoment(user: UserRecord, today: LocalDate, deps: ScheduleDeps): Promise<Date> {
-  const start = await usualStart(user, today, deps);
+function habitMoment({ user, today, habit }: UserCycle): Date {
+  const start = usualStart(user, today, habit);
   const at = start
     ? planReadyAt(today, start, user.timezone)
     : zonedTimeToInstant(today, user.settings.quietHours.end, user.timezone);
   return outOfQuietHours(user, today, at);
 }
 
-/** RN-MSJ-008 · 1 `regreso` cuando hay P-052 días de entreno planificados sin actividad. */
+/**
+ * RN-MSJ-008 · `regreso`: el único tras P-052 días de entreno sin actividad, el
+ * final tras P-053 días o, en pausa, la reactivación del lunes o del día 1.
+ */
 async function comebackCandidate(
-  user: UserRecord,
-  today: LocalDate,
+  cycle: UserCycle,
   deps: ScheduleDeps,
 ): Promise<NewOutboxMessage[]> {
-  const stats = await deps.messageStats.get(user.id);
+  const { user, today, stats } = cycle;
   const action = comebackAction({
     today,
     ...(await comebackInputs(user, today, deps)),
@@ -187,19 +210,20 @@ async function comebackCandidate(
     reactivationsUsed: stats.reactivationsUsed,
     lastReactivationDate: stats.lastReactivationDate,
   });
-  if (action !== 'send_comeback') return [];
-  const at = await habitMoment(user, today, deps);
-  return [candidate(user, 'regreso', today, at, nextQuietStart(user, today, at))];
+  if (action === 'none') return [];
+  const at = habitMoment(cycle);
+  const notAfter = nextQuietStart(user, today, at);
+  return [candidate(user, 'regreso', today, at, notAfter, action === 'send_reactivation')];
 }
 
 /** `recordatorio_contextual`: ayer entreno sin contar y hoy descanso (PO, 2026-11-10). */
 async function contextualReminderCandidate(
-  user: UserRecord,
-  today: LocalDate,
+  cycle: UserCycle,
   deps: ScheduleDeps,
 ): Promise<NewOutboxMessage[]> {
+  const { user, today } = cycle;
   if (!(await contextualReminderApplies(user, today, deps))) return [];
-  const at = await habitMoment(user, today, deps);
+  const at = habitMoment(cycle);
   return [candidate(user, 'recordatorio_contextual', today, at, nextQuietStart(user, today, at))];
 }
 

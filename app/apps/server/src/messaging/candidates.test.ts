@@ -106,16 +106,17 @@ describe('RN-MSJ-016 · T-071 · cierre_del_dia solo si sirve (HU-007-5)', () =>
 });
 
 describe('RN-MSJ-008 · T-071 · un solo regreso tras P-052 días de entreno sin actividad (HU-007-3)', () => {
-  it("una semana sin actividad: 1 regreso con [Exprés 15'] [Ajustar plan] y nunca dos", async () => {
+  it("tras el miércoles y el viernes sin actividad: 1 regreso el sábado con [Exprés 15'] [Ajustar plan], nunca dos", async () => {
     const t = await proactiveSetup();
     await t.setHabitTime('18:00');
-    await run(t, '2026-10-19T16:00:00Z', '2026-10-26T04:00:00Z');
-    const comebacks = t.sent.filter((m) => m.reply.text.startsWith('Aquí sigo'));
+    // El onboarding del lunes es actividad (una interacción, T-072). Solo se corre
+    // el planificador desde el sábado: nada antes ocupa el presupuesto.
+    await run(t, '2026-10-24T12:00:00Z', '2026-10-27T04:00:00Z');
+    expect(t.outboxOf('regreso')).toHaveLength(1);
     expect(t.sentTemplates().filter((s) => s.startsWith('regreso:'))).toEqual(['regreso:RG-01']);
-    expect(comebacks).toHaveLength(1);
-    expect(comebacks[0]?.reply.buttons.map((b) => b.label)).toEqual(templateById('RG-01').buttons);
-    // Lunes y miércoles planificados sin actividad: sale el jueves.
-    expect(operationalDate(comebacks[0]?.at ?? new Date(0), 'America/Bogota')).toBe('2026-10-22');
+    const comeback = t.sent.find((m) => m.reply.text === templateById('RG-01').text);
+    expect(comeback?.reply.buttons.map((b) => b.label)).toEqual(templateById('RG-01').buttons);
+    expect(operationalDate(comeback?.at ?? new Date(0), 'America/Bogota')).toBe('2026-10-24');
   });
 
   it('si vuelve a entrenar, el conteo empieza de nuevo y no sale regreso', async () => {

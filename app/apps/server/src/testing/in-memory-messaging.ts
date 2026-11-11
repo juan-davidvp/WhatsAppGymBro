@@ -37,6 +37,7 @@ export function inMemoryMessaging() {
         sentAt: null,
         telegramMessageId: null,
         actionedAt: null,
+        outcome: null,
         createdAt: at,
       });
       return Promise.resolve({ created: true });
@@ -95,6 +96,20 @@ export function inMemoryMessaging() {
     markActioned(id, at) {
       return Promise.resolve(
         update(id, (m) => m.status === 'sent' && m.actionedAt === null, { actionedAt: at }),
+      );
+    },
+    awaitingOutcome(sentBefore) {
+      return Promise.resolve(
+        outbox
+          .filter(
+            (m) => m.status === 'sent' && m.outcome === null && m.sentAt && m.sentAt <= sentBefore,
+          )
+          .sort((a, b) => (a.sentAt?.getTime() ?? 0) - (b.sentAt?.getTime() ?? 0)),
+      );
+    },
+    setOutcome(id, outcome) {
+      return Promise.resolve(
+        update(id, (m) => m.status === 'sent' && m.outcome === null, { outcome }),
       );
     },
     purposeStats(userId, purpose) {

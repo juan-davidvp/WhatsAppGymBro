@@ -3,6 +3,7 @@ import {
   PARAMETERS,
   byPurposePriority,
   evaluateProactive,
+  fadedPurposes,
   pickTemplate,
   type LocalDate,
   type MessagePurpose,
@@ -18,7 +19,7 @@ import type {
   UserRecord,
   UsersRepository,
 } from '../ports/repositories.js';
-import { proactiveButtons, type ComposeDeps } from './compose.js';
+import { proactiveButtons, type ComposeDeps, type CompositionEffect } from './compose.js';
 import { COMPOSERS } from './composers.js';
 import type { MessageSender } from './sender.js';
 
@@ -105,6 +106,7 @@ async function dispatchOne(
     new Date(now.getTime() - HISTORY_DAYS * DAY_MS),
   );
   const stats = await deps.messageStats.get(user.id);
+  const faded = await fadedFor(user, deps);
   const decision = evaluateProactive({
     candidate: {
       purpose: message.purpose,
@@ -113,7 +115,7 @@ async function dispatchOne(
       ...(message.notAfter ? { notAfter: message.notAfter } : {}),
       reactivation: message.reactivation,
     },
-    user: messagingState(user, stats),
+    user: messagingState(user, stats, faded),
     history,
     day: composition.day,
     now,
@@ -139,7 +141,46 @@ async function dispatchOne(
     { userId: user.id, timezone: user.timezone },
     { purpose: message.purpose, templateId },
   );
+  if (composition.effect) await applyEffect(composition.effect, user, date, stats, deps);
   return true;
+}
+
+/**
+ * RN-MSJ-009: tras P-055 semanas cumplidas seguidas, `recordatorio_contextual` se
+ * apaga y `plan_listo` también si su tasa de acción no llega a P-056.
+ */
+async function fadedFor(user: UserRecord, deps: DispatchDeps): Promise<MessagePurpose[]> {
+  const weekStreak = (await deps.streaks.get(user.id))?.state.weekStreak ?? 0;
+  if (weekStreak < PARAMETERS.messages.fadingAfterFulfilledWeeks) return [];
+  const { sent, actioned } = await deps.outbox.purposeStats(user.id, 'plan_listo');
+  return fadedPurposes({
+    fulfilledWeeksStreak: weekStreak,
+    planReadyActionRate: sent > 0 ? actioned / sent : null,
+  });
+}
+
+/** RN-MSJ-008: el `regreso` final pausa los proactivos; la reactivación se cuenta. */
+async function applyEffect(
+  effect: CompositionEffect,
+  user: UserRecord,
+  date: LocalDate,
+  stats: MessageStatsRecord,
+  deps: DispatchDeps,
+): Promise<void> {
+  const subject = { userId: user.id, timezone: user.timezone };
+  if (effect.kind === 'inactivity_pause') {
+    await deps.messageStats.update(user.id, {
+      inactivityPausedAt: deps.clock(),
+      reactivationsUsed: 0,
+    });
+    await deps.events.emit('inactivity_pause_started', subject, {
+      inactiveDays: effect.inactiveDays,
+    });
+    return;
+  }
+  const count = stats.reactivationsUsed + 1;
+  await deps.messageStats.update(user.id, { reactivationsUsed: count, lastReactivationDate: date });
+  await deps.events.emit('reactivation_sent', subject, { count });
 }
 
 async function suppress(

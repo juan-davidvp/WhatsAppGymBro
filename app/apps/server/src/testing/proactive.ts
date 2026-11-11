@@ -1,5 +1,6 @@
 import type { LocalTime, Weekday } from '@gymbro/domain';
 import { dispatchDue, type DispatchDeps } from '../messaging/dispatch.js';
+import { settleOutcomes } from '../messaging/engagement.js';
 import { scheduleCandidates, type ScheduleDeps } from '../messaging/schedule.js';
 import type { MessageSender } from '../messaging/sender.js';
 import type { Reply } from '../onboarding/replies.js';
@@ -40,8 +41,9 @@ export async function proactiveSetup() {
     goTo: (iso: string) => {
       now = new Date(iso);
     },
-    /** Un ciclo del planificador: programar los candidatos del día y enviar los vencidos. */
+    /** Un ciclo del planificador: cerrar ventanas P-067, programar y enviar los vencidos. */
     tick: async () => {
+      await settleOutcomes(deps);
       await scheduleCandidates(deps);
       return dispatchDue(deps);
     },
