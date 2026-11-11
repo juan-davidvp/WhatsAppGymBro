@@ -157,6 +157,9 @@ export function usersRepository(db: Db): UsersRepository {
     async updateProfile(userId, profile) {
       await setNested(userId, 'profile', profile);
     },
+    async setStatus(userId, status) {
+      await collection.updateOne({ _id: new ObjectId(userId) }, { $set: { status } });
+    },
     async recordOnboardingInteraction(userId, at) {
       const _id = new ObjectId(userId);
       await collection.updateOne({ _id }, { $inc: { 'onboarding.interactions': 1 } });

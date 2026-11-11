@@ -81,6 +81,8 @@ async function candidatesFor(
     habit: await refreshLearnedStarts(user, deps),
     stats: await deps.messageStats.get(user.id),
   };
+  // RN-MSJ-013: durante una /pausa no se programa nada (al terminar, sigue normal).
+  if (cycle.stats.pausedUntil && cycle.stats.pausedUntil > deps.clock()) return [];
   const comeback = await comebackCandidate(cycle, deps);
   // RN-MSJ-008: en pausa por inactividad solo cabe la reactivación.
   if (cycle.stats.inactivityPausedAt) return comeback;

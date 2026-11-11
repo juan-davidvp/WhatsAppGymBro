@@ -37,6 +37,10 @@ export type CallbackAction =
   | { action: 'ss'; sessionId: string; value: string }
   /** Estrategia ante un estancamiento: `<r|v|d><índice del ejercicio>` (RN-ENT-003). */
   | { action: 'pt'; sessionId: string; value: string }
+  /** `/pausa`: días, reanudar o cambiar (T-073). */
+  | { action: 'ps'; value: string }
+  /** `/ajustes` de mensajes: pantalla u opción elegida (T-073). */
+  | { action: 'aj'; value: string }
   /** Comida: `<operación>` y el borrador de la comida en curso (T-050, T-051). */
   | { action: 'ml'; op: string; state: string };
 
@@ -73,6 +77,8 @@ export function encodeCallbackData(action: CallbackAction): string {
     case 'del':
     case 'rs':
     case 'td':
+    case 'ps':
+    case 'aj':
       return checkSize(`${VERSION}:${action.action}:${checkValue(action.value)}`);
   }
 }
@@ -97,7 +103,9 @@ export function parseCallbackData(data: string): CallbackAction | null {
       action === 'sc' ||
       action === 'del' ||
       action === 'rs' ||
-      action === 'td') &&
+      action === 'td' ||
+      action === 'ps' ||
+      action === 'aj') &&
     arg !== undefined &&
     value === undefined &&
     VALUE.test(arg)

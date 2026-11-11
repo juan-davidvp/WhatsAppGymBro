@@ -194,6 +194,10 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         updateUser(userId, (user) => ({ ...user, profile: { ...user.profile, ...profile } }));
         return Promise.resolve();
       },
+      setStatus(userId, status) {
+        updateUser(userId, (user) => ({ ...user, status }));
+        return Promise.resolve();
+      },
       recordOnboardingInteraction(userId, at) {
         updateUser(userId, (user) => ({
           ...user,

@@ -188,6 +188,12 @@ export const EVENT_PROPS_SCHEMAS = {
   backoff_applied: z.strictObject({ days: z.number().int().positive() }),
   inactivity_pause_started: z.strictObject({ inactiveDays: z.number().int().nonnegative() }),
   reactivation_sent: z.strictObject({ count: z.number().int().positive() }),
+  /** T-073 (RN-MSJ-013, RN-MSJ-014, HU-007-4). */
+  pause_set: z.strictObject({ days: z.number().int().positive() }),
+  message_settings_changed: z.strictObject({
+    field: z.enum(['intensity', 'quiet_hours', 'purpose']),
+  }),
+  bot_blocked: z.strictObject({}),
   /** SPEC-009 (T-065, RN-SEG-008): qué disparó la señal de sobreuso. */
   overuse_signal: z.strictObject({ reason: z.enum(['sessions_per_day', 'rest_days']) }),
 } satisfies Partial<Record<EventName, z.ZodType>>;

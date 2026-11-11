@@ -3,9 +3,9 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.10.0
+version: 0.11.0
 creado: 2026-10-18
-actualizado: 2026-11-10
+actualizado: 2026-11-11
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
 fuentes: [F39, F45, F50, F52, F55, F56, F57, F58, F59, F93, F94, F95, F99]
 relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
@@ -125,6 +125,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-067 | `metrics.actionWindowHours` | 2 h | — | [[plan-de-medicion]] | Sí | — |
 | P-097 | `messages.sendMaxAttempts` | 3 intentos | — | FR-007-08 (envíos a Telegram: intentos ante límite de tasa o fallo temporal) | No | — |
 | P-098 | `messages.sendRetryBaseSeconds` | 1 s | — | FR-007-08 (espera exponencial: 1 s, 2 s, 4 s…; manda el `retry_after` de Telegram si lo da) | No | — |
+| P-099 | `messages.pauseOptionsDays` | 1, 3, 7 y 14 días | — | RN-MSJ-013 (opciones de `/pausa`, HU-007-4; la mayor es P-059) | No | — |
 | P-096 | `scheduler.intervalSeconds` | 60 s | — | FR-005-02 (ciclo del planificador: cierre de días y, desde T-070, la bandeja; [[plan-tecnico]] §6) | No | — |
 
 ## Integraciones, seguridad y datos

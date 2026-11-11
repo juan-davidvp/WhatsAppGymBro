@@ -54,6 +54,8 @@ import { answerMeal, mealMenu } from '../meals/meals.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
+import { answerSettings, settingsCommand } from '../messaging/message-settings.js';
+import { answerPause, pauseCommand } from '../messaging/pause.js';
 import {
   deduplicate,
   loadUser,
@@ -265,6 +267,14 @@ export function createBot({
     if (ctx.user) await sendAll(ctx, await planView(ctx.user, useCases));
   });
 
+  handlers.command('pausa', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await pauseCommand(ctx.user, useCases));
+  });
+
+  handlers.command('ajustes', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, settingsCommand(ctx.user));
+  });
+
   handlers.command('privacidad', async (ctx) => {
     if (ctx.user) await sendAll(ctx, [privacyCommand(ctx.user)]);
   });
@@ -333,6 +343,10 @@ export function createBot({
         });
       case 'pt':
         return answerPlateau(user, action.sessionId, action.value, useCases);
+      case 'ps':
+        return answerPause(user, action.value, useCases);
+      case 'aj':
+        return answerSettings(user, action.value, useCases);
       case 'nav':
         if (action.target === 'plan') return planView(user, useCases);
         if (action.target === 'today') return todayScreen(user, useCases);

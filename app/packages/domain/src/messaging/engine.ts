@@ -363,6 +363,23 @@ export function pauseUntil(now: Date, days: number): Date {
   return new Date(now.getTime() + days * DAY_MS);
 }
 
+const WEEK_LENGTH = 7;
+
+/**
+ * RN-MSJ-013 (decisión del PO, 2026-11-11): ¿la pausa `[from, until)` toca la
+ * semana de `weekStart`? Si la toca, la semana no se evalúa (SPEC-005 §8).
+ */
+export function pauseTouchesWeek(
+  pause: { readonly from: Date; readonly until: Date } | null,
+  weekStart: LocalDate,
+  timeZone: string,
+): boolean {
+  if (!pause || pause.until.getTime() <= pause.from.getTime()) return false;
+  const first = operationalDate(pause.from, timeZone);
+  const last = operationalDate(new Date(pause.until.getTime() - 1), timeZone);
+  return first <= addDays(weekStart, WEEK_LENGTH - 1) && last >= weekStart;
+}
+
 /** RN-MSJ-014: al bloquear el bot, se cancelan las salidas pendientes y se registra `bot_blocked`. */
 export function handleBotBlocked<T extends { readonly status: string }>(
   outbox: readonly T[],

@@ -21,7 +21,7 @@ import type {
 } from '../ports/repositories.js';
 import { proactiveButtons, type ComposeDeps, type CompositionEffect } from './compose.js';
 import { COMPOSERS } from './composers.js';
-import type { MessageSender } from './sender.js';
+import { BotBlockedError, type MessageSender } from './sender.js';
 
 /**
  * Envío de la bandeja de salida (T-070, FR-007-03, plan técnico §6). En cada
@@ -106,7 +106,7 @@ async function dispatchOne(
     new Date(now.getTime() - HISTORY_DAYS * DAY_MS),
   );
   const stats = await deps.messageStats.get(user.id);
-  const faded = await fadedFor(user, deps);
+  const disabled = [...userDisabledPurposes(user), ...(await fadedFor(user, deps))];
   const decision = evaluateProactive({
     candidate: {
       purpose: message.purpose,
@@ -115,7 +115,7 @@ async function dispatchOne(
       ...(message.notAfter ? { notAfter: message.notAfter } : {}),
       reactivation: message.reactivation,
     },
-    user: messagingState(user, stats, faded),
+    user: messagingState(user, stats, disabled),
     history,
     day: composition.day,
     now,
@@ -131,10 +131,17 @@ async function dispatchOne(
   const option = composition.options.find((o) => o.templateId === templateId);
   if (!templateId || !option) return suppress(message, user, 'cooldown', deps);
 
-  const { messageId } = await deps.sender.send(user.chatId, {
-    text: renderTemplate(templateId, option.variables),
-    buttons: proactiveButtons(templateId, message.purpose),
-  });
+  let messageId: number;
+  try {
+    ({ messageId } = await deps.sender.send(user.chatId, {
+      text: renderTemplate(templateId, option.variables),
+      buttons: proactiveButtons(templateId, message.purpose),
+    }));
+  } catch (error) {
+    if (!(error instanceof BotBlockedError)) throw error;
+    await markBlocked(user, deps);
+    return false;
+  }
   await deps.outbox.markSent(message.id, { templateId, sentAt: now, telegramMessageId: messageId });
   await deps.events.emit(
     'message_sent',
@@ -143,6 +150,23 @@ async function dispatchOne(
   );
   if (composition.effect) await applyEffect(composition.effect, user, date, stats, deps);
   return true;
+}
+
+/** `/ajustes`: propósitos que el usuario apagó (RN-MSJ-001: los demás, encendidos). */
+export function userDisabledPurposes(user: UserRecord): MessagePurpose[] {
+  const enabled = user.settings.purposesEnabled ?? {};
+  return (Object.keys(enabled) as MessagePurpose[]).filter((p) => enabled[p] === false);
+}
+
+/**
+ * RN-MSJ-014: el usuario bloqueó el bot. Se cancelan las pendientes (también la
+ * de este envío), se marca y se registra `bot_blocked`; no se le escribe más.
+ */
+async function markBlocked(user: UserRecord, deps: DispatchDeps): Promise<void> {
+  await deps.outbox.cancelPending(user.id);
+  await deps.messageStats.update(user.id, { blockedAt: deps.clock() });
+  await deps.users.setStatus(user.id, 'blocked');
+  await deps.events.emit('bot_blocked', { userId: user.id, timezone: user.timezone }, {});
 }
 
 /**

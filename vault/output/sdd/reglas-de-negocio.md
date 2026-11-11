@@ -3,9 +3,9 @@ titulo: Catálogo de reglas de negocio
 tipo: sdd-reglas
 hito: H3
 estado: en-revision
-version: 0.7.0
+version: 0.8.0
 creado: 2026-10-18
-actualizado: 2026-11-10
+actualizado: 2026-11-11
 deriva_de: [propuesta-de-valor, objetivos-y-progreso, cada-dia-cuenta, sistema-de-gamificacion, proactividad-sin-spam, registro-sin-friccion, relacion-comida-entreno, constancia-en-cualquier-lugar, integraciones-y-ecosistema, seguridad-y-cumplimiento, fundamentos-de-entrenamiento, registro-de-decisiones]
 fuentes: [F39, F40, F42, F45, F46, F47, F48, F49, F50, F51, F52, F55, F56, F57, F58, F59, F60, F61, F70, F71, F82, F93, F96, F97, F99]
 relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
@@ -131,8 +131,8 @@ relacionados: [parametros, constitucion, glosario, estrategia-de-pruebas]
 | RN-MSJ-010 | La misma plantilla no se envía dos veces al mismo usuario en P-058 días; cada envío registra el `template_id`. | P-058 | `F50` |
 | RN-MSJ-011 | Ninguna plantilla contiene expresiones de la lista prohibida de [[voz-y-marca]]; lo verifica una prueba automática. | — | FB-001-17 |
 | RN-MSJ-012 | Todo mensaje proactivo incluye al menos una acción de 1 toque. | — | FB-001-08 |
-| RN-MSJ-013 | `/pausa` detiene los mensajes proactivos entre 1 y P-059 días; los comandos siguen funcionando. | P-059 | ADR-011 |
-| RN-MSJ-014 | Si Telegram indica que el usuario bloqueó el bot, se detienen los envíos y se registra el evento `bot_blocked`. | — | ADR-002 |
+| RN-MSJ-013 | `/pausa` detiene los mensajes proactivos entre 1 y P-059 días (opciones P-099); los comandos siguen funcionando y se puede reanudar antes. La semana que toca una pausa no se evalúa: ni cumplida ni rota (SPEC-005 §8). Los días se cierran igual (decisión del PO, 2026-11-11). | P-059, P-099 | ADR-011 |
+| RN-MSJ-014 | Si Telegram indica que el usuario bloqueó el bot, se detienen los envíos, se cancelan las salidas pendientes y se registra el evento `bot_blocked`. Si vuelve a escribir (lo desbloqueó), los envíos se reanudan `[supuesto]`. | — | ADR-002 |
 | RN-MSJ-015 | Solo el motor de política puede programar o enviar mensajes proactivos. | — | Constitución III |
 | RN-MSJ-016 | `cierre_del_dia` (P-066) solo se envía si el día todavía no cuenta, o si ya cuenta y solo le falta la mitad de comida para quedar completo (decisión del PO, 2026-11-10), y la acción que falta se puede hacer en P-073 toques o menos. | P-066, P-073 | ADR-011 |
 | RN-MSJ-017 | `resumen_semanal` se envía el domingo a la hora P-060 (si no cae en silencio) e incluye el plan de la semana siguiente. | P-060 | `F48` |

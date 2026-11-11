@@ -45,6 +45,8 @@ export interface UserRecord {
   readonly settings: {
     readonly intensity: Intensity;
     readonly quietHours: { readonly start: LocalTime; readonly end: LocalTime };
+    /** RN-MSJ-001 · `/ajustes`: propósito → encendido; uno que falta está encendido. */
+    readonly purposesEnabled?: Readonly<Partial<Record<MessagePurpose, boolean>>>;
     readonly gamificationEnabled: boolean;
     readonly numberFreeMode: boolean;
     /** RN-SEG-002: el plan arranca con intensidad baja hasta que haya autorización. */
@@ -99,6 +101,8 @@ export interface UsersRepository {
   /** Cuenta una interacción del onboarding; la primera fija `startedAt`. */
   recordOnboardingInteraction(userId: string, at: Date): Promise<void>;
   completeOnboarding(userId: string, at: Date): Promise<void>;
+  /** RN-MSJ-014: `blocked` si bloqueó el bot; `active` si vuelve a escribir. */
+  setStatus(userId: string, status: UserStatus): Promise<void>;
   /** Usuarios activos que terminaron el onboarding (para el cierre programado, T-060). */
   listActive(): Promise<UserRecord[]>;
   /** "Empezar de nuevo" (SPEC-001 §8): borra lo declarado y vuelve a `step`. */
@@ -198,6 +202,8 @@ export interface MessageStatsRecord {
   readonly backoffUntil: Date | null;
   /** FR-007-06: último toque o comando del usuario. */
   readonly lastInteractionAt: Date | null;
+  /** RN-MSJ-013: inicio de la última `/pausa` (con `pausedUntil`, la semana que toca). */
+  readonly pausedAt: Date | null;
   readonly inactivityPausedAt: Date | null;
   readonly reactivationsUsed: number;
   readonly lastReactivationDate: LocalDate | null;
@@ -209,6 +215,7 @@ export const EMPTY_MESSAGE_STATS: MessageStatsRecord = {
   consecutiveIgnored: 0,
   backoffUntil: null,
   lastInteractionAt: null,
+  pausedAt: null,
   inactivityPausedAt: null,
   reactivationsUsed: 0,
   lastReactivationDate: null,

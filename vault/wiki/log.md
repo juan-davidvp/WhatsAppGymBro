@@ -681,3 +681,26 @@ Pendiente, sin cambiar:
   - `messaging/engagement.test.ts` (11): acción, ignorado, interacción en la ventana, retroceso, final y pausa, reactivaciones y regreso a la actividad, tope de P-054, hora aprendida y desvanecimiento.
   - **SC-007-1:** 60 días con comportamientos aleatorios (semilla fija), incluido un tramo de 15 días de ausencia. 0 violaciones de presupuesto, silencio, separación y rotación, pasando por ignorados, retroceso, pausa y reactivación.
 
+## [2026-11-11] decision | M7 · /pausa y /ajustes (PO)
+- **`/pausa` (RN-MSJ-013):** detiene los proactivos de 1 a P-059 días, con las opciones de P-099 (nuevo parámetro: 1, 3, 7 y 14). La semana que toca una pausa no se evalúa, ni cumplida ni rota (SPEC-005 §8). Los días se cierran igual. Con una pausa en curso, `/pausa` ofrece [Reanudar].
+- **`/ajustes`:** por ahora abre directo la pantalla de mensajes (cantidad, silencio y tipos). Cuando lleguen las otras secciones pasa a ser un menú.
+- Cambian [[reglas-de-negocio]] v0.8.0 (RN-MSJ-013 y RN-MSJ-014), [[parametros]] v0.11.0 (P-099), [[modelo-de-datos]] v0.8.0 (`pausedAt` y `purposesEnabled`) y [[plantillas-de-mensajes]] v0.17.0 (§2.6 y los comandos `pausa` y `ajustes`).
+
+## [2026-11-11] implementar | T-073 /pausa, /ajustes de mensajes y bloqueo
+- **`/pausa`** (`messaging/pause.ts`):
+  - PA-01 con [1 día] [3 días] [7 días] [14 días] y PA-02 con la fecha de fin; emite `pause_set`.
+  - Con pausa en curso: PA-03 con [Reanudar] (PA-04) y [Cambiar días].
+  - En pausa, el planificador no programa nada y el motor suprime lo que ya estaba (`paused`). Los comandos siguen.
+  - El cierre de semana no evalúa la que toca una pausa (`pauseTouchesWeek` en el dominio).
+- **`/ajustes`** (`messaging/message-settings.ts`):
+  - AJ-01 con cantidad, silencio y tipos apagados. [Cantidad] reutiliza ON-22 y [Silencio] ON-23 con las franjas de P-047 y P-086.
+  - [Tipos] lleva a AJ-02 con ✅/⬜ por propósito.
+  - Cada cambio se guarda, emite `message_settings_changed` (campo), avisa con AJ-03 y el motor lo usa en la siguiente evaluación.
+  - Los tipos apagados se guardan en `users.settings.purposesEnabled`. El motor recibe los apagados por el usuario más los desvanecidos (RN-MSJ-009).
+- **Bloqueo** (RN-MSJ-014): un 403 de Telegram (`BotBlockedError`) cancela las salidas pendientes (también la de ese envío), guarda `blockedAt`, pasa al usuario a `blocked` (deja de estar activo) y emite `bot_blocked`. **[supuesto, para el PO]** Si vuelve a escribir, lo desbloqueó: vuelve a `active` y se le puede escribir de nuevo.
+- **Comandos** del menú: se añaden `pausa` y `ajustes`.
+- **Pruebas:**
+  - `messaging/controls.test.ts` (9): opciones y fecha, nada en pausa con los comandos funcionando, [Reanudar], semana no evaluada, AJ-01, cantidad y silencio con su evento, silencio nuevo en la siguiente evaluación, tipo apagado con `disabled_purpose`, bloqueo y desbloqueo.
+  - `pauseTouchesWeek` en el dominio (RN-MSJ-013).
+  - `setStatus` y `purposesEnabled` contra MongoDB.
+

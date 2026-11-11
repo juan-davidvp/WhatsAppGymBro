@@ -490,6 +490,25 @@ describe('RN-SEG-007 · señales de riesgo por intervalo (pausa del juego)', () 
   });
 });
 
+describe('RN-MSJ-014 · T-073 · estado y ajustes de mensajes del usuario', () => {
+  it('un usuario bloqueado sale de los activos y vuelve al reactivarse; guarda los tipos apagados', async () => {
+    const users = usersRepository(db);
+    const user = await users.findOrCreate({ telegramUserId: 640, chatId: 640, now });
+    await users.completeOnboarding(user.id, now);
+    expect((await users.listActive()).some((u) => u.id === user.id)).toBe(true);
+    await users.setStatus(user.id, 'blocked');
+    expect((await users.listActive()).some((u) => u.id === user.id)).toBe(false);
+    await users.setStatus(user.id, 'active');
+    await users.updateSettings(user.id, { purposesEnabled: { plan_listo: false } });
+    const after = await users.findOrCreate({ telegramUserId: 640, chatId: 640, now });
+    expect(after.status).toBe('active');
+    expect(after.settings).toMatchObject({
+      intensity: 'NORMAL',
+      purposesEnabled: { plan_listo: false },
+    });
+  });
+});
+
 describe('T-032 · perfil y onboarding del usuario', () => {
   it('guarda el perfil, cuenta interacciones, termina y reinicia', async () => {
     const users = usersRepository(db);

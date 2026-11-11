@@ -10,6 +10,7 @@ import {
   PROHIBITED_EXPRESSIONS,
   WEEKLY_PHRASES,
   WEEK_LINE_SYMBOLS,
+  PURPOSE_NAMES,
   QUEST_LABELS,
   type Amount,
   type HandEquivalence,
@@ -44,6 +45,7 @@ describe('T-003 · plantillas de mensajes', () => {
     /^### 2\.2/,
     /^### 2\.4/,
     /^### 2\.5/,
+    /^### 2\.6/,
     /^## 3\./,
     /^### 3\.1/,
     /^### 3\.2/,
@@ -86,6 +88,13 @@ describe('T-003 · plantillas de mensajes', () => {
     const marks = line.slice(line.indexOf('Marcas:'));
     const symbols = [...marks.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
     expect(symbols).toEqual(Object.values(WEEK_LINE_SYMBOLS));
+  });
+
+  it('los nombres de los propósitos de /ajustes ({tipo}) coinciden', () => {
+    const line = templatesMd.split('\n').find((l) => l.startsWith('`{tipo}`')) ?? '';
+    const names = line.slice(line.indexOf(':') + 1);
+    const pairs = [...names.matchAll(/`(\w+)` ([^·]+)/g)].map((m) => [m[1], m[2]?.trim()]);
+    expect(Object.fromEntries(pairs)).toEqual(PURPOSE_NAMES);
   });
 
   it('los rótulos de las misiones (MI-02) coinciden con su nota', () => {

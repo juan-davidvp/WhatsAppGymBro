@@ -247,6 +247,8 @@ export const PARAMETERS = {
     sendMaxAttempts: 3,
     /** P-098 · FR-007-08 · segundos de la primera espera (luego se duplica) */
     sendRetryBaseSeconds: 1,
+    /** P-099 · RN-MSJ-013 · días (opciones de `/pausa`; la mayor es P-059) */
+    pauseOptionsDays: [1, 3, 7, 14],
   },
   scheduler: {
     /** P-096 · FR-005-02 · segundos entre ciclos del planificador (plan técnico §6) */

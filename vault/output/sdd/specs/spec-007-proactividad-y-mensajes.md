@@ -3,7 +3,7 @@ titulo: SPEC-007 · Proactividad y motor de mensajes
 tipo: sdd-spec
 id: SPEC-007
 hito: H3
-estado: borrador
+estado: implementado
 version: 0.2.0
 fase: 0
 prioridad: P1
@@ -103,3 +103,5 @@ Optimización con algoritmos de bandido (Fase 1+, cuando haya volumen), notifica
 - **Alcance de M7 (PO, 2026-11-10):** `reconocimiento` sigue como aviso en la próxima interacción y `mantenimiento` pasa a M8. `resumen_semanal` sale en texto hasta T-080.
 - **Para el PO (supuesto de T-071, 2026-11-11):** una semana sin días que cuentan no recibe `resumen_semanal`. RS-04 diría "Cerraste otra semana: 0 días que cuentan" seguido de una frase como "Semana sólida.", que no sería cierta; de esa semana se ocupa `regreso`. ¿Se mantiene así, o se escribe una plantilla para la semana en cero?
 - **Resuelto (PO, 2026-11-11):** un mensaje queda **ignorado** si en P-067 h tras el envío no hubo ninguna interacción del usuario (toque o comando); una interacción en otra parte del bot no lo deja ignorado. Las reactivaciones (P-054) se reinician cuando el usuario vuelve: el máximo es por cada pausa por inactividad.
+- **Resuelto (PO, 2026-11-11):** `/pausa` detiene los proactivos y la semana que toca la pausa no se evalúa (SPEC-005 §8); los días se cierran igual. Con una pausa en curso, `/pausa` ofrece [Reanudar]. Por ahora `/ajustes` abre directo la pantalla de mensajes; cuando lleguen objetivo, días, juego y conexiones pasa a ser un menú.
+- **Pendiente para el PO:** textos PA-01 a PA-04 y AJ-01 a AJ-03 ([[plantillas-de-mensajes]] §2.6) y el supuesto de RN-MSJ-014 (si vuelve a escribir, se reanudan los envíos).

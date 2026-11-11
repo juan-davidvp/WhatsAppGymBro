@@ -20,6 +20,7 @@ import type {
  */
 
 export interface EngagementDeps {
+  users: UsersRepository;
   outbox: OutboxRepository;
   messageStats: MessageStatsRepository;
   events: EventEmitter;
@@ -41,11 +42,15 @@ export async function recordInteraction(
   const leavesInactivityPause: Partial<MessageStatsRecord> = stats.inactivityPausedAt
     ? { inactivityPausedAt: null, reactivationsUsed: 0 }
     : {};
+  // RN-MSJ-014 [supuesto]: si escribe, desbloqueó el bot y se le puede volver a escribir.
+  const unblocks = user.status === 'blocked' || stats.blockedAt !== null;
   await deps.messageStats.update(user.id, {
     lastInteractionAt: now,
     consecutiveIgnored,
     ...leavesInactivityPause,
+    ...(unblocks ? { blockedAt: null } : {}),
   });
+  if (user.status === 'blocked') await deps.users.setStatus(user.id, 'active');
   if (telegramMessageId !== null) await recordAction(user, telegramMessageId, now, deps);
 }
 
@@ -70,7 +75,6 @@ async function recordAction(
 }
 
 export interface SettleDeps extends EngagementDeps {
-  users: UsersRepository;
   logger?: Logger;
 }
 

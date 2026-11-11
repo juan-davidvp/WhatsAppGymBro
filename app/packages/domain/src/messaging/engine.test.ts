@@ -13,6 +13,7 @@ import {
   handleBotBlocked,
   isInQuietHours,
   messageBudget,
+  pauseTouchesWeek,
   pauseUntil,
   pickTemplate,
   planReadyAt,
@@ -311,6 +312,37 @@ describe('RN-MSJ-012 · todo proactivo lleva al menos una acción de 1 toque', (
       send: false,
       reason: 'no_action',
     });
+  });
+});
+
+describe('RN-MSJ-013 · la semana que toca una /pausa no se evalúa (PO, 2026-11-11)', () => {
+  const MONDAY = '2026-10-19';
+  const tz = 'America/Bogota';
+
+  it('una pausa que empieza, termina o pasa por la semana la toca', () => {
+    const inside = { from: local('2026-10-21', '10:00'), until: local('2026-10-22', '10:00') };
+    const fromBefore = { from: local('2026-10-16', '10:00'), until: local('2026-10-20', '10:00') };
+    const intoNext = { from: local('2026-10-25', '18:00'), until: local('2026-10-28', '18:00') };
+    expect(pauseTouchesWeek(inside, MONDAY, tz)).toBe(true);
+    expect(pauseTouchesWeek(fromBefore, MONDAY, tz)).toBe(true);
+    expect(pauseTouchesWeek(intoNext, MONDAY, tz)).toBe(true);
+  });
+
+  it('sin pausa, o con una que terminó antes de la semana o empieza después, no', () => {
+    const before = { from: local('2026-10-12', '10:00'), until: local('2026-10-15', '10:00') };
+    const after = { from: local('2026-10-27', '10:00'), until: local('2026-10-30', '10:00') };
+    // Reanudada en el mismo instante: no hubo pausa.
+    const empty = { from: local('2026-10-21', '10:00'), until: local('2026-10-21', '10:00') };
+    expect(pauseTouchesWeek(null, MONDAY, tz)).toBe(false);
+    expect(pauseTouchesWeek(before, MONDAY, tz)).toBe(false);
+    expect(pauseTouchesWeek(after, MONDAY, tz)).toBe(false);
+    expect(pauseTouchesWeek(empty, MONDAY, tz)).toBe(false);
+  });
+
+  it('el domingo antes del corte de las 03:00 todavía es de esa semana (RN-DQC-001)', () => {
+    // El lunes 26 a las 02:00 sigue siendo el día operativo del domingo 25.
+    const lateSunday = { from: local('2026-10-26', '02:00'), until: local('2026-10-27', '02:00') };
+    expect(pauseTouchesWeek(lateSunday, MONDAY, tz)).toBe(true);
   });
 });
 

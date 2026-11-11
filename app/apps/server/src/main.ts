@@ -145,6 +145,7 @@ async function main(): Promise<void> {
           xp,
           weeks,
           quests,
+          messageStats,
           events,
           clock,
           logger,
