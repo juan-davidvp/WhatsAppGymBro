@@ -1,5 +1,6 @@
 import { PARAMETERS, type ConsentCategory, type QuestKind } from '@gymbro/domain';
 import type { BotDependencies } from '../bot/create-bot.js';
+import { inMemoryMessaging } from './in-memory-messaging.js';
 import type { EventEmitter, EventProps, EventSubject } from '../events/emitter.js';
 import type { EventName } from '../events/catalog.js';
 import type { DayStatus, DayType, ExerciseAdjustment } from '@gymbro/domain';
@@ -76,6 +77,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     sources: string[];
     dayStatus: DayStatus | null;
   }[] = [];
+  const messaging = inMemoryMessaging();
   const streakStates = new Map<string, StoredPlayerState>();
   const notices: (NoticeRecord & { userId: string; shownAt: Date | null })[] = [];
   const xpLedger: (XpLedgerRecord & { userId: string })[] = [];
@@ -192,6 +194,10 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         updateUser(userId, (user) => ({ ...user, profile: { ...user.profile, ...profile } }));
         return Promise.resolve();
       },
+      setStatus(userId, status) {
+        updateUser(userId, (user) => ({ ...user, status }));
+        return Promise.resolve();
+      },
       recordOnboardingInteraction(userId, at) {
         updateUser(userId, (user) => ({
           ...user,
@@ -243,7 +249,12 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         habits.push(habit);
         return Promise.resolve();
       },
+      get(userId) {
+        return Promise.resolve(habits.find((h) => h.userId === userId) ?? null);
+      },
     },
+    outbox: messaging.outboxRepository,
+    messageStats: messaging.messageStatsRepository,
     goals: {
       activate(goal) {
         for (const g of goals)
@@ -563,6 +574,16 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
       onDate(userId, date) {
         return Promise.resolve(workouts.filter((w) => w.userId === userId && w.date === date));
       },
+      recentStarted(userId, limit) {
+        return Promise.resolve(
+          workouts
+            .filter(
+              (w) => w.userId === userId && (w.status === 'completed' || w.status === 'partial'),
+            )
+            .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
+            .slice(0, limit),
+        );
+      },
       update(id, rev, changes) {
         const index = workouts.findIndex((w) => w.id === id && w.rev === rev);
         const current = workouts[index];
@@ -711,6 +732,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         removeRows(xpLedger, userId);
         removeRows(weekRecords, userId);
         removeRows(questRows, userId);
+        messaging.erase(userId);
         removeRows(workouts, userId);
         removeRows(records, userId);
         removeRows(achievements, userId);
@@ -757,6 +779,8 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
     xpLedger,
     weekRecords,
     questRows,
+    outbox: messaging.outbox,
+    messageStats: messaging.stats,
     workouts,
     records,
     achievements,

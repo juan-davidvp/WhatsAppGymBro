@@ -19,7 +19,9 @@ import type {
   BodyMeasurementsRepository,
   GoalsRepository,
   DaysRepository,
+  MessageStatsRepository,
   NoticesRepository,
+  OutboxRepository,
   QuestsRepository,
   StreakStatesRepository,
   WeeksRepository,
@@ -52,7 +54,15 @@ import { answerMeal, mealMenu } from '../meals/meals.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
-import { deduplicate, loadUser, riskGuard, type BotContext } from './middleware.js';
+import { answerSettings, settingsCommand } from '../messaging/message-settings.js';
+import { answerPause, pauseCommand } from '../messaging/pause.js';
+import {
+  deduplicate,
+  loadUser,
+  riskGuard,
+  trackInteraction,
+  type BotContext,
+} from './middleware.js';
 
 /**
  * Adaptador de Telegram (grammY). Delgado: traduce el update a un caso de uso y
@@ -83,6 +93,10 @@ export interface BotDependencies {
   weeks: WeeksRepository;
   /** Misiones semanales (T-063, RN-GAM-008). */
   quests: QuestsRepository;
+  /** Bandeja de salida de los mensajes proactivos (T-070, FR-007-02). */
+  outbox: OutboxRepository;
+  /** Ignorados, retroceso, pausas y bloqueo (T-072, T-073). */
+  messageStats: MessageStatsRepository;
   workouts: WorkoutSessionsRepository;
   records: PersonalRecordsRepository;
   achievements: AchievementsRepository;
@@ -162,21 +176,30 @@ function mainKeyboard(): Keyboard {
  * Envía las respuestas en orden. Una respuesta marcada `edit` reemplaza el mensaje
  * del botón tocado (tarjeta de sesión, selección múltiple); las demás son nuevas.
  */
+/** Texto y opciones de envío de una respuesta (respuestas y mensajes proactivos, T-070). */
+export function telegramPayload(reply: Reply): {
+  text: string;
+  options: { reply_markup?: InlineKeyboard | Keyboard; parse_mode?: 'HTML' };
+} {
+  const formatted = reply.text.includes('**')
+    ? { text: toTelegramHtml(reply.text), parse_mode: 'HTML' as const }
+    : { text: reply.text };
+  const markup = reply.mainKeyboard
+    ? { reply_markup: mainKeyboard() }
+    : reply.buttons.length > 0
+      ? { reply_markup: inlineKeyboard(reply) }
+      : {};
+  return {
+    text: formatted.text,
+    options: { ...markup, ...(formatted.parse_mode ? { parse_mode: formatted.parse_mode } : {}) },
+  };
+}
+
 async function sendAll(ctx: BotContext, replies: readonly Reply[]): Promise<void> {
   for (const reply of replies) {
     if (reply.toast) continue;
-    const formatted = reply.text.includes('**')
-      ? { text: toTelegramHtml(reply.text), parse_mode: 'HTML' as const }
-      : { text: reply.text };
-    const markup = reply.mainKeyboard
-      ? { reply_markup: mainKeyboard() }
-      : reply.buttons.length > 0
-        ? { reply_markup: inlineKeyboard(reply) }
-        : {};
-    const options = {
-      ...markup,
-      ...(formatted.parse_mode ? { parse_mode: formatted.parse_mode } : {}),
-    };
+    const formatted = telegramPayload(reply);
+    const options = formatted.options;
     if (reply.edit && ctx.callbackQuery?.message && !reply.mainKeyboard) {
       try {
         await ctx.editMessageText(
@@ -219,6 +242,7 @@ export function createBot({
 
   handlers.use(deduplicate(deps.processedUpdates, clock, logger));
   handlers.use(loadUser(deps.users, clock));
+  handlers.use(trackInteraction({ ...deps, clock, logger }));
   handlers.use(riskGuard({ ...deps, clock, logger }));
 
   const useCases = { ...deps, clock, logger };
@@ -241,6 +265,14 @@ export function createBot({
 
   handlers.command('plan', async (ctx) => {
     if (ctx.user) await sendAll(ctx, await planView(ctx.user, useCases));
+  });
+
+  handlers.command('pausa', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await pauseCommand(ctx.user, useCases));
+  });
+
+  handlers.command('ajustes', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, settingsCommand(ctx.user));
   });
 
   handlers.command('privacidad', async (ctx) => {
@@ -311,6 +343,10 @@ export function createBot({
         });
       case 'pt':
         return answerPlateau(user, action.sessionId, action.value, useCases);
+      case 'ps':
+        return answerPause(user, action.value, useCases);
+      case 'aj':
+        return answerSettings(user, action.value, useCases);
       case 'nav':
         if (action.target === 'plan') return planView(user, useCases);
         if (action.target === 'today') return todayScreen(user, useCases);

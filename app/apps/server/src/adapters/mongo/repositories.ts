@@ -43,6 +43,7 @@ import {
   type SetEntriesRepository,
   type SetEntryRecord,
   type StreakStatesRepository,
+  type TrainingHabitRecord,
   type UserProfile,
   type UserRecord,
   type UsersRepository,
@@ -67,7 +68,9 @@ function isDuplicateKey(error: unknown): boolean {
 }
 
 /** Inserta; si la clave única ya existe, no hace nada. */
-async function insertIfAbsent(insert: () => Promise<unknown>): Promise<{ inserted: boolean }> {
+export async function insertIfAbsent(
+  insert: () => Promise<unknown>,
+): Promise<{ inserted: boolean }> {
   try {
     await insert();
     return { inserted: true };
@@ -153,6 +156,9 @@ export function usersRepository(db: Db): UsersRepository {
     },
     async updateProfile(userId, profile) {
       await setNested(userId, 'profile', profile);
+    },
+    async setStatus(userId, status) {
+      await collection.updateOne({ _id: new ObjectId(userId) }, { $set: { status } });
     },
     async recordOnboardingInteraction(userId, at) {
       const _id = new ObjectId(userId);
@@ -676,6 +682,10 @@ export function trainingHabitsRepository(db: Db): TrainingHabitsRepository {
     async save(habit) {
       await collection.replaceOne({ userId: habit.userId }, { ...habit }, { upsert: true });
     },
+    async get(userId) {
+      const doc = await collection.findOne({ userId }, { projection: { _id: 0 } });
+      return doc ? (doc as unknown as TrainingHabitRecord) : null;
+    },
   };
 }
 
@@ -854,6 +864,14 @@ export function workoutSessionsRepository(db: Db): WorkoutSessionsRepository {
     },
     async onDate(userId, date) {
       return (await collection.find({ userId, date }).toArray()).map(toWorkoutSession);
+    },
+    async recentStarted(userId, limit) {
+      const docs = await collection
+        .find({ userId, status: { $in: ['completed', 'partial'] } })
+        .sort({ startedAt: -1 })
+        .limit(limit)
+        .toArray();
+      return docs.map(toWorkoutSession);
     },
     async update(id, rev, changes) {
       const doc = await collection.findOneAndUpdate(

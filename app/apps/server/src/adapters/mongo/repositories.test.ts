@@ -36,6 +36,7 @@ import {
   streakStatesRepository,
   usersRepository,
 } from './repositories.js';
+import { messageStatsRepository, outboxRepository } from './messaging-repositories.js';
 import { COLLECTIONS } from './schema.js';
 
 /** T-020 · repositorios contra una base MongoDB 8.0 en memoria. */
@@ -248,6 +249,105 @@ describe('RN-DQC-007 · T-061 · el estado del juego se guarda completo y por ve
   });
 });
 
+describe('FR-007-02 · T-070 · bandeja de salida', () => {
+  it('una salida por clave, se envía una sola vez y la acción se registra una vez', async () => {
+    const outbox = outboxRepository(db);
+    const at = new Date('2026-10-21T21:00:00Z');
+    const message = {
+      userId: 'u70',
+      key: 'plan_listo:2026-10-21',
+      purpose: 'plan_listo' as const,
+      scheduledFor: new Date('2026-10-21T22:00:00Z'),
+      notAfter: new Date('2026-10-21T23:00:00Z'),
+      reactivation: false,
+    };
+    expect(await outbox.schedule(message, at)).toEqual({ created: true });
+    expect(await outbox.schedule(message, at)).toEqual({ created: false });
+    expect(await outbox.due(at)).toEqual([]);
+    const [due] = await outbox.due(new Date('2026-10-21T22:00:00Z'));
+    expect(due).toMatchObject({ key: message.key, status: 'pending' });
+    const sent = {
+      templateId: 'PL-01',
+      sentAt: new Date('2026-10-21T22:00:00Z'),
+      telegramMessageId: 9,
+    };
+    // Como mucho una vez: solo una reclamación gana y solo una reclamada se marca enviada.
+    expect(await outbox.markSent(due?.id ?? '', sent)).toBe(false);
+    expect(await outbox.claim(due?.id ?? '')).toBe(true);
+    expect(await outbox.claim(due?.id ?? '')).toBe(false);
+    expect(await outbox.due(new Date('2026-10-21T22:00:00Z'))).toEqual([]);
+    expect(await outbox.markSent(due?.id ?? '', sent)).toBe(true);
+    expect(await outbox.markSent(due?.id ?? '', sent)).toBe(false);
+    expect(await outbox.sentSince('u70', at)).toEqual([
+      { purpose: 'plan_listo', templateId: 'PL-01', sentAt: sent.sentAt },
+    ]);
+    const found = await outbox.byTelegramMessage('u70', 9);
+    expect(await outbox.markActioned(found?.id ?? '', sent.sentAt)).toBe(true);
+    expect(await outbox.markActioned(found?.id ?? '', sent.sentAt)).toBe(false);
+    // M03: la tasa cuenta las de ventana cerrada, por su resultado.
+    expect(await outbox.purposeStats('u70', 'plan_listo')).toEqual({ sent: 0, actioned: 0 });
+    await outbox.setOutcome(found?.id ?? '', 'actioned');
+    expect(await outbox.purposeStats('u70', 'plan_listo')).toEqual({ sent: 1, actioned: 1 });
+  });
+
+  it('RN-MSJ-014 · cancela las pendientes; las suprimidas guardan su motivo', async () => {
+    const outbox = outboxRepository(db);
+    const at = new Date('2026-10-21T10:00:00Z');
+    const base = {
+      userId: 'u71',
+      purpose: 'plan_listo' as const,
+      scheduledFor: at,
+      notAfter: null,
+      reactivation: false,
+    };
+    await outbox.schedule({ ...base, key: 'a' }, at);
+    await outbox.schedule({ ...base, key: 'b' }, at);
+    const [first] = await outbox.due(at);
+    expect(await outbox.markSuppressed(first?.id ?? '', 'quiet_hours')).toBe(true);
+    const [second] = await outbox.due(at);
+    await outbox.claim(second?.id ?? '');
+    // Una reclamada (envío a medias) también se cancela.
+    expect(await outbox.cancelPending('u71')).toBe(1);
+    expect(await outbox.markFailed(second?.id ?? '')).toBe(false);
+    expect(await outbox.due(at)).toEqual([]);
+  });
+
+  it('message_stats parte de cero y guarda los cambios', async () => {
+    const stats = messageStatsRepository(db);
+    expect((await stats.get('u72')).consecutiveIgnored).toBe(0);
+    const until = new Date('2026-10-25T00:00:00Z');
+    await stats.update('u72', { pausedUntil: until });
+    expect((await stats.get('u72')).pausedUntil).toEqual(until);
+    await stats.update('u72', { lastInteractionAt: until });
+    expect(await stats.get('u72')).toMatchObject({ pausedUntil: until, lastInteractionAt: until });
+  });
+
+  it('RN-MSJ-007 · T-072 · las enviadas esperan su resultado y lo fijan una sola vez', async () => {
+    const outbox = outboxRepository(db);
+    const at = new Date('2026-10-22T10:00:00Z');
+    await outbox.schedule(
+      {
+        userId: 'u73',
+        key: 'regreso:2026-10-22',
+        purpose: 'regreso',
+        scheduledFor: at,
+        notAfter: null,
+        reactivation: false,
+      },
+      at,
+    );
+    const [due] = await outbox.due(at);
+    await outbox.claim(due?.id ?? '');
+    await outbox.markSent(due?.id ?? '', { templateId: 'RG-01', sentAt: at, telegramMessageId: 5 });
+    expect(await outbox.awaitingOutcome(new Date('2026-10-22T09:59:00Z'))).toEqual([]);
+    const [waiting] = await outbox.awaitingOutcome(new Date('2026-10-22T12:00:00Z'));
+    expect(waiting).toMatchObject({ key: 'regreso:2026-10-22', outcome: null });
+    expect(await outbox.setOutcome(waiting?.id ?? '', 'ignored')).toBe(true);
+    expect(await outbox.setOutcome(waiting?.id ?? '', 'interacted')).toBe(false);
+    expect(await outbox.awaitingOutcome(new Date('2026-10-22T12:00:00Z'))).toEqual([]);
+  });
+});
+
 describe('T-061 · avisos para la próxima interacción', () => {
   it('se guardan una vez por clave y se entregan una sola vez, en orden', async () => {
     const notices = noticesRepository(db);
@@ -400,6 +500,25 @@ describe('RN-SEG-007 · señales de riesgo por intervalo (pausa del juego)', () 
     expect(
       await signals.instantsBetween('u5', at('2026-10-19T08:00:00Z'), at('2026-10-20T08:00:00Z')),
     ).toEqual([at('2026-10-19T12:00:00Z')]);
+  });
+});
+
+describe('RN-MSJ-014 · T-073 · estado y ajustes de mensajes del usuario', () => {
+  it('un usuario bloqueado sale de los activos y vuelve al reactivarse; guarda los tipos apagados', async () => {
+    const users = usersRepository(db);
+    const user = await users.findOrCreate({ telegramUserId: 640, chatId: 640, now });
+    await users.completeOnboarding(user.id, now);
+    expect((await users.listActive()).some((u) => u.id === user.id)).toBe(true);
+    await users.setStatus(user.id, 'blocked');
+    expect((await users.listActive()).some((u) => u.id === user.id)).toBe(false);
+    await users.setStatus(user.id, 'active');
+    await users.updateSettings(user.id, { purposesEnabled: { plan_listo: false } });
+    const after = await users.findOrCreate({ telegramUserId: 640, chatId: 640, now });
+    expect(after.status).toBe('active');
+    expect(after.settings).toMatchObject({
+      intensity: 'NORMAL',
+      purposesEnabled: { plan_listo: false },
+    });
   });
 });
 
@@ -607,6 +726,39 @@ describe('FR-003-03 · T-041 · sesiones de entreno con versión de estado', () 
     expect((await workouts.byId(created.id))?.status).toBe('completed');
     expect(await workouts.activeOn('u14', '2026-10-19')).toBeNull();
     expect(await workouts.byId('no-es-un-id')).toBeNull();
+  });
+
+  it('RN-MSJ-006 · T-072 · las últimas sesiones completas o parciales, de la más reciente a la más vieja', async () => {
+    const workouts = workoutSessionsRepository(db);
+    const base = {
+      userId: 'u14b',
+      plannedSessionId: 'p1',
+      template: 'FULL_A' as const,
+      variant: 'GYM' as const,
+      endedAt: null,
+      loggedAsPlanned: false,
+      progress: startProgress([
+        { exerciseCode: 'SQ', pattern: 'SQUAT', sets: 1, targetReps: 10, loadKg: 60 },
+      ]),
+      lastConfirmedAt: null,
+      pendingTaps: 0,
+    };
+    const day = (d: number) => `2026-10-${String(d).padStart(2, '0')}`;
+    for (const [d, status] of [
+      [5, 'completed'],
+      [7, 'abandoned'],
+      [9, 'partial'],
+      [12, 'completed'],
+    ] as const) {
+      await workouts.create({
+        ...base,
+        date: day(d),
+        status,
+        startedAt: new Date(`${day(d)}T23:00:00Z`),
+      });
+    }
+    const recent = await workouts.recentStarted('u14b', 2);
+    expect(recent.map((s) => s.date)).toEqual(['2026-10-12', '2026-10-09']);
   });
 });
 

@@ -13,4 +13,6 @@ export const BOT_COMMANDS = [
   { command: 'plan', description: 'Tu plan de la semana' },
   { command: 'privacidad', description: 'Tu autorización y la política de datos' },
   { command: 'borrar_datos', description: 'Borrar todos tus datos' },
+  { command: 'pausa', description: 'Pausar mis mensajes unos días' },
+  { command: 'ajustes', description: 'Cuánto y cuándo te escribo' },
 ] as const;

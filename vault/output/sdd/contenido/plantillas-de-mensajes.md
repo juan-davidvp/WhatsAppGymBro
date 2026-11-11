@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.15.0
+version: 0.17.0
 creado: 2026-10-18
-actualizado: 2026-11-09
+actualizado: 2026-11-11
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -26,6 +26,11 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | PL-03 | {dia_semana} de **{sesion}**. Si hoy no da para el gym, la versión en casa cuenta igual. | [Gym] [Casa] [Exprés 15'] [Hoy no puedo] |
 | PL-04 | Listo tu plan: **{sesion}**. La última vez subiste en {ejercicio_clave}; hoy vamos por más. | [Gym] [Casa] [Exprés 15'] [Hoy no puedo] |
 | PL-05 | Llevas {dias_que_cuentan} días que cuentan. Hoy suma el siguiente: **{sesion}**. | [Gym] [Casa] [Exprés 15'] [Hoy no puedo] |
+| PL-06 | Mañana temprano toca **{sesion}**. Queda listo para que solo confirmes. | [Ver plan] |
+| PL-07 | Para mañana: **{sesion}** ({minutos} min). Si no da para el gym, la versión en casa cuenta igual. | [Ver plan] |
+| PL-08 | Mañana entrenas temprano: **{sesion}**. Todo cargado. | [Ver plan] |
+
+> PL-06 a PL-08 salen la noche anterior, justo antes del silencio, cuando el aviso del día caería dentro de él (RN-MSJ-005). Llevan [Ver plan] porque esa noche todavía es el día operativo anterior.
 
 ### 1.2 `recordatorio_contextual`
 
@@ -61,6 +66,9 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | RS-01 | Tu semana: {dqc} días que cuentan ({dqc_anterior} la anterior) · {sesiones}/{compromiso} sesiones · proteína media {proteina_media} g. {frase_semana} | [Ver plan] [Ajustar días] |
 | RS-02 | Semana {cumplida_o_no}. {dqc} días que cuentan y {records} récords. Tu mejor semana: {mejor}. Misiones nuevas listas. | [Ver misiones] [Ver plan] |
 | RS-03 | Así quedó tu muro esta semana. {frase_semana} El plan de la próxima ya está. | [Ver plan] [Ajustar días] |
+| RS-04 | Cerraste otra semana: {dqc} días que cuentan. {frase_semana} | [Ver plan] [Ajustar días] |
+
+> Hasta que llegue la imagen del muro (T-080), el resumen sale en texto: RS-01 (no en el modo sin números), RS-02 (solo si la semana va cumplida) y RS-04. RS-03 espera a la imagen.
 
 `{frase_semana}` sale de una lista rotativa sin juicios: "Cada día sumó.", "Volviste cuando costaba, y eso también suma.", "Semana sólida.", "Constancia por encima de todo."
 
@@ -179,6 +187,8 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | plan | Tu plan de la semana |
 | privacidad | Tu autorización y la política de datos |
 | borrar_datos | Borrar todos tus datos |
+| pausa | Pausar mis mensajes unos días |
+| ajustes | Cuánto y cuándo te escribo |
 
 > Lista que el bot registra en Telegram. Cada comando se añade aquí cuando su tarea lo implementa ([[flujos-de-usuario]] §1 tiene la lista completa prevista).
 
@@ -214,6 +224,28 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 > - CM-10: `{lista}` es cada comida de ayer con su nombre (CM-17 si no era frecuente), separadas por " · ". [Registrar] las registra todas con 1 toque.
 > - CM-15 sale antes de CM-01 en un día de entreno, antes de la hora habitual (P-083). `{alimentos}` son P-095 fuentes de proteína de costo `$` del [[alimentos-accesibles-base]], que rotan cada día (RN-NUT-006).
 > - CM-08, CM-14 y CM-16 se muestran como aviso breve sobre el botón.
+
+### 2.6 Mensajes: `/pausa` y `/ajustes` (T-073)
+
+| ID | Momento | Texto |
+|---|---|---|
+| PA-01 | `/pausa` | ¿Cuántos días sin mensajes míos? Los comandos siguen funcionando. |
+| PA-02 | Pausa elegida | Listo: sin mensajes hasta el {fecha}. Si quieres volver antes, usa /pausa. |
+| PA-03 | `/pausa` con una pausa en curso | Estás en pausa hasta el {fecha}. [Reanudar] [Cambiar días] |
+| PA-04 | [Reanudar] | Listo, retomamos. Te escribo cuando toque. |
+| AJ-01 | `/ajustes` | Tus mensajes: **{intensidad}** · sin mensajes de {inicio} a {fin} · apagados: {apagados}. [Cantidad] [Silencio] [Tipos] |
+| AJ-02 | [Tipos] | Toca un tipo para apagarlo o encenderlo. [Listo] |
+| AJ-03 | Cambio guardado | Listo, guardado. |
+
+> - PA-01 lleva una opción por cada valor de P-099: [1 día] y «{n} días» para los demás. PA-03 [Cambiar días] vuelve a PA-01.
+> - `{fecha}` es el día de la semana y el número del día en que termina la pausa ("jueves 12").
+> - La semana que toca una pausa no se evalúa (RN-MSJ-013). La pausa por inactividad (RN-MSJ-008) es otra cosa: termina con cualquier interacción.
+> - AJ-01: `{intensidad}` es Poco, Normal o Más (los botones de ON-22). `{apagados}` son los tipos apagados separados por ", ", o "ninguno".
+> - [Cantidad] muestra ON-22. [Silencio] muestra ON-23 con la franja actual, [Me sirve] y una opción por cada otra franja de P-047 y P-086.
+> - AJ-02 lleva un botón por tipo, con ✅ si está encendido o ⬜ si está apagado, y se edita en cada toque. [Listo] vuelve a AJ-01.
+> - Después de cada cambio se vuelve a AJ-01, con AJ-03 como aviso breve sobre el botón.
+
+`{tipo}` (nombres de los propósitos en AJ-01 y AJ-02): `plan_listo` Plan del día · `cierre_del_dia` Cierre del día · `recordatorio_contextual` Recordatorio · `regreso` Regreso · `resumen_semanal` Resumen de la semana
 
 ## 3. Onboarding (textos base)
 

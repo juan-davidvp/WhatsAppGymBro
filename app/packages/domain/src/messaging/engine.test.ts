@@ -13,9 +13,11 @@ import {
   handleBotBlocked,
   isInQuietHours,
   messageBudget,
+  pauseTouchesWeek,
   pauseUntil,
   pickTemplate,
   planReadyAt,
+  planReadySendAt,
   registerMessageOutcome,
   usualStartTime,
   weeklySummaryAt,
@@ -293,14 +295,22 @@ describe('RN-MSJ-010 · la misma plantilla no se repite en P-058 días', () => {
       sent(new Date(now.getTime() - 86_400_000), 'PL-01'),
       sent(new Date(now.getTime() - 2 * 86_400_000), 'PL-02'),
     ];
-    expect(pickTemplate(['PL-01', 'PL-02', 'PL-03'], history, now, () => 0)).toBe('PL-03');
+    expect(pickTemplate(['PL-01', 'PL-02', 'PL-03'], history, now, TZ, () => 0)).toBe('PL-03');
   });
 
   it('pasada la ventana la plantilla vuelve a estar disponible', () => {
     const now = local(D, '17:00');
     const old = sent(new Date(now.getTime() - (M.templateCooldownDays + 1) * 86_400_000), 'PL-01');
-    expect(pickTemplate(['PL-01'], [old], now, () => 0.99)).toBe('PL-01');
-    expect(pickTemplate(['PL-01'], [sent(now, 'PL-01')], now, () => 0)).toBeNull();
+    expect(pickTemplate(['PL-01'], [old], now, TZ, () => 0.99)).toBe('PL-01');
+    expect(pickTemplate(['PL-01'], [sent(now, 'PL-01')], now, TZ, () => 0)).toBeNull();
+  });
+
+  it('cuenta días operativos: la de hace P-058 días vuelve aunque se enviara unos segundos más tarde', () => {
+    const now = local(D, '19:00');
+    const lastWeek = new Date(now.getTime() - M.templateCooldownDays * 86_400_000 + 20_000);
+    expect(pickTemplate(['RS-04'], [sent(lastWeek, 'RS-04')], now, TZ, () => 0)).toBe('RS-04');
+    const sixDaysAgo = local(addDays(D, -(M.templateCooldownDays - 1)), '08:00');
+    expect(pickTemplate(['RS-04'], [sent(sixDaysAgo, 'RS-04')], now, TZ, () => 0)).toBeNull();
   });
 });
 
@@ -310,6 +320,37 @@ describe('RN-MSJ-012 · todo proactivo lleva al menos una acción de 1 toque', (
       send: false,
       reason: 'no_action',
     });
+  });
+});
+
+describe('RN-MSJ-013 · la semana que toca una /pausa no se evalúa (PO, 2026-11-11)', () => {
+  const MONDAY = '2026-10-19';
+  const tz = 'America/Bogota';
+
+  it('una pausa que empieza, termina o pasa por la semana la toca', () => {
+    const inside = { from: local('2026-10-21', '10:00'), until: local('2026-10-22', '10:00') };
+    const fromBefore = { from: local('2026-10-16', '10:00'), until: local('2026-10-20', '10:00') };
+    const intoNext = { from: local('2026-10-25', '18:00'), until: local('2026-10-28', '18:00') };
+    expect(pauseTouchesWeek(inside, MONDAY, tz)).toBe(true);
+    expect(pauseTouchesWeek(fromBefore, MONDAY, tz)).toBe(true);
+    expect(pauseTouchesWeek(intoNext, MONDAY, tz)).toBe(true);
+  });
+
+  it('sin pausa, o con una que terminó antes de la semana o empieza después, no', () => {
+    const before = { from: local('2026-10-12', '10:00'), until: local('2026-10-15', '10:00') };
+    const after = { from: local('2026-10-27', '10:00'), until: local('2026-10-30', '10:00') };
+    // Reanudada en el mismo instante: no hubo pausa.
+    const empty = { from: local('2026-10-21', '10:00'), until: local('2026-10-21', '10:00') };
+    expect(pauseTouchesWeek(null, MONDAY, tz)).toBe(false);
+    expect(pauseTouchesWeek(before, MONDAY, tz)).toBe(false);
+    expect(pauseTouchesWeek(after, MONDAY, tz)).toBe(false);
+    expect(pauseTouchesWeek(empty, MONDAY, tz)).toBe(false);
+  });
+
+  it('el domingo antes del corte de las 03:00 todavía es de esa semana (RN-DQC-001)', () => {
+    // El lunes 26 a las 02:00 sigue siendo el día operativo del domingo 25.
+    const lateSunday = { from: local('2026-10-26', '02:00'), until: local('2026-10-27', '02:00') };
+    expect(pauseTouchesWeek(lateSunday, MONDAY, tz)).toBe(true);
   });
 });
 
@@ -393,10 +434,52 @@ describe('RN-MSJ-016 · cierre_del_dia solo si el día no cuenta y lo que falta 
     ).toEqual({ send: false, reason: 'not_doable' });
   });
 
-  it('si el día ya cuenta no se envía', () => {
+  it('si el día ya cuenta y no le falta solo la comida, no se envía', () => {
     expect(
       evaluate(closing, [], user, { ...trainingDay, dayCounts: true, missingActionTaps: 1 }),
     ).toEqual({ send: false, reason: 'day_already_counts' });
+  });
+
+  it('ampliada (2026-11-10): si ya cuenta y solo le falta la mitad de comida para quedar completo, se envía', () => {
+    const almostComplete = {
+      ...trainingDay,
+      dayCounts: true,
+      missingActionTaps: 1,
+      onlyNutritionMissingForComplete: true,
+    };
+    expect(evaluate(closing, [], user, almostComplete)).toEqual({ send: true });
+    expect(
+      evaluate(closing, [], user, {
+        ...almostComplete,
+        missingActionTaps: M.dayClosingMaxTaps + 1,
+      }),
+    ).toEqual({ send: false, reason: 'not_doable' });
+  });
+});
+
+describe('RN-MSJ-005 · ampliada (2026-11-10): si el aviso cae en silencio, sale la noche anterior', () => {
+  const quiet = { start: '21:30', end: '07:00' };
+
+  it('con hora habitual 18:00 sale el mismo día, P-048 minutos antes', () => {
+    expect(planReadySendAt(D, '18:00', quiet, TZ)).toEqual({
+      at: planReadyAt(D, '18:00', TZ),
+      eve: false,
+    });
+  });
+
+  it('con hora habitual 06:00 (aviso a las 05:00, en silencio) sale la víspera a las 21:29', () => {
+    expect(planReadySendAt(D, '06:00', quiet, TZ)).toEqual({
+      at: local(addDays(D, -1), '21:29'),
+      eve: true,
+    });
+  });
+
+  it('si el silencio empieza después de medianoche, sale antes de que empiece ese mismo silencio', () => {
+    const lateQuiet = { start: '00:30', end: '08:00' };
+    expect(planReadySendAt(D, '07:00', lateQuiet, TZ)).toEqual({
+      at: local(D, '00:29'),
+      eve: true,
+    });
   });
 });
 

@@ -35,7 +35,7 @@ describe('FR-005-02 · T-060 · ciclo del planificador', () => {
     expect(calls).toBe(2);
     release();
     await third;
-    scheduler.stop();
+    await scheduler.stop();
   });
 
   it('un error en un tic se registra y el siguiente tic corre igual', async () => {
@@ -53,6 +53,28 @@ describe('FR-005-02 · T-060 · ciclo del planificador', () => {
     await scheduler.runOnce();
     expect(calls).toBe(2);
     expect(lines.some((l) => l.includes('scheduler_tick_failed'))).toBe(true);
-    scheduler.stop();
+    await scheduler.stop();
+  });
+
+  it('al detenerse espera a que termine el tic en curso (no deja un envío a medias)', async () => {
+    let finished = false;
+    let release = () => {};
+    const { logger } = quietLogger();
+    const scheduler = startScheduler({
+      logger,
+      intervalMs: HOUR_MS,
+      tick: () =>
+        new Promise<void>((resolve) => {
+          release = () => {
+            finished = true;
+            resolve();
+          };
+        }),
+    });
+    const stopped = scheduler.stop();
+    expect(finished).toBe(false);
+    release();
+    await stopped;
+    expect(finished).toBe(true);
   });
 });

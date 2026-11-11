@@ -4,6 +4,7 @@ import type { Intensity } from '../goals/maintenance.js';
 import { weekStartOf } from '../gamification/weekly.js';
 import {
   addDays,
+  daysBetween,
   localParts,
   minutesOfDay,
   weekdayOf,
@@ -114,11 +115,17 @@ export interface DayContext {
   readonly sessionStarted: boolean;
   /** RN-MSJ-016: toques que costaría la acción que falta (null si no se puede hacer en toques). */
   readonly missingActionTaps: number | null;
+  /**
+   * RN-MSJ-016 (ampliada, 2026-11-10): el día ya cuenta y solo le falta la mitad
+   * de comida para quedar completo.
+   */
+  readonly onlyNutritionMissingForComplete?: boolean;
 }
 
 export type Decision =
   { readonly send: true } | { readonly send: false; readonly reason: SuppressionReason };
 
+const MINUTE_MS = 60_000;
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
 
@@ -179,7 +186,9 @@ export function evaluateProactive(input: {
     return suppress('day_already_counts');
   }
   if (candidate.purpose === 'cierre_del_dia') {
-    if (day.dayCounts) return suppress('day_already_counts');
+    if (day.dayCounts && !day.onlyNutritionMissingForComplete) {
+      return suppress('day_already_counts');
+    }
     if (
       day.missingActionTaps === null ||
       day.missingActionTaps > PARAMETERS.messages.dayClosingMaxTaps
@@ -209,18 +218,28 @@ export function evaluateProactive(input: {
 }
 
 /**
- * RN-MSJ-010: elige una plantilla del propósito que no se haya enviado en P-058
- * días; `random` (0–1) se recibe para rotar sin E/S. Null si todas están en espera.
+ * RN-MSJ-010: elige una plantilla del propósito que no se haya enviado en los
+ * últimos P-058 días operativos (no en horas: el resumen del domingo a las 19:00
+ * vuelve a estar disponible el domingo siguiente aunque el ciclo empiece unos
+ * segundos antes). `random` (0–1) se recibe para rotar sin E/S. Null si todas
+ * están en espera.
  */
 export function pickTemplate(
   templateIds: readonly string[],
   history: readonly SentMessage[],
   now: Date,
+  timeZone: string,
   random: () => number,
 ): string | null {
-  const since = now.getTime() - PARAMETERS.messages.templateCooldownDays * DAY_MS;
+  const today = operationalDate(now, timeZone);
   const recent = new Set(
-    history.filter((m) => m.sentAt.getTime() > since).map((m) => m.templateId),
+    history
+      .filter(
+        (m) =>
+          daysBetween(operationalDate(m.sentAt, timeZone), today) <
+          PARAMETERS.messages.templateCooldownDays,
+      )
+      .map((m) => m.templateId),
   );
   const available = templateIds.filter((id) => !recent.has(id));
   if (available.length === 0) return null;
@@ -231,6 +250,26 @@ export function pickTemplate(
 export function planReadyAt(date: LocalDate, usualStart: LocalTime, timeZone: string): Date {
   const start = zonedTimeToInstant(date, usualStart, timeZone);
   return new Date(start.getTime() - PARAMETERS.messages.planReadyLeadMinutes * 60_000);
+}
+
+/**
+ * RN-MSJ-005 (ampliada, 2026-11-10): cuándo sale `plan_listo` del día `date`. Si
+ * P-048 minutos antes de la hora habitual cae en silencio, sale la noche anterior,
+ * un minuto antes de que empiece el silencio (`eve`), con la variante de mañana.
+ */
+export function planReadySendAt(
+  date: LocalDate,
+  usualStart: LocalTime,
+  quietHours: QuietHours,
+  timeZone: string,
+): { at: Date; eve: boolean } {
+  const at = planReadyAt(date, usualStart, timeZone);
+  if (!isInQuietHours(at, quietHours, timeZone)) return { at, eve: false };
+  let quietStart = zonedTimeToInstant(date, quietHours.start, timeZone);
+  if (quietStart.getTime() > at.getTime()) {
+    quietStart = zonedTimeToInstant(addDays(date, -1), quietHours.start, timeZone);
+  }
+  return { at: new Date(quietStart.getTime() - MINUTE_MS), eve: true };
 }
 
 /**
@@ -333,6 +372,23 @@ export function pauseUntil(now: Date, days: number): Date {
     throw new Error(`RN-MSJ-013: la pausa va de 1 a ${PARAMETERS.messages.maxPauseDays} días`);
   }
   return new Date(now.getTime() + days * DAY_MS);
+}
+
+const WEEK_LENGTH = 7;
+
+/**
+ * RN-MSJ-013 (decisión del PO, 2026-11-11): ¿la pausa `[from, until)` toca la
+ * semana de `weekStart`? Si la toca, la semana no se evalúa (SPEC-005 §8).
+ */
+export function pauseTouchesWeek(
+  pause: { readonly from: Date; readonly until: Date } | null,
+  weekStart: LocalDate,
+  timeZone: string,
+): boolean {
+  if (!pause || pause.until.getTime() <= pause.from.getTime()) return false;
+  const first = operationalDate(pause.from, timeZone);
+  const last = operationalDate(new Date(pause.until.getTime() - 1), timeZone);
+  return first <= addDays(weekStart, WEEK_LENGTH - 1) && last >= weekStart;
 }
 
 /** RN-MSJ-014: al bloquear el bot, se cancelan las salidas pendientes y se registra `bot_blocked`. */

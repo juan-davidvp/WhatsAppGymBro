@@ -21,6 +21,8 @@ import type {
   Weekday,
   WeeklyQuest,
   QuestKind,
+  MessagePurpose,
+  SentMessage,
   XpLedgerEntry,
 } from '@gymbro/domain';
 
@@ -43,6 +45,8 @@ export interface UserRecord {
   readonly settings: {
     readonly intensity: Intensity;
     readonly quietHours: { readonly start: LocalTime; readonly end: LocalTime };
+    /** RN-MSJ-001 · `/ajustes`: propósito → encendido; uno que falta está encendido. */
+    readonly purposesEnabled?: Readonly<Partial<Record<MessagePurpose, boolean>>>;
     readonly gamificationEnabled: boolean;
     readonly numberFreeMode: boolean;
     /** RN-SEG-002: el plan arranca con intensidad baja hasta que haya autorización. */
@@ -97,6 +101,8 @@ export interface UsersRepository {
   /** Cuenta una interacción del onboarding; la primera fija `startedAt`. */
   recordOnboardingInteraction(userId: string, at: Date): Promise<void>;
   completeOnboarding(userId: string, at: Date): Promise<void>;
+  /** RN-MSJ-014: `blocked` si bloqueó el bot; `active` si vuelve a escribir. */
+  setStatus(userId: string, status: UserStatus): Promise<void>;
   /** Usuarios activos que terminaron el onboarding (para el cierre programado, T-060). */
   listActive(): Promise<UserRecord[]>;
   /** "Empezar de nuevo" (SPEC-001 §8): borra lo declarado y vuelve a `step`. */
@@ -122,6 +128,112 @@ export interface TrainingHabitRecord {
 export interface TrainingHabitsRepository {
   /** RN-PLAN-002: un hábito por usuario; se reemplaza. */
   save(habit: TrainingHabitRecord): Promise<void>;
+  /** Hábito del usuario (hora declarada por día), para los mensajes (RN-MSJ-005). */
+  get(userId: string): Promise<TrainingHabitRecord | null>;
+}
+
+// ── Mensajes proactivos (SPEC-007) ───────────────────────────────────────────
+
+/** `sending`: reclamada para enviar; `failed`: Telegram no la aceptó (no se reintenta). */
+export type OutboxStatus = 'pending' | 'sending' | 'sent' | 'suppressed' | 'cancelled' | 'failed';
+
+/**
+ * Resultado de una enviada al cerrar su ventana P-067 (RN-MSJ-007): con acción en
+ * uno de sus botones, con otra interacción del usuario o ignorada (PO, 2026-11-11).
+ */
+export type OutboxOutcome = 'actioned' | 'interacted' | 'ignored';
+
+/** Salida de la bandeja (`proactive_messages`, FR-007-02). */
+export interface OutboxMessage {
+  readonly id: string;
+  readonly userId: string;
+  /** Propósito + día operativo: una salida por propósito y día. */
+  readonly key: string;
+  readonly purpose: MessagePurpose;
+  readonly scheduledFor: Date;
+  readonly notAfter: Date | null;
+  readonly reactivation: boolean;
+  readonly status: OutboxStatus;
+  readonly suppressedReason: string | null;
+  readonly templateId: string | null;
+  readonly sentAt: Date | null;
+  readonly telegramMessageId: number | null;
+  readonly actionedAt: Date | null;
+  /** null mientras corre la ventana P-067. */
+  readonly outcome: OutboxOutcome | null;
+}
+
+export type NewOutboxMessage = Pick<
+  OutboxMessage,
+  'userId' | 'key' | 'purpose' | 'scheduledFor' | 'notAfter' | 'reactivation'
+>;
+
+export interface OutboxRepository {
+  /** Programa una salida una sola vez por clave; `created` es false si ya existía. */
+  schedule(message: NewOutboxMessage, at: Date): Promise<{ created: boolean }>;
+  /** Salidas pendientes cuya hora ya llegó, en orden de hora. */
+  due(now: Date): Promise<OutboxMessage[]>;
+  /**
+   * Reclama una pendiente para enviarla (pasa a `sending`); false si otro ya la
+   * reclamó. Así un mensaje sale como mucho una vez, aunque el proceso caiga.
+   */
+  claim(id: string): Promise<boolean>;
+  /** Pasa una salida reclamada a enviada; false si ya no estaba reclamada. */
+  markSent(
+    id: string,
+    sent: { templateId: string; sentAt: Date; telegramMessageId: number },
+  ): Promise<boolean>;
+  markSuppressed(id: string, reason: string): Promise<boolean>;
+  /** Una reclamada que Telegram no aceptó después de los reintentos. */
+  markFailed(id: string): Promise<boolean>;
+  /** RN-MSJ-014: cancela las pendientes y reclamadas del usuario; devuelve cuántas. */
+  cancelPending(userId: string): Promise<number>;
+  /** Enviadas desde `since` (presupuesto, separación y rotación). */
+  sentSince(userId: string, since: Date): Promise<SentMessage[]>;
+  /** Enviada que corresponde a un mensaje de Telegram (para registrar la acción). */
+  byTelegramMessage(userId: string, telegramMessageId: number): Promise<OutboxMessage | null>;
+  markActioned(id: string, at: Date): Promise<boolean>;
+  /** Enviadas antes de `sentBefore` sin resultado todavía, en orden de envío. */
+  awaitingOutcome(sentBefore: Date): Promise<OutboxMessage[]>;
+  /** Fija el resultado una sola vez; false si ya lo tenía. */
+  setOutcome(id: string, outcome: OutboxOutcome): Promise<boolean>;
+  /** Enviadas con su ventana P-067 cerrada y, de ellas, con acción (tasa de acción, RN-MSJ-009, M03). */
+  purposeStats(
+    userId: string,
+    purpose: MessagePurpose,
+  ): Promise<{ sent: number; actioned: number }>;
+}
+
+/** `message_stats` (RN-MSJ-007, 008, 013, 014). */
+export interface MessageStatsRecord {
+  readonly consecutiveIgnored: number;
+  readonly backoffUntil: Date | null;
+  /** FR-007-06: último toque o comando del usuario. */
+  readonly lastInteractionAt: Date | null;
+  /** RN-MSJ-013: inicio de la última `/pausa` (con `pausedUntil`, la semana que toca). */
+  readonly pausedAt: Date | null;
+  readonly inactivityPausedAt: Date | null;
+  readonly reactivationsUsed: number;
+  readonly lastReactivationDate: LocalDate | null;
+  readonly pausedUntil: Date | null;
+  readonly blockedAt: Date | null;
+}
+
+export const EMPTY_MESSAGE_STATS: MessageStatsRecord = {
+  consecutiveIgnored: 0,
+  backoffUntil: null,
+  lastInteractionAt: null,
+  pausedAt: null,
+  inactivityPausedAt: null,
+  reactivationsUsed: 0,
+  lastReactivationDate: null,
+  pausedUntil: null,
+  blockedAt: null,
+};
+
+export interface MessageStatsRepository {
+  get(userId: string): Promise<MessageStatsRecord>;
+  update(userId: string, changes: Partial<MessageStatsRecord>): Promise<void>;
 }
 
 export interface GoalRecord {
@@ -311,6 +423,8 @@ export interface WorkoutSessionsRepository {
   /** Sesión activa del usuario en esa fecha, si hay. */
   activeOn(userId: string, date: LocalDate): Promise<WorkoutSessionRecord | null>;
   onDate(userId: string, date: LocalDate): Promise<WorkoutSessionRecord[]>;
+  /** RN-MSJ-006: las últimas `limit` sesiones completas o parciales, de la más reciente a la más vieja. */
+  recentStarted(userId: string, limit: number): Promise<WorkoutSessionRecord[]>;
   /** Guarda cambios solo si `rev` sigue igual; devuelve la sesión nueva o null si cambió antes. */
   update(
     id: string,

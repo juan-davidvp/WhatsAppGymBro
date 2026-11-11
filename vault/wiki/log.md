@@ -589,3 +589,135 @@ Pendiente, sin cambiar:
   - Un cierre en curso podría recrear datos de un usuario que se borra en ese mismo instante.
   - Si el proceso cae entre guardar el XP del regreso y su aviso, BR-01 no se repite.
   - Terminar una sesión marca la sesión completada antes de sumar el día (patrón de T-043): si falla a mitad, el día no cuenta.
+
+## [2026-11-10] decision | M7 · mensajes proactivos: alcance aprobado por el PO
+- **RN-MSJ-016 se amplía:** `cierre_del_dia` sale si el día no cuenta, **o si cuenta y solo le falta la mitad de comida para quedar completo** (CD-03/CD-04). Sigue limitado a P-073 toques y al presupuesto. Cierra la duda de SPEC-007 §10. Pendiente: aplicarlo en la bóveda y en el motor con T-071.
+- **`recordatorio_contextual` entra en la Fase 0** con un solo disparador: ayer fue de entreno y no contó, y hoy hay hueco. Tiene la menor prioridad y desvanecimiento RN-MSJ-009. Cierra la otra duda de SPEC-007 §10.
+- **Alcance de T-071:**
+  - `resumen_semanal` sale ya, en texto (RS-01/RS-02). RS-03 espera a la imagen del muro de T-080.
+  - Los reconocimientos siguen como avisos en la próxima interacción hasta M8, que trae /logros y /progreso.
+  - `mantenimiento` pasa a M8, con el registro de peso.
+- **Botones de T-045:** [Ajustar plan] y [Ajustar días] muestran el plan de la semana, como CU-06. RG-03 sale de la rotación hasta T-045.
+- **Trabajo de T-070 en curso** (rama `h4/m7-mensajes-proactivos`, sin commit):
+  - P-097 y P-098 en [[parametros]] v0.10.0.
+  - `proactive_messages` y `message_stats` en [[modelo-de-datos]] v0.6.0.
+  - Puertos `OutboxRepository` y `MessageStatsRepository`, repositorios de Mongo y en memoria, y `telegramPayload` compartido.
+
+## [2026-11-10] implementar | T-070 Bandeja de salida, ciclo, envío con reintentos y supresión de salidas viejas
+- **Bandeja** (`proactive_messages`, FR-007-02): una salida por propósito y día operativo (clave `propósito:fecha`, índice único). Repositorios de MongoDB en `adapters/mongo/messaging-repositories.ts` y dobles en `testing/in-memory-messaging.ts`. `message_stats` está listo para T-072 y T-073 ([[modelo-de-datos]] v0.6.0).
+- **Programación** (`messaging/schedule.ts`): en cada ciclo (P-096), `plan_listo` se programa P-048 minutos antes de la hora habitual del día (la del hábito; si no, la de su franja, P-083). Vale hasta esa hora. Pasada la hora, ya no se programa.
+- **Envío** (`messaging/dispatch.ts`, FR-007-03):
+  - Cada salida vencida se vuelve a evaluar con el motor (RN-MSJ-015) y el estado del momento.
+  - El motor evalúa la **hora real de envío**: una salida atrasada no cae en silencio ni rompe el presupuesto o la separación. Vieja → `stale`.
+  - La plantilla se elige con la rotación (RN-MSJ-010) y los botones salen de la plantilla (RN-MSJ-012).
+  - Un error con una salida no detiene las demás.
+- **Telegram** (`messaging/sender.ts`, FR-007-08): reintenta ante 429 (con el `retry_after` de Telegram) o fallos 5xx y de red, hasta P-097 intentos y con espera exponencial desde P-098. Un 403 (bot bloqueado) no se reintenta: se maneja en T-073. El formato de las respuestas se comparte (`telegramPayload`).
+- **Eventos:** `message_scheduled`, `message_suppressed` (motivo) y `message_sent` (plantilla), con esquema estricto.
+- **Pruebas:**
+  - `messaging/cycle.test.ts`: programar y enviar una vez, sesión ya empezada, salida vieja, hora pasada y silencio.
+  - **G06 = 0:** 3 semanas de ciclos cada 30 min con horas habituales cambiantes, verificando cada envío por separado.
+  - `messaging/sender.test.ts` y pruebas de la bandeja contra MongoDB.
+- **Para decisión del PO:** con la franja de la mañana (06:00, P-083) y el silencio por defecto (21:30–07:00, P-047), `plan_listo` cae a las 05:00, dentro del silencio, y **nunca sale**. Opciones:
+  - acercar el aviso al fin del silencio si todavía es antes de la hora habitual;
+  - pedir otra hora de silencio en el onboarding;
+  - aceptar que quien entrena temprano no recibe `plan_listo`.
+- **Pendiente:** `repositories.ts` de MongoDB supera las 800 líneas; conviene partirlo por módulo en una tarea de limpieza.
+
+## [2026-11-11] implementar | T-071 Candidatos de M7 y RN-MSJ-016 ampliada
+- **Reglas** ([[reglas-de-negocio]] v0.7.0), según la decisión del PO del 2026-11-10:
+  - RN-MSJ-005: si `plan_listo` cae en silencio, sale la noche anterior un minuto antes del silencio (`planReadySendAt`).
+  - RN-MSJ-016: `cierre_del_dia` también va cuando el día ya cuenta y solo le falta la mitad de comida para quedar completo.
+- **Textos** ([[plantillas-de-mensajes]] v0.16.0, para revisión del PO en el PR):
+  - PL-06 a PL-08: variantes de la víspera, con [Ver plan].
+  - RS-04: resumen sin cifras de proteína.
+- **Programación** (`messaging/schedule.ts`): en cada ciclo, por usuario y con un error aislado por usuario:
+  - `plan_listo` de hoy y de mañana; el de mañana solo si sale esta noche.
+  - `regreso` y `recordatorio_contextual`, solo si se cumple su condición, a la hora de `plan_listo` (fuera del silencio).
+  - `cierre_del_dia` a las 20:00 (P-066).
+  - `resumen_semanal` el domingo a las 19:00 (P-060).
+  - Todas valen hasta que empieza el silencio.
+- **Composición** (al enviar, con el estado de ese momento):
+  - `compose-day.ts`: `plan_listo` PL-01/02/03/05, o PL-06/07/08 la víspera. `cierre_del_dia` CD-01/02 si el día no cuenta y es descanso, y CD-03/04 si ya cuenta; solo con una comida frecuente (P-073 toques), y en el modo sin números sin las plantillas con gramos.
+  - `compose-week.ts`: `regreso` RG-01/02, `recordatorio_contextual` RC-01/02/03, y `resumen_semanal` RS-01 (si hay semana anterior y comidas) o RS-04.
+  - `comeback.ts`: entradas de RN-MSJ-008. La actividad es un día que contó o que tuvo la mitad de comida, en una ventana de P-053 días y nunca antes del alta.
+  - La fecha del mensaje sale de la clave de la bandeja, así que el aviso de la víspera habla del día siguiente.
+- **Supuestos para el PO:**
+  - Una semana sin días que cuentan no recibe resumen (pregunta abierta en [[spec-007-proactividad-y-mensajes]] §10).
+  - `{frase_semana}` rota por número de semana, sin repetir la de la semana anterior.
+  - El día del alta cuenta como día planificado para `regreso`.
+- **Pruebas:**
+  - `messaging/candidates.test.ts` (13): HU-007-5 escenarios 1 y 2, CD-03, sin frecuente, día completo, `regreso` único en una semana sin actividad (sale el jueves), conteo reiniciado, `recordatorio_contextual` con y sin día anterior contado, RS-04, RS-01 con proteína media, semana en cero y solo domingo.
+  - `cycle.test.ts`: aviso de la víspera y víspera atrasada (`stale`).
+  - G06 sigue en 0 con todos los propósitos.
+- **Pendiente para T-072:**
+  - Ampliar la simulación de G06 a 60 días (SC-007-1).
+  - Los candidatos se recalculan en cada ciclo aunque ya estén en la bandeja; basta para la Fase 0 (principio XI).
+
+## [2026-11-11] decision | M7 · ignorado y reactivaciones (PO)
+- **Ignorado (RN-MSJ-007):** un proactivo queda ignorado si en P-067 h (2 h) tras el envío no hubo ninguna interacción del usuario, ni toque ni comando. Si entrena desde 🏋️ Hoy sin tocar el mensaje, no cuenta como ignorado. La ventana es la misma de M03.
+- **Reactivaciones (RN-MSJ-008):** el máximo de P-054 es por cada pausa por inactividad. Cuando el usuario vuelve, el contador se reinicia.
+- Registrado en [[spec-007-proactividad-y-mensajes]] §10 y en [[modelo-de-datos]] v0.7.0.
+
+## [2026-11-11] implementar | T-072 Hora habitual aprendida, retroceso, inactividad y desvanecimiento
+- **Modelo** ([[modelo-de-datos]] v0.7.0):
+  - `proactive_messages.outcome` (`actioned`·`interacted`·`ignored`) con índice `status+outcome+sentAt`.
+  - `message_stats.lastInteractionAt`.
+  - Índice `workout_sessions` `userId+startedAt`.
+  - `training_habits.learnedStart` ahora se escribe.
+- **Interacción** (FR-007-06, `bot/middleware.ts` → `messaging/engagement.ts`):
+  - Cada toque o comando guarda la hora, reinicia los ignorados y saca de la pausa por inactividad con las reactivaciones en cero.
+  - Un toque en un botón de un proactivo es su acción: `message_actioned` con los minutos.
+  - Si el registro falla, el update sigue.
+- **Ignorados y retroceso** (RN-MSJ-007): al cerrar la ventana P-067, cada enviada queda `actioned`, `interacted` o `ignored`. Una ignorada emite `message_ignored`. Con P-050 seguidas, el presupuesto semanal queda a la mitad P-051 días (`backoff_applied`).
+- **Hora habitual aprendida** (RN-MSJ-006, `messaging/learned-time.ts`): en cada ciclo, la mediana de inicio de las últimas P-049 sesiones de cada día del hábito; con menos, la declarada. Solo se guarda cuando cambia.
+- **Inactividad** (RN-MSJ-008):
+  - Tras P-053 días sin actividad: `regreso` final (RG-04/05), pausa e `inactivity_pause_started`.
+  - En pausa solo se programa la reactivación: RG-06 el lunes y RG-07 el día 1, con `reactivation_sent`, hasta P-054.
+  - Lo que ya estaba en la bandeja se suprime con `inactive`.
+  - Ahora la interacción también es actividad para `regreso`: el onboarding cuenta.
+- **Desvanecimiento** (RN-MSJ-009): tras P-055 semanas cumplidas seguidas, el motor recibe `recordatorio_contextual` como apagado, y también `plan_listo` si su tasa de acción no llega a P-056.
+- **Rotación** (RN-MSJ-010): ya estaba desde T-070. La simulación la verifica.
+- **Pruebas:**
+  - `messaging/engagement.test.ts` (11): acción, ignorado, interacción en la ventana, retroceso, final y pausa, reactivaciones y regreso a la actividad, tope de P-054, hora aprendida y desvanecimiento.
+  - **SC-007-1:** 60 días con comportamientos aleatorios (semilla fija), incluido un tramo de 15 días de ausencia. 0 violaciones de presupuesto, silencio, separación y rotación, pasando por ignorados, retroceso, pausa y reactivación.
+
+## [2026-11-11] decision | M7 · /pausa y /ajustes (PO)
+- **`/pausa` (RN-MSJ-013):** detiene los proactivos de 1 a P-059 días, con las opciones de P-099 (nuevo parámetro: 1, 3, 7 y 14). La semana que toca una pausa no se evalúa, ni cumplida ni rota (SPEC-005 §8). Los días se cierran igual. Con una pausa en curso, `/pausa` ofrece [Reanudar].
+- **`/ajustes`:** por ahora abre directo la pantalla de mensajes (cantidad, silencio y tipos). Cuando lleguen las otras secciones pasa a ser un menú.
+- Cambian [[reglas-de-negocio]] v0.8.0 (RN-MSJ-013 y RN-MSJ-014), [[parametros]] v0.11.0 (P-099), [[modelo-de-datos]] v0.8.0 (`pausedAt` y `purposesEnabled`) y [[plantillas-de-mensajes]] v0.17.0 (§2.6 y los comandos `pausa` y `ajustes`).
+
+## [2026-11-11] implementar | T-073 /pausa, /ajustes de mensajes y bloqueo
+- **`/pausa`** (`messaging/pause.ts`):
+  - PA-01 con [1 día] [3 días] [7 días] [14 días] y PA-02 con la fecha de fin; emite `pause_set`.
+  - Con pausa en curso: PA-03 con [Reanudar] (PA-04) y [Cambiar días].
+  - En pausa, el planificador no programa nada y el motor suprime lo que ya estaba (`paused`). Los comandos siguen.
+  - El cierre de semana no evalúa la que toca una pausa (`pauseTouchesWeek` en el dominio).
+- **`/ajustes`** (`messaging/message-settings.ts`):
+  - AJ-01 con cantidad, silencio y tipos apagados. [Cantidad] reutiliza ON-22 y [Silencio] ON-23 con las franjas de P-047 y P-086.
+  - [Tipos] lleva a AJ-02 con ✅/⬜ por propósito.
+  - Cada cambio se guarda, emite `message_settings_changed` (campo), avisa con AJ-03 y el motor lo usa en la siguiente evaluación.
+  - Los tipos apagados se guardan en `users.settings.purposesEnabled`. El motor recibe los apagados por el usuario más los desvanecidos (RN-MSJ-009).
+- **Bloqueo** (RN-MSJ-014): un 403 de Telegram (`BotBlockedError`) cancela las salidas pendientes (también la de ese envío), guarda `blockedAt`, pasa al usuario a `blocked` (deja de estar activo) y emite `bot_blocked`. **[supuesto, para el PO]** Si vuelve a escribir, lo desbloqueó: vuelve a `active` y se le puede escribir de nuevo.
+- **Comandos** del menú: se añaden `pausa` y `ajustes`.
+- **Pruebas:**
+  - `messaging/controls.test.ts` (9): opciones y fecha, nada en pausa con los comandos funcionando, [Reanudar], semana no evaluada, AJ-01, cantidad y silencio con su evento, silencio nuevo en la siguiente evaluación, tipo apagado con `disabled_purpose`, bloqueo y desbloqueo.
+  - `pauseTouchesWeek` en el dominio (RN-MSJ-013).
+  - `setStatus` y `purposesEnabled` contra MongoDB.
+
+## [2026-11-11] implementar | M7 · correcciones de la revisión de código
+Revisión del diff completo de M7 (T-070 a T-073): sin hallazgos críticos ni altos. Se corrigen los 5 medios y 3 de los bajos.
+
+- **Bloquear o desbloquear el bot no es una interacción.** Telegram lo avisa como `my_chat_member`. Antes reiniciaba los ignorados, sacaba de la pausa y podía desbloquear a quien acababa de bloquear. Ahora solo cuentan los mensajes, ediciones y toques.
+- **La acción cuenta dentro de P-067 h (M03).** Un toque posterior es solo una interacción. La tasa de acción de `plan_listo` (RN-MSJ-009) se calcula con el resultado de las ventanas cerradas.
+- **RN-MSJ-010 en días operativos** (aclaración en [[reglas-de-negocio]]). Medida en horas, el resumen del domingo con una sola plantilla podía quedar suprimido como `cooldown` si el ciclo empezaba unos segundos antes que la semana anterior.
+- **[Reanudar] solo actúa con la pausa en curso.** Un botón viejo alargaba la pausa guardada y dejaba sin evaluar la semana actual.
+- **Un proactivo sale como mucho una vez.** La salida se reclama (`sending`) antes de enviarla. Si el proceso cae a mitad del envío, no se reenvía al reiniciar. Si Telegram falla tras los reintentos, queda `failed`. Al detenerse, el proceso espera el ciclo en curso. [[modelo-de-datos]]: estados `sending` y `failed`.
+- **Bajos corregidos:**
+  - Un `regreso` o `recordatorio_contextual` que al salir del silencio pasaría al día siguiente ya no se programa.
+  - Al registrar un ignorado solo se escriben los campos del retroceso.
+  - Los índices de `/ajustes` se validan con una expresión estricta.
+- **Pendiente:**
+  - El ciclo de cada minuto relee mucho por usuario. Basta para la Fase 0 (principio XI); antes de la alfa conviene saltar los candidatos cuya clave ya existe.
+  - Un `retry_after` largo de Telegram detiene el ciclo; habría que poner un tope (nuevo parámetro).
+  - `pausedAt` y `pausedUntil` guardan solo la última pausa.
+

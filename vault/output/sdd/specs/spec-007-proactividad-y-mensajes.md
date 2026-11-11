@@ -3,13 +3,13 @@ titulo: SPEC-007 · Proactividad y motor de mensajes
 tipo: sdd-spec
 id: SPEC-007
 hito: H3
-estado: borrador
-version: 0.1.1
+estado: implementado
+version: 0.2.0
 fase: 0
 prioridad: P1
 depende_de: [SPEC-002, SPEC-005]
 creado: 2026-10-18
-actualizado: 2026-10-19
+actualizado: 2026-11-11
 deriva_de: [proactividad-sin-spam, estrategia-anti-novedad, voz-y-marca]
 fuentes: [F47, F49, F50, F51]
 relacionados: [plantillas-de-mensajes, parametros, plan-tecnico, estrategia-de-pruebas]
@@ -83,7 +83,7 @@ RN-MSJ-001 a RN-MSJ-017 · RN-PLAN-009 · RN-MAN-003 · RN-MAN-005.
 
 ## 7. Eventos
 
-`message_scheduled` (propósito, plantilla) · `message_suppressed` (propósito, motivo) · `message_sent` · `message_actioned` (propósito, plantilla, minutos hasta la acción) · `message_ignored` · `backoff_applied` · `inactivity_pause_started` · `reactivation_sent` · `pause_set` (días) · `message_settings_changed` (campo) · `bot_blocked`.
+`message_scheduled` (propósito, plantilla) · `message_suppressed` (propósito, motivo) · `message_sent` · `message_actioned` (propósito, plantilla, minutos hasta la acción) · `message_ignored` (propósito, plantilla) · `backoff_applied` (días) · `inactivity_pause_started` (días sin actividad) · `reactivation_sent` (número de la reactivación) · `pause_set` (días) · `message_settings_changed` (campo) · `bot_blocked`.
 
 ## 8. Casos límite
 
@@ -97,5 +97,11 @@ Optimización con algoritmos de bandido (Fase 1+, cuando haya volumen), notifica
 
 ## 10. Aclaraciones pendientes
 
-- `[NEEDS CLARIFICATION]` Las plantillas CD-03 y CD-04 son para un día que **ya cuenta** y al que le falta proteína para quedar completo, pero RN-MSJ-016 dice que `cierre_del_dia` solo se envía si el día **todavía no cuenta**. El motor aplica la regla (CD-03/CD-04 no se envían). Propuesta: ampliar RN-MSJ-016 a "si el día no cuenta, o si cuenta y le falta solo la mitad de comida para quedar completo" (T-016, 2026-10-19).
-- `[NEEDS CLARIFICATION]` ¿`recordatorio_contextual` entra en la Fase 0? Propuesta: sí, solo con un disparador (ayer faltó y hoy hay hueco); el resto en Fase 1.
+- ~~CD-03/CD-04 frente a RN-MSJ-016~~ **Resuelto (PO, 2026-11-10):** RN-MSJ-016 se amplía a "si el día no cuenta, o si cuenta y le falta solo la mitad de comida para quedar completo".
+- ~~¿`recordatorio_contextual` en la Fase 0?~~ **Resuelto (PO, 2026-11-10):** sí, con un solo disparador: ayer fue de entreno y no contó, y hoy es descanso (hay hueco).
+- **Resuelto (PO, 2026-11-10):** si `plan_listo` cae en silencio (franja de la mañana), sale la noche anterior antes del silencio (RN-MSJ-005, PL-06 a PL-08).
+- **Alcance de M7 (PO, 2026-11-10):** `reconocimiento` sigue como aviso en la próxima interacción y `mantenimiento` pasa a M8. `resumen_semanal` sale en texto hasta T-080.
+- **Para el PO (supuesto de T-071, 2026-11-11):** una semana sin días que cuentan no recibe `resumen_semanal`. RS-04 diría "Cerraste otra semana: 0 días que cuentan" seguido de una frase como "Semana sólida.", que no sería cierta; de esa semana se ocupa `regreso`. ¿Se mantiene así, o se escribe una plantilla para la semana en cero?
+- **Resuelto (PO, 2026-11-11):** un mensaje queda **ignorado** si en P-067 h tras el envío no hubo ninguna interacción del usuario (toque o comando); una interacción en otra parte del bot no lo deja ignorado. Las reactivaciones (P-054) se reinician cuando el usuario vuelve: el máximo es por cada pausa por inactividad.
+- **Resuelto (PO, 2026-11-11):** `/pausa` detiene los proactivos y la semana que toca la pausa no se evalúa (SPEC-005 §8); los días se cierran igual. Con una pausa en curso, `/pausa` ofrece [Reanudar]. Por ahora `/ajustes` abre directo la pantalla de mensajes; cuando lleguen objetivo, días, juego y conexiones pasa a ser un menú.
+- **Pendiente para el PO:** textos PA-01 a PA-04 y AJ-01 a AJ-03 ([[plantillas-de-mensajes]] §2.6) y el supuesto de RN-MSJ-014 (si vuelve a escribir, se reanudan los envíos).

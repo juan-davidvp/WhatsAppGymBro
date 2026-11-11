@@ -3,6 +3,7 @@ import {
   compareWithOwnHistory,
   evaluateWeek,
   overuseSignal,
+  pauseTouchesWeek,
   weekStartOf,
   type LocalDate,
   type WeekAchieved,
@@ -14,6 +15,7 @@ import { grantXp, type XpDeps } from '../days/xp.js';
 import { plannedWeekDays } from '../plans/weekly-plan.js';
 import type {
   DaysRepository,
+  MessageStatsRepository,
   PlansRepository,
   UserRecord,
   WeekRecord,
@@ -33,6 +35,8 @@ export interface CloseWeekDeps extends XpDeps {
   plans: PlansRepository;
   workouts: WorkoutSessionsRepository;
   weeks: WeeksRepository;
+  /** RN-MSJ-013: la semana que toca una `/pausa` no se evalúa. */
+  messageStats: MessageStatsRepository;
 }
 
 export interface ClosedWeek {
@@ -60,8 +64,11 @@ export async function evaluateClosedWeek(
     const sessions = await deps.workouts.onDate(user.id, rest);
     if (sessions.some((s) => s.status === 'completed')) restDaysTrained += 1;
   }
-  // Solo se cierran días de usuarios activos: un usuario en pausa no llega aquí (T-073).
-  const result = evaluateWeek({ planned, completed: achieved.sessions, paused: false });
+  // RN-MSJ-013 (PO, 2026-11-11): la semana que toca una /pausa no se evalúa.
+  const { pausedAt, pausedUntil } = await deps.messageStats.get(user.id);
+  const pause = pausedAt && pausedUntil ? { from: pausedAt, until: pausedUntil } : null;
+  const paused = pauseTouchesWeek(pause, weekStart, user.timezone);
+  const result = evaluateWeek({ planned, completed: achieved.sessions, paused });
   return {
     record: {
       weekStart,
