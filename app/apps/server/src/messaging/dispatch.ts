@@ -3,8 +3,8 @@ import {
   PARAMETERS,
   byPurposePriority,
   evaluateProactive,
-  operationalDate,
   pickTemplate,
+  type LocalDate,
   type MessagePurpose,
   type SuppressionReason,
   type UserMessagingState,
@@ -18,7 +18,8 @@ import type {
   UserRecord,
   UsersRepository,
 } from '../ports/repositories.js';
-import { COMPOSERS, proactiveButtons, type ComposeDeps } from './compose.js';
+import { proactiveButtons, type ComposeDeps } from './compose.js';
+import { COMPOSERS } from './composers.js';
 import type { MessageSender } from './sender.js';
 
 /**
@@ -93,7 +94,8 @@ async function dispatchOne(
   if (!user) return suppress(message, null, 'paused', deps);
   const composer = COMPOSERS[message.purpose];
   if (!composer) return suppress(message, user, 'disabled_purpose', deps);
-  const date = operationalDate(message.scheduledFor, user.timezone);
+  // La fecha de la clave: `plan_listo` de la víspera habla del día siguiente.
+  const date = message.key.slice(message.key.indexOf(':') + 1) as LocalDate;
   const composition = await composer(user, date, deps);
   const first = composition.options[0];
   if (!first) return suppress(message, user, 'not_doable', deps);

@@ -622,3 +622,33 @@ Pendiente, sin cambiar:
   - pedir otra hora de silencio en el onboarding;
   - aceptar que quien entrena temprano no recibe `plan_listo`.
 - **Pendiente:** `repositories.ts` de MongoDB supera las 800 líneas; conviene partirlo por módulo en una tarea de limpieza.
+
+## [2026-11-11] implementar | T-071 Candidatos de M7 y RN-MSJ-016 ampliada
+- **Reglas** ([[reglas-de-negocio]] v0.7.0), según la decisión del PO del 2026-11-10:
+  - RN-MSJ-005: si `plan_listo` cae en silencio, sale la noche anterior un minuto antes del silencio (`planReadySendAt`).
+  - RN-MSJ-016: `cierre_del_dia` también va cuando el día ya cuenta y solo le falta la mitad de comida para quedar completo.
+- **Textos** ([[plantillas-de-mensajes]] v0.16.0, para revisión del PO en el PR):
+  - PL-06 a PL-08: variantes de la víspera, con [Ver plan].
+  - RS-04: resumen sin cifras de proteína.
+- **Programación** (`messaging/schedule.ts`): en cada ciclo, por usuario y con un error aislado por usuario:
+  - `plan_listo` de hoy y de mañana; el de mañana solo si sale esta noche.
+  - `regreso` y `recordatorio_contextual`, solo si se cumple su condición, a la hora de `plan_listo` (fuera del silencio).
+  - `cierre_del_dia` a las 20:00 (P-066).
+  - `resumen_semanal` el domingo a las 19:00 (P-060).
+  - Todas valen hasta que empieza el silencio.
+- **Composición** (al enviar, con el estado de ese momento):
+  - `compose-day.ts`: `plan_listo` PL-01/02/03/05, o PL-06/07/08 la víspera. `cierre_del_dia` CD-01/02 si el día no cuenta y es descanso, y CD-03/04 si ya cuenta; solo con una comida frecuente (P-073 toques), y en el modo sin números sin las plantillas con gramos.
+  - `compose-week.ts`: `regreso` RG-01/02, `recordatorio_contextual` RC-01/02/03, y `resumen_semanal` RS-01 (si hay semana anterior y comidas) o RS-04.
+  - `comeback.ts`: entradas de RN-MSJ-008. La actividad es un día que contó o que tuvo la mitad de comida, en una ventana de P-053 días y nunca antes del alta.
+  - La fecha del mensaje sale de la clave de la bandeja, así que el aviso de la víspera habla del día siguiente.
+- **Supuestos para el PO:**
+  - Una semana sin días que cuentan no recibe resumen (pregunta abierta en [[spec-007-proactividad-y-mensajes]] §10).
+  - `{frase_semana}` rota por número de semana, sin repetir la de la semana anterior.
+  - El día del alta cuenta como día planificado para `regreso`.
+- **Pruebas:**
+  - `messaging/candidates.test.ts` (13): HU-007-5 escenarios 1 y 2, CD-03, sin frecuente, día completo, `regreso` único en una semana sin actividad (sale el jueves), conteo reiniciado, `recordatorio_contextual` con y sin día anterior contado, RS-04, RS-01 con proteína media, semana en cero y solo domingo.
+  - `cycle.test.ts`: aviso de la víspera y víspera atrasada (`stale`).
+  - G06 sigue en 0 con todos los propósitos.
+- **Pendiente para T-072:**
+  - Ampliar la simulación de G06 a 60 días (SC-007-1).
+  - Los candidatos se recalculan en cada ciclo aunque ya estén en la bandeja; basta para la Fase 0 (principio XI).

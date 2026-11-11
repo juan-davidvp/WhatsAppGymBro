@@ -1,26 +1,29 @@
-import { SESSION_NAMES, WEEKDAY_NAMES, templateById } from '@gymbro/content';
-import {
-  WEEK_DAYS,
-  weekStartOf,
-  weekdayOf,
-  type DayContext,
-  type LocalDate,
-  type MessagePurpose,
-} from '@gymbro/domain';
+import { templateById } from '@gymbro/content';
+import type { DayContext, LocalDate, MessagePurpose } from '@gymbro/domain';
 import type { CallbackAction } from '../bot/callback-data.js';
+import type { MealDeps } from '../meals/meals.js';
 import { button, type Button } from '../onboarding/replies.js';
-import { ensureWeek, plannedDayType } from '../plans/weekly-plan.js';
-import type { UserRecord } from '../ports/repositories.js';
-import type { TrainingDeps } from '../sessions/deps.js';
+import { plannedDayType } from '../plans/weekly-plan.js';
+import type {
+  MessageStatsRepository,
+  OutboxRepository,
+  UserRecord,
+  WeeksRepository,
+} from '../ports/repositories.js';
 
 /**
  * Contenido de cada mensaje proactivo (T-070, T-071): el estado del día que
  * evalúa el motor (RN-MSJ-005, RN-MSJ-016), las plantillas posibles con sus
  * variables (la rotación elige una, RN-MSJ-010) y los botones de 1 toque
  * (RN-MSJ-012). Se arma al enviar, con el estado de ese momento (plan técnico §6).
+ * Los de cada propósito están en `compose-day.ts` y `compose-week.ts`.
  */
 
-export type ComposeDeps = TrainingDeps;
+export interface ComposeDeps extends MealDeps {
+  weeks: WeeksRepository;
+  outbox: OutboxRepository;
+  messageStats: MessageStatsRepository;
+}
 
 export interface TemplateOption {
   readonly templateId: string;
@@ -29,10 +32,11 @@ export interface TemplateOption {
 
 export interface Composition {
   readonly day: DayContext;
-  /** Vacío si hoy no hay nada que decir (p. ej., no hay sesión planificada). */
+  /** Vacío si ya no hay nada que decir (p. ej., no hay sesión planificada). */
   readonly options: readonly TemplateOption[];
 }
 
+/** `date` es el día al que se refiere el mensaje (la clave de la salida). */
 export type Composer = (
   user: UserRecord,
   date: LocalDate,
@@ -54,41 +58,6 @@ export async function dayContext(
     missingActionTaps: null,
   };
 }
-
-/** "Miércoles" para `{dia_semana}`. */
-function weekdayName(date: LocalDate): string {
-  const name = WEEKDAY_NAMES[WEEK_DAYS.indexOf(weekdayOf(date))] ?? '';
-  return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
-/**
- * RN-MSJ-005 · `plan_listo`: la sesión del día con [Gym] [Casa] [Exprés 15']
- * [Hoy no puedo]. PL-04 necesita el ejercicio en el que subió la última vez y
- * PL-05 al menos un día que cuenta: si no hay dato, la plantilla no entra.
- */
-const planReady: Composer = async (user, date, deps) => {
-  const day = await dayContext(user, date, deps);
-  const week = await ensureWeek(user, weekStartOf(date), deps);
-  const planned = week?.days.find((d) => d.date === date)?.session;
-  if (!planned) return { day, options: [] };
-  const sesion = SESSION_NAMES[planned.template];
-  const total = (await deps.streaks.get(user.id))?.state.counted.total ?? 0;
-  const options: TemplateOption[] = [
-    {
-      templateId: 'PL-01',
-      variables: { sesion, minutos: Math.round(planned.versions.GYM.estimatedMinutes) },
-    },
-    { templateId: 'PL-02', variables: { sesion } },
-    { templateId: 'PL-03', variables: { dia_semana: weekdayName(date), sesion } },
-  ];
-  if (total > 0)
-    options.push({ templateId: 'PL-05', variables: { dias_que_cuentan: total, sesion } });
-  return { day, options };
-};
-
-export const COMPOSERS: Partial<Readonly<Record<MessagePurpose, Composer>>> = {
-  plan_listo: planReady,
-};
 
 const td = (value: string): CallbackAction => ({ action: 'td', value });
 
@@ -115,7 +84,6 @@ const BUTTON_ACTIONS: Readonly<Record<string, CallbackAction>> = {
   Volver: { action: 'nav', target: 'today' },
   Sí: { action: 'nav', target: 'today' },
   Retomar: { action: 'nav', target: 'today' },
-  'Ver misiones': td('quests'),
 };
 
 const COMEBACK_PURPOSES: readonly MessagePurpose[] = ['regreso', 'recordatorio_contextual'];

@@ -16,6 +16,7 @@ import {
   pauseUntil,
   pickTemplate,
   planReadyAt,
+  planReadySendAt,
   registerMessageOutcome,
   usualStartTime,
   weeklySummaryAt,
@@ -393,10 +394,52 @@ describe('RN-MSJ-016 · cierre_del_dia solo si el día no cuenta y lo que falta 
     ).toEqual({ send: false, reason: 'not_doable' });
   });
 
-  it('si el día ya cuenta no se envía', () => {
+  it('si el día ya cuenta y no le falta solo la comida, no se envía', () => {
     expect(
       evaluate(closing, [], user, { ...trainingDay, dayCounts: true, missingActionTaps: 1 }),
     ).toEqual({ send: false, reason: 'day_already_counts' });
+  });
+
+  it('ampliada (2026-11-10): si ya cuenta y solo le falta la mitad de comida para quedar completo, se envía', () => {
+    const almostComplete = {
+      ...trainingDay,
+      dayCounts: true,
+      missingActionTaps: 1,
+      onlyNutritionMissingForComplete: true,
+    };
+    expect(evaluate(closing, [], user, almostComplete)).toEqual({ send: true });
+    expect(
+      evaluate(closing, [], user, {
+        ...almostComplete,
+        missingActionTaps: M.dayClosingMaxTaps + 1,
+      }),
+    ).toEqual({ send: false, reason: 'not_doable' });
+  });
+});
+
+describe('RN-MSJ-005 · ampliada (2026-11-10): si el aviso cae en silencio, sale la noche anterior', () => {
+  const quiet = { start: '21:30', end: '07:00' };
+
+  it('con hora habitual 18:00 sale el mismo día, P-048 minutos antes', () => {
+    expect(planReadySendAt(D, '18:00', quiet, TZ)).toEqual({
+      at: planReadyAt(D, '18:00', TZ),
+      eve: false,
+    });
+  });
+
+  it('con hora habitual 06:00 (aviso a las 05:00, en silencio) sale la víspera a las 21:29', () => {
+    expect(planReadySendAt(D, '06:00', quiet, TZ)).toEqual({
+      at: local(addDays(D, -1), '21:29'),
+      eve: true,
+    });
+  });
+
+  it('si el silencio empieza después de medianoche, sale antes de que empiece ese mismo silencio', () => {
+    const lateQuiet = { start: '00:30', end: '08:00' };
+    expect(planReadySendAt(D, '07:00', lateQuiet, TZ)).toEqual({
+      at: local(D, '00:29'),
+      eve: true,
+    });
   });
 });
 

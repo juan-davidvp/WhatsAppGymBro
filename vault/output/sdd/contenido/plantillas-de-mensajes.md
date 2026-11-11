@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.15.0
+version: 0.16.0
 creado: 2026-10-18
-actualizado: 2026-11-09
+actualizado: 2026-11-10
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -26,6 +26,11 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | PL-03 | {dia_semana} de **{sesion}**. Si hoy no da para el gym, la versión en casa cuenta igual. | [Gym] [Casa] [Exprés 15'] [Hoy no puedo] |
 | PL-04 | Listo tu plan: **{sesion}**. La última vez subiste en {ejercicio_clave}; hoy vamos por más. | [Gym] [Casa] [Exprés 15'] [Hoy no puedo] |
 | PL-05 | Llevas {dias_que_cuentan} días que cuentan. Hoy suma el siguiente: **{sesion}**. | [Gym] [Casa] [Exprés 15'] [Hoy no puedo] |
+| PL-06 | Mañana temprano toca **{sesion}**. Queda listo para que solo confirmes. | [Ver plan] |
+| PL-07 | Para mañana: **{sesion}** ({minutos} min). Si no da para el gym, la versión en casa cuenta igual. | [Ver plan] |
+| PL-08 | Mañana entrenas temprano: **{sesion}**. Todo cargado. | [Ver plan] |
+
+> PL-06 a PL-08 salen la noche anterior, justo antes del silencio, cuando el aviso del día caería dentro de él (RN-MSJ-005). Llevan [Ver plan] porque esa noche todavía es el día operativo anterior.
 
 ### 1.2 `recordatorio_contextual`
 
@@ -61,6 +66,9 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | RS-01 | Tu semana: {dqc} días que cuentan ({dqc_anterior} la anterior) · {sesiones}/{compromiso} sesiones · proteína media {proteina_media} g. {frase_semana} | [Ver plan] [Ajustar días] |
 | RS-02 | Semana {cumplida_o_no}. {dqc} días que cuentan y {records} récords. Tu mejor semana: {mejor}. Misiones nuevas listas. | [Ver misiones] [Ver plan] |
 | RS-03 | Así quedó tu muro esta semana. {frase_semana} El plan de la próxima ya está. | [Ver plan] [Ajustar días] |
+| RS-04 | Cerraste otra semana: {dqc} días que cuentan. {frase_semana} | [Ver plan] [Ajustar días] |
+
+> Hasta que llegue la imagen del muro (T-080), el resumen sale en texto: RS-01 (no en el modo sin números), RS-02 (solo si la semana va cumplida) y RS-04. RS-03 espera a la imagen.
 
 `{frase_semana}` sale de una lista rotativa sin juicios: "Cada día sumó.", "Volviste cuando costaba, y eso también suma.", "Semana sólida.", "Constancia por encima de todo."
 

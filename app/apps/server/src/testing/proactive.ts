@@ -59,5 +59,13 @@ export async function proactiveSetup() {
       });
     },
     eventsNamed: (name: string) => flow.events.filter((e) => e.name === name).map((e) => e.props),
+    /** Salidas de la bandeja de un propósito. */
+    outboxOf: (purpose: string) => flow.outbox.filter((m) => m.purpose === purpose),
+    /** Propósito y plantilla de cada envío, en orden. */
+    sentTemplates: () =>
+      flow.outbox
+        .filter((m) => m.status === 'sent')
+        .sort((a, b) => (a.sentAt?.getTime() ?? 0) - (b.sentAt?.getTime() ?? 0))
+        .map((m) => `${m.purpose}:${m.templateId ?? ''}`),
   };
 }

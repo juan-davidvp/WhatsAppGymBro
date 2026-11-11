@@ -114,11 +114,17 @@ export interface DayContext {
   readonly sessionStarted: boolean;
   /** RN-MSJ-016: toques que costaría la acción que falta (null si no se puede hacer en toques). */
   readonly missingActionTaps: number | null;
+  /**
+   * RN-MSJ-016 (ampliada, 2026-11-10): el día ya cuenta y solo le falta la mitad
+   * de comida para quedar completo.
+   */
+  readonly onlyNutritionMissingForComplete?: boolean;
 }
 
 export type Decision =
   { readonly send: true } | { readonly send: false; readonly reason: SuppressionReason };
 
+const MINUTE_MS = 60_000;
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
 
@@ -179,7 +185,9 @@ export function evaluateProactive(input: {
     return suppress('day_already_counts');
   }
   if (candidate.purpose === 'cierre_del_dia') {
-    if (day.dayCounts) return suppress('day_already_counts');
+    if (day.dayCounts && !day.onlyNutritionMissingForComplete) {
+      return suppress('day_already_counts');
+    }
     if (
       day.missingActionTaps === null ||
       day.missingActionTaps > PARAMETERS.messages.dayClosingMaxTaps
@@ -231,6 +239,26 @@ export function pickTemplate(
 export function planReadyAt(date: LocalDate, usualStart: LocalTime, timeZone: string): Date {
   const start = zonedTimeToInstant(date, usualStart, timeZone);
   return new Date(start.getTime() - PARAMETERS.messages.planReadyLeadMinutes * 60_000);
+}
+
+/**
+ * RN-MSJ-005 (ampliada, 2026-11-10): cuándo sale `plan_listo` del día `date`. Si
+ * P-048 minutos antes de la hora habitual cae en silencio, sale la noche anterior,
+ * un minuto antes de que empiece el silencio (`eve`), con la variante de mañana.
+ */
+export function planReadySendAt(
+  date: LocalDate,
+  usualStart: LocalTime,
+  quietHours: QuietHours,
+  timeZone: string,
+): { at: Date; eve: boolean } {
+  const at = planReadyAt(date, usualStart, timeZone);
+  if (!isInQuietHours(at, quietHours, timeZone)) return { at, eve: false };
+  let quietStart = zonedTimeToInstant(date, quietHours.start, timeZone);
+  if (quietStart.getTime() > at.getTime()) {
+    quietStart = zonedTimeToInstant(addDays(date, -1), quietHours.start, timeZone);
+  }
+  return { at: new Date(quietStart.getTime() - MINUTE_MS), eve: true };
 }
 
 /**

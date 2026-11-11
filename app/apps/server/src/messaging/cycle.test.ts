@@ -15,6 +15,14 @@ import { proactiveSetup } from '../testing/proactive.js';
  * `plan_listo` sale a las 17:00 (P-048) = 22:00Z y vale hasta las 18:00 = 23:00Z.
  */
 
+const COUNTED_DAY = {
+  trainingHalf: true,
+  nutritionHalf: false,
+  activeRecovery: false,
+  counts: true,
+  complete: false,
+};
+
 const WED_16 = '2026-10-21T21:00:00Z';
 const WED_17 = '2026-10-21T22:00:00Z';
 
@@ -24,13 +32,15 @@ describe('RN-MSJ-005 · RN-MSJ-015 · T-070 · plan_listo pasa por la bandeja y 
     await t.setHabitTime('18:00');
     t.goTo(WED_16);
     expect(await t.tick()).toBe(0);
-    expect(t.outbox).toMatchObject([{ key: 'plan_listo:2026-10-21', status: 'pending' }]);
+    expect(t.outboxOf('plan_listo')).toMatchObject([
+      { key: 'plan_listo:2026-10-21', status: 'pending' },
+    ]);
     t.goTo(WED_17);
     expect(await t.tick()).toBe(1);
     expect(await t.tick()).toBe(0); // otro ciclo no lo repite
     const [message] = t.sent;
     expect(message?.reply.buttons.map((b) => b.label)).toEqual(templateById('PL-01').buttons);
-    expect(t.outbox[0]).toMatchObject({ status: 'sent', templateId: 'PL-01' });
+    expect(t.outboxOf('plan_listo')[0]).toMatchObject({ status: 'sent', templateId: 'PL-01' });
     expect(t.eventsNamed('message_sent')).toEqual([{ purpose: 'plan_listo', templateId: 'PL-01' }]);
     // El texto es la plantilla con sus variables (sesión del plan y minutos).
     const week = t.weeks.find((w) => w.weekStart === '2026-10-19');
@@ -53,7 +63,7 @@ describe('RN-MSJ-005 · RN-MSJ-015 · T-070 · plan_listo pasa por la bandeja y 
     t.goTo(WED_17);
     await t.tick();
     expect(t.sent).toEqual([]);
-    expect(t.outbox[0]).toMatchObject({
+    expect(t.outboxOf('plan_listo')[0]).toMatchObject({
       status: 'suppressed',
       suppressedReason: 'day_already_counts',
     });
@@ -67,7 +77,10 @@ describe('RN-MSJ-005 · RN-MSJ-015 · T-070 · plan_listo pasa por la bandeja y 
     t.goTo('2026-10-21T23:30:00Z'); // 18:30: ya pasó la hora habitual
     await t.tick();
     expect(t.sent).toEqual([]);
-    expect(t.outbox[0]).toMatchObject({ status: 'suppressed', suppressedReason: 'stale' });
+    expect(t.outboxOf('plan_listo')[0]).toMatchObject({
+      status: 'suppressed',
+      suppressedReason: 'stale',
+    });
     expect(t.eventsNamed('message_suppressed')).toEqual([
       { purpose: 'plan_listo', reason: 'stale' },
     ]);
@@ -78,16 +91,48 @@ describe('RN-MSJ-005 · RN-MSJ-015 · T-070 · plan_listo pasa por la bandeja y 
     await t.setHabitTime('18:00');
     t.goTo('2026-10-21T23:30:00Z');
     await t.tick();
-    expect(t.outbox).toEqual([]);
+    expect(t.outboxOf('plan_listo')).toEqual([]);
   });
 
-  it('RN-MSJ-004 · con la hora habitual temprana, el aviso caería en silencio y no se envía', async () => {
+  it('RN-MSJ-005 (ampliada) · si el aviso caería en silencio, sale la noche anterior con PL-06 y [Ver plan]', async () => {
     const t = await proactiveSetup();
+    // El lunes contó: el martes no hay recordatorio_contextual que ocupe el hueco.
+    await t.deps.days.saveStatus(t.userId, '2026-10-19', 'TRAINING', COUNTED_DAY);
     await t.setHabitTime('07:30'); // aviso a las 06:30, dentro de 21:30–07:00
+    t.goTo('2026-10-21T02:00:00Z'); // martes 21:00
+    await t.tick();
+    expect(t.outboxOf('plan_listo')).toMatchObject([
+      // Martes 21:29 (un minuto antes del silencio), válido hasta que empieza.
+      {
+        key: 'plan_listo:2026-10-21',
+        scheduledFor: new Date('2026-10-21T02:29:00Z'),
+        notAfter: new Date('2026-10-21T02:30:00Z'),
+      },
+    ]);
+    t.goTo('2026-10-21T02:29:00Z');
+    expect(await t.tick()).toBe(1);
+    const week = t.weeks.find((w) => w.weekStart === '2026-10-19');
+    const session = week?.days.find((d) => d.date === '2026-10-21')?.session;
+    expect(t.sent[0]?.reply.text).toBe(
+      renderTemplate('PL-06', { sesion: SESSION_NAMES[session?.template ?? 'FULL_A'] }),
+    );
+    expect(t.sent[0]?.reply.buttons.map((b) => b.label)).toEqual(['Ver plan']);
+    // El miércoles por la mañana no sale otro.
     t.goTo('2026-10-21T11:30:00Z');
+    expect(await t.tick()).toBe(0);
+  });
+
+  it('RN-MSJ-004 · una salida de la víspera que se atrasa hasta el silencio se suprime (stale)', async () => {
+    const t = await proactiveSetup();
+    // El lunes contó: el martes no hay recordatorio_contextual que ocupe el hueco.
+    await t.deps.days.saveStatus(t.userId, '2026-10-19', 'TRAINING', COUNTED_DAY);
+    await t.setHabitTime('07:30');
+    t.goTo('2026-10-21T02:00:00Z');
+    await t.tick();
+    t.goTo('2026-10-21T02:45:00Z'); // martes 21:45: ya empezó el silencio
     await t.tick();
     expect(t.sent).toEqual([]);
-    expect(t.outbox[0]).toMatchObject({ suppressedReason: 'quiet_hours' });
+    expect(t.outboxOf('plan_listo')[0]).toMatchObject({ suppressedReason: 'stale' });
   });
 });
 

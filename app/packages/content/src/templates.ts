@@ -47,6 +47,27 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: ['Gym', 'Casa', "Exprés 15'", 'Hoy no puedo'],
   },
   {
+    id: 'PL-06',
+    kind: 'proactive',
+    purpose: 'plan_listo',
+    text: 'Mañana temprano toca **{sesion}**. Queda listo para que solo confirmes.',
+    buttons: ['Ver plan'],
+  },
+  {
+    id: 'PL-07',
+    kind: 'proactive',
+    purpose: 'plan_listo',
+    text: 'Para mañana: **{sesion}** ({minutos} min). Si no da para el gym, la versión en casa cuenta igual.',
+    buttons: ['Ver plan'],
+  },
+  {
+    id: 'PL-08',
+    kind: 'proactive',
+    purpose: 'plan_listo',
+    text: 'Mañana entrenas temprano: **{sesion}**. Todo cargado.',
+    buttons: ['Ver plan'],
+  },
+  {
     id: 'RC-01',
     kind: 'proactive',
     purpose: 'recordatorio_contextual',
@@ -161,6 +182,13 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     kind: 'proactive',
     purpose: 'resumen_semanal',
     text: 'Así quedó tu muro esta semana. {frase_semana} El plan de la próxima ya está.',
+    buttons: ['Ver plan', 'Ajustar días'],
+  },
+  {
+    id: 'RS-04',
+    kind: 'proactive',
+    purpose: 'resumen_semanal',
+    text: 'Cerraste otra semana: {dqc} días que cuentan. {frase_semana}',
     buttons: ['Ver plan', 'Ajustar días'],
   },
   {
