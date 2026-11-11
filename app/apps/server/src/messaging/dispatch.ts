@@ -9,6 +9,7 @@ import {
   type MessagePurpose,
   type SuppressionReason,
   type UserMessagingState,
+  type WallCell,
 } from '@gymbro/domain';
 import type { Logger } from '../logger.js';
 import type {
@@ -38,6 +39,8 @@ export interface DispatchDeps extends ComposeDeps {
   outbox: OutboxRepository;
   messageStats: MessageStatsRepository;
   sender: MessageSender;
+  /** T-080: PNG del muro de constancia (en producción, `adapters/images/wall.ts`). */
+  renderWall?: (grid: readonly (readonly WallCell[])[]) => Uint8Array;
   /** Fuente de aleatoriedad de la rotación (en pruebas, fija). */
   random?: () => number;
   logger?: Logger;
@@ -122,14 +125,17 @@ async function dispatchOne(
   });
   if (!decision.send) return suppress(message, user, decision.reason, deps);
 
+  // T-080: la imagen se genera al enviar; si falla, sale el texto sin las opciones que la necesitan.
+  const photo = composition.wall ? renderPhoto(composition.wall, user, deps) : null;
+  const options = composition.options.filter((o) => photo !== null || !o.needsImage);
   const templateId = pickTemplate(
-    composition.options.map((o) => o.templateId),
+    options.map((o) => o.templateId),
     history,
     now,
     user.timezone,
     deps.random ?? Math.random,
   );
-  const option = composition.options.find((o) => o.templateId === templateId);
+  const option = options.find((o) => o.templateId === templateId);
   if (!templateId || !option) return suppress(message, user, 'cooldown', deps);
 
   // Como mucho una vez: si el proceso cae entre el envío y el registro, la salida
@@ -140,6 +146,7 @@ async function dispatchOne(
     ({ messageId } = await deps.sender.send(user.chatId, {
       text: renderTemplate(templateId, option.variables),
       buttons: proactiveButtons(templateId, message.purpose),
+      ...(photo ? { photo } : {}),
     }));
   } catch (error) {
     if (error instanceof BotBlockedError) {
@@ -155,8 +162,30 @@ async function dispatchOne(
     { userId: user.id, timezone: user.timezone },
     { purpose: message.purpose, templateId },
   );
+  if (message.purpose === 'resumen_semanal') {
+    await deps.events.emit(
+      'weekly_summary_sent',
+      { userId: user.id, timezone: user.timezone },
+      { withImage: photo !== null },
+    );
+  }
   if (composition.effect) await applyEffect(composition.effect, user, date, stats, deps);
   return true;
+}
+
+/** PNG del muro; null si no hay generador o falla (se registra y sale el texto). */
+function renderPhoto(
+  grid: readonly (readonly WallCell[])[],
+  user: UserRecord,
+  deps: DispatchDeps,
+): Uint8Array | null {
+  if (!deps.renderWall) return null;
+  try {
+    return deps.renderWall(grid);
+  } catch (error) {
+    deps.logger?.error('wall_render_failed', { userId: user.id, error });
+    return null;
+  }
 }
 
 /** `/ajustes`: propósitos que el usuario apagó (RN-MSJ-001: los demás, encendidos). */

@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.18.0
+version: 0.19.0
 creado: 2026-10-18
 actualizado: 2026-11-11
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -68,7 +68,10 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | RS-03 | Así quedó tu muro esta semana. {frase_semana} El plan de la próxima ya está. | [Ver plan] [Ajustar días] |
 | RS-04 | Cerraste otra semana: {dqc} días que cuentan. {frase_semana} | [Ver plan] [Ajustar días] |
 
-> Hasta que llegue la imagen del muro (T-080), el resumen sale en texto: RS-01 (no en el modo sin números), RS-02 (solo si la semana va cumplida) y RS-04. RS-03 espera a la imagen.
+> - El resumen sale con la imagen del muro de las últimas P-102 semanas (T-080). La imagen no lleva texto: cada día es un cuadro según cuente, sea completo o no.
+> - El pie de la imagen rota entre RS-01, RS-03 y RS-04. RS-01 no va en el modo sin números y solo se usa si hay semana anterior y comidas registradas. Si la imagen no se puede generar, sale solo el texto, con RS-01 o RS-04.
+> - RS-02 queda fuera: las misiones nuevas se generan después del cierre del domingo (PO, 2026-11-10).
+> - Una semana sin días que cuentan no recibe resumen `[supuesto]`.
 
 `{frase_semana}` sale de una lista rotativa sin juicios: "Cada día sumó.", "Volviste cuando costaba, y eso también suma.", "Semana sólida.", "Constancia por encima de todo."
 

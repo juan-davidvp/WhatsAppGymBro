@@ -4,6 +4,7 @@ import {
   addDays,
   comebackAction,
   evaluateWeek,
+  wallGrid,
   weekStartOf,
   weekdayOf,
   type LocalDate,
@@ -113,10 +114,13 @@ export const weeklySummary: Composer = async (user, date, deps) => {
   // Una semana sin días que cuentan no tiene nada que reconocer; de eso se ocupa `regreso`.
   if (achieved.countedDays === 0) return { day, options: [] };
   const frase = weeklyPhrase(weekStart);
+  const wall = wallGrid(await deps.days.history(user.id), date);
   const options: TemplateOption[] = [
     { templateId: 'RS-04', variables: { dqc: achieved.countedDays, frase_semana: frase } },
+    // T-080: con la imagen del muro entra RS-03.
+    { templateId: 'RS-03', variables: { frase_semana: frase }, needsImage: true },
   ];
-  if (user.settings.numberFreeMode) return { day, options };
+  if (user.settings.numberFreeMode) return { day, options, wall };
 
   const previous = (await deps.weeks.list(user.id)).find(
     (w) => w.weekStart === addDays(weekStart, -WEEK_LENGTH),
@@ -144,5 +148,5 @@ export const weeklySummary: Composer = async (user, date, deps) => {
       },
     });
   }
-  return { day, options };
+  return { day, options, wall };
 };

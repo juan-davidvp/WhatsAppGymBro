@@ -3,7 +3,7 @@ titulo: Parámetros configurables
 tipo: sdd-parametros
 hito: H3
 estado: en-revision
-version: 0.12.0
+version: 0.13.0
 creado: 2026-10-18
 actualizado: 2026-11-11
 deriva_de: [reglas-de-negocio, objetivos-y-progreso, sistema-de-gamificacion, proactividad-sin-spam, fundamentos-de-entrenamiento, relacion-comida-entreno]
@@ -128,6 +128,7 @@ relacionados: [reglas-de-negocio, plan-tecnico, estrategia-de-pruebas]
 | P-099 | `messages.pauseOptionsDays` | 1, 3, 7 y 14 días | — | RN-MSJ-013 (opciones de `/pausa`, HU-007-4; la mayor es P-059) | No | — |
 | P-100 | `progress.weightStepsKg` | 0,1 y 0,5 kg | — | HU-006-2 (botones para registrar el peso desde el último; decisión del PO, 2026-11-11) | No | — |
 | P-101 | `progress.logbookEntriesShown` | 20 entradas | — | HU-006-3 (`/logros` muestra las más recientes; un mensaje de Telegram tiene tope de largo) | No | — |
+| P-102 | `progress.wallWeeks` | 12 semanas | — | HU-006-1 (muro del resumen semanal; decisión del PO, 2026-11-11) | No | — |
 | P-096 | `scheduler.intervalSeconds` | 60 s | — | FR-005-02 (ciclo del planificador: cierre de días y, desde T-070, la bandeja; [[plan-tecnico]] §6) | No | — |
 
 ## Integraciones, seguridad y datos

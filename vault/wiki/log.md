@@ -758,3 +758,22 @@ Revisión del diff completo de M7 (T-070 a T-073): sin hallazgos críticos ni al
   - `progress/progress.test.ts` (12): pantalla, teclado, media móvil, barra del objetivo, fuerza, modo sin números, peso escrito y con botones, bitácora vacía y en orden, [Ver bitácora].
   - En el dominio, `progress.test.ts`.
 
+## [2026-11-11] implementar | T-080 Imagen del muro y resumen semanal
+- **Dominio** (`progress/progress.ts`): `wallGrid` arma el muro de las últimas P-102 semanas (nuevo, 12), de lunes a domingo. Cada día queda como completo, cuenta, no cuenta o todavía no pasó. Solo estados, sin datos sensibles (FR-006-01).
+- **Imagen** (`adapters/images/wall.ts`):
+  - Plantilla SVG sin texto, renderizada a PNG en el servidor con `@resvg/resvg-js` 2.6.2. Es la dependencia nueva que preveía el plan técnico §8, sin fuentes que empaquetar.
+  - Colores: verde oscuro = completo, verde claro = cuenta, gris = no cuenta, contorno = por venir.
+- **Resumen semanal:**
+  - Sale como foto con el pie RS-01, RS-03 o RS-04; RS-03 entra ahora que hay imagen.
+  - La imagen se genera al enviar. Si falla, se registra y sale solo el texto, sin RS-03.
+  - Emite `weekly_summary_sent {withImage}`.
+  - El envío proactivo admite foto (`sendPhoto` con el texto de pie).
+  - [[plantillas-de-mensajes]] v0.19.0: la nota de §1.5 se actualiza; ya no menciona RS-02, que el PO había dejado fuera.
+- **Pruebas:**
+  - Muro en el dominio, con una propiedad.
+  - Imagen: un cuadro por día, sin texto, PNG válido.
+  - Envío como foto.
+  - Resumen con imagen y RS-03, y resumen cuando la imagen falla.
+  - Generé una imagen de ejemplo con el renderizador real.
+- **Pendiente:** verificar el envío a Telegram con el bot real. El criterio de T-080 dice "enviada en local", y aquí no hay token; quedó probado con la API simulada.
+

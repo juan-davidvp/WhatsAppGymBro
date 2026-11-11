@@ -255,6 +255,8 @@ export const PARAMETERS = {
     weightStepsKg: [0.1, 0.5],
     /** P-101 · HU-006-3 · entradas de la bitácora que muestra `/logros` */
     logbookEntriesShown: 20,
+    /** P-102 · HU-006-1 · semanas del muro del resumen semanal */
+    wallWeeks: 12,
   },
   scheduler: {
     /** P-096 · FR-005-02 · segundos entre ciclos del planificador (plan técnico §6) */

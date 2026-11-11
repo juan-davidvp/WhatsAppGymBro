@@ -105,7 +105,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-080 | Imagen del muro (SVG → PNG) y resumen semanal | HU-006-1 | T-062, T-071 | Imagen generada y enviada en local |
+| T-080 ✅ | Imagen del muro (SVG → PNG) y resumen semanal | HU-006-1 | T-062, T-071 | Imagen generada y enviada en local |
 | T-081 ✅ | `/progreso`, registro de peso y `/logros` | HU-006-2/3 | T-062 | Escenarios pasan |
 | T-082 | *Should:* objetivo cumplido, revisión de fase y mantenimiento | HU-006-4 a 6 | T-081 | Escenarios pasan |
 | T-083 | *Should:* Mini App de progreso con validación de datos de inicio — **pasa a la Fase 1** (PO, 2026-11-11, Q9) | HU-006-7 | T-081 | Abre desde el botón de menú y rechaza datos no válidos |

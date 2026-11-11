@@ -188,6 +188,8 @@ export const EVENT_PROPS_SCHEMAS = {
   backoff_applied: z.strictObject({ days: z.number().int().positive() }),
   inactivity_pause_started: z.strictObject({ inactiveDays: z.number().int().nonnegative() }),
   reactivation_sent: z.strictObject({ count: z.number().int().positive() }),
+  /** T-080 (HU-006-1): si salió con la imagen del muro. */
+  weekly_summary_sent: z.strictObject({ withImage: z.boolean() }),
   /** T-081 (HU-006-2, HU-006-3): vistas, sin datos. */
   progress_viewed: z.strictObject({}),
   achievement_log_viewed: z.strictObject({}),

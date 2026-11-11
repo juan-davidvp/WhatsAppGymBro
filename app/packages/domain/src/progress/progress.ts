@@ -1,4 +1,6 @@
 import { PARAMETERS } from '../config/parameters.js';
+import { weekStartOf } from '../gamification/weekly.js';
+import { addDays, type LocalDate } from '../time/zoned.js';
 import { estimated1RM, type MovementPattern } from '../training/training.js';
 
 /**
@@ -62,4 +64,37 @@ export function stepWeight(kg: number, deltaKg: number): number {
   const unit = Math.min(...PARAMETERS.progress.weightStepsKg);
   const decimals = Math.max(0, -Math.floor(Math.log10(unit)));
   return Number((Math.round((kg + deltaKg) / unit) * unit).toFixed(decimals));
+}
+
+/** Estado de un día en el muro de constancia (HU-006-1). */
+export type WallCell = 'complete' | 'counted' | 'none' | 'future';
+
+const WEEK_LENGTH = 7;
+
+/**
+ * HU-006-1 (decisión del PO, 2026-11-11): muro de las últimas P-102 semanas, de
+ * la más vieja a la actual, cada una de lunes a domingo. Un día es completo, cuenta
+ * o no; los días después de `today` todavía no pasaron. Solo días y estados, sin
+ * datos sensibles (FR-006-01).
+ */
+export function wallGrid(
+  history: readonly {
+    readonly date: LocalDate;
+    readonly counted: boolean;
+    readonly complete: boolean;
+  }[],
+  today: LocalDate,
+  weeks: number = PARAMETERS.progress.wallWeeks,
+): WallCell[][] {
+  const byDate = new Map(history.map((d) => [d.date, d]));
+  const firstMonday = addDays(weekStartOf(today), -WEEK_LENGTH * (weeks - 1));
+  return Array.from({ length: weeks }, (_, w) =>
+    Array.from({ length: WEEK_LENGTH }, (_, d): WallCell => {
+      const date = addDays(firstMonday, w * WEEK_LENGTH + d);
+      if (date > today) return 'future';
+      const day = byDate.get(date);
+      if (day?.complete) return 'complete';
+      return day?.counted ? 'counted' : 'none';
+    }),
+  );
 }

@@ -1,5 +1,5 @@
 import { templateById } from '@gymbro/content';
-import type { DayContext, LocalDate, MessagePurpose } from '@gymbro/domain';
+import type { DayContext, LocalDate, MessagePurpose, WallCell } from '@gymbro/domain';
 import type { CallbackAction } from '../bot/callback-data.js';
 import type { MealDeps } from '../meals/meals.js';
 import { button, type Button } from '../onboarding/replies.js';
@@ -28,6 +28,8 @@ export interface ComposeDeps extends MealDeps {
 export interface TemplateOption {
   readonly templateId: string;
   readonly variables: Readonly<Record<string, string | number>>;
+  /** Solo tiene sentido con la imagen del muro (RS-03). */
+  readonly needsImage?: boolean;
 }
 
 /** RN-MSJ-008: lo que cambia en `message_stats` cuando el mensaje sale. */
@@ -40,6 +42,8 @@ export interface Composition {
   /** Vacío si ya no hay nada que decir (p. ej., no hay sesión planificada). */
   readonly options: readonly TemplateOption[];
   readonly effect?: CompositionEffect;
+  /** HU-006-1: muro de constancia que acompaña el mensaje (T-080). */
+  readonly wall?: readonly (readonly WallCell[])[];
 }
 
 /** `date` es el día al que se refiere el mensaje (la clave de la salida). */

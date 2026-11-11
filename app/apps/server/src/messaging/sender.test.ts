@@ -19,15 +19,22 @@ const apiError = (code: number, retryAfter?: number) =>
   );
 
 function fakeApi(failures: unknown[]) {
-  const calls: { chatId: number | string; text: string }[] = [];
+  const calls: { chatId: number | string; text: string; photo?: boolean }[] = [];
+  const answer = () => {
+    const failure = failures.shift();
+    if (failure) return Promise.reject(failure);
+    return Promise.resolve({ message_id: 77 } as never);
+  };
   return {
     calls,
     api: {
       sendMessage: (chatId: number | string, text: string) => {
         calls.push({ chatId, text });
-        const failure = failures.shift();
-        if (failure) return Promise.reject(failure);
-        return Promise.resolve({ message_id: 77 } as never);
+        return answer();
+      },
+      sendPhoto: (chatId: number | string, _photo: unknown, options?: { caption?: string }) => {
+        calls.push({ chatId, text: options?.caption ?? '', photo: true });
+        return answer();
       },
     },
   };
@@ -68,6 +75,14 @@ describe('FR-007-08 · T-070 · envío con reintentos', () => {
     const sender = telegramSender(api, () => Promise.resolve());
     await expect(sender.send(42, reply)).rejects.toBeInstanceOf(BotBlockedError);
     expect(calls).toHaveLength(1);
+  });
+
+  it('T-080 · con imagen se envía como foto y el texto va de pie', async () => {
+    const { api, calls } = fakeApi([]);
+    const sender = telegramSender(api, () => Promise.resolve());
+    const photo = new Uint8Array([137, 80, 78, 71]);
+    expect(await sender.send(42, { ...reply, photo })).toEqual({ messageId: 77 });
+    expect(calls).toEqual([{ chatId: 42, text: 'Hola', photo: true }]);
   });
 
   it('un error que no es temporal (400) no se reintenta', async () => {

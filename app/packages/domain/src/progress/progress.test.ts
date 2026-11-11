@@ -2,7 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { PARAMETERS } from '../config/parameters.js';
 import { estimated1RM } from '../training/training.js';
-import { stepWeight, strengthHighlights } from './progress.js';
+import { stepWeight, strengthHighlights, wallGrid } from './progress.js';
 
 const sets = (...pairs: [number, number][]) => pairs.map(([loadKg, reps]) => ({ loadKg, reps }));
 const STEPS = PARAMETERS.progress.weightStepsKg;
@@ -52,6 +52,48 @@ describe('HU-006-2 · registrar el peso con botones (PO, 2026-11-11, P-100)', ()
           return Math.abs(result / unit - Math.round(result / unit)) < 1e-9;
         },
       ),
+    );
+  });
+});
+
+describe('HU-006-1 · muro de constancia de P-102 semanas (PO, 2026-11-11)', () => {
+  const today = '2026-10-21'; // miércoles
+
+  it('P-102 semanas de lunes a domingo, la actual al final, con el estado de cada día', () => {
+    const grid = wallGrid(
+      [
+        { date: '2026-10-19', counted: true, complete: true },
+        { date: '2026-10-20', counted: true, complete: false },
+        { date: '2026-10-21', counted: false, complete: false },
+        { date: '2026-08-03', counted: true, complete: false },
+      ],
+      today,
+    );
+    expect(grid).toHaveLength(PARAMETERS.progress.wallWeeks);
+    expect(grid.every((week) => week.length === 7)).toBe(true);
+    expect(grid.at(-1)).toEqual([
+      'complete',
+      'counted',
+      'none',
+      'future',
+      'future',
+      'future',
+      'future',
+    ]);
+    // El lunes de la primera semana es 11 semanas antes del lunes actual.
+    expect(grid[0]?.[0]).toBe('counted');
+  });
+
+  it('un día fuera de la ventana no aparece y nada futuro cuenta', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 20 }), (weeks) => {
+        const grid = wallGrid(
+          [{ date: '2026-12-01', counted: true, complete: true }],
+          today,
+          weeks,
+        );
+        return grid.flat().every((cell) => cell !== 'complete' && cell !== 'counted');
+      }),
     );
   });
 });
