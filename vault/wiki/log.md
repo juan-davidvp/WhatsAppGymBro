@@ -721,3 +721,102 @@ Revisión del diff completo de M7 (T-070 a T-073): sin hallazgos críticos ni al
   - Un `retry_after` largo de Telegram detiene el ciclo; habría que poner un tope (nuevo parámetro).
   - `pausedAt` y `pausedUntil` guardan solo la última pausa.
 
+## [2026-11-11] decision | M8 · alcance y diseño de Progreso (PO)
+- **Alcance:**
+  - M8 cubre T-080 a T-082.
+  - La Mini App (T-083) pasa a la Fase 1, lo que resuelve Q9.
+  - T-084 (relación comida–entreno) queda para después.
+- **Peso (HU-006-2):** se registra con botones desde el último peso (P-100: ± 0,1 y ± 0,5 kg). Solo el primero se escribe, respondiendo a PG-10. Esto prevalece sobre "escribe un número" (constitución II).
+- **Muro (T-080):** 12 semanas, imagen sin texto (los datos van en el pie), SVG → PNG con `@resvg/resvg-js`.
+- **Ejercicios clave de `/progreso`:** uno por patrón (sentadilla, bisagra, empuje y tirón), el más entrenado, con su mejor 1RM estimado.
+- **Cambios en la bóveda:**
+  - [[parametros]] v0.12.0: P-100 y P-101.
+  - [[modelo-de-datos]] v0.9.0: `personal_records` con `loadKg` y `reps`.
+  - [[plantillas-de-mensajes]] v0.18.0: §2.7, comandos `progreso` y `logros`, y sale KB-02.
+  - [[spec-006-progreso-logros-y-mantenimiento]] §10.
+
+## [2026-11-11] implementar | T-081 /progreso, registro de peso y /logros
+- **Dominio** (`progress/progress.ts`): `strengthHighlights` da un ejercicio por patrón con su mejor 1RM estimado (RN-ENT-005). `stepWeight` suma o resta los pasos de P-100, con una prueba de propiedad.
+- **`/progreso` y `📈 Progreso`** (`progress/progress-screen.ts`):
+  - PG-01: días que cuentan, racha y nivel.
+  - Barra del objetivo (PG-02/03, RN-OBJ-011), solo si tiene meta.
+  - Reto 66 (PG-04/05).
+  - Media móvil del peso o "datos insuficientes" (PG-06/07, RN-OBJ-010).
+  - Fuerza (PG-08).
+  - En el modo sin números no hay peso, barra de peso ni [Registrar peso] (FR-006-05), y [Registrar peso] exige la autorización de medidas corporales (RN-DAT-001). Emite `progress_viewed`.
+- **Peso** (`progress/weight.ts`):
+  - PG-09 con [−0,5] [−0,1] [+0,1] [+0,5] [Guardar]; el peso viaja en el botón, sin estado guardado.
+  - Sin peso previo, PG-10 pide responder al mensaje (`force_reply`), y un texto que no es un peso recibe PG-12.
+  - Al guardar emite `weight_logged {source: 'progress'}`.
+- **`/logros` y [Ver bitácora]** (`progress/logbook.ts`, RN-GAM-011):
+  - Logros y récords de los más viejos a los más recientes, con las últimas P-101 entradas.
+  - Los récords guardan ahora carga y repeticiones para mostrar "80 kg × 5 (e1RM 93 kg)"; los anteriores salen sin ese dato (BI-05).
+  - Emite `achievement_log_viewed`.
+  - Los avisos RE-01 a RE-05 llevan ya sus botones [Ver bitácora]/[Ver progreso].
+- **Repositorios:** `weightsSince`, `records.list` y `achievements.list`, en MongoDB y en memoria, con pruebas.
+- **Pruebas:**
+  - `progress/progress.test.ts` (12): pantalla, teclado, media móvil, barra del objetivo, fuerza, modo sin números, peso escrito y con botones, bitácora vacía y en orden, [Ver bitácora].
+  - En el dominio, `progress.test.ts`.
+
+## [2026-11-11] implementar | T-080 Imagen del muro y resumen semanal
+- **Dominio** (`progress/progress.ts`): `wallGrid` arma el muro de las últimas P-102 semanas (nuevo, 12), de lunes a domingo. Cada día queda como completo, cuenta, no cuenta o todavía no pasó. Solo estados, sin datos sensibles (FR-006-01).
+- **Imagen** (`adapters/images/wall.ts`):
+  - Plantilla SVG sin texto, renderizada a PNG en el servidor con `@resvg/resvg-js` 2.6.2. Es la dependencia nueva que preveía el plan técnico §8, sin fuentes que empaquetar.
+  - Colores: verde oscuro = completo, verde claro = cuenta, gris = no cuenta, contorno = por venir.
+- **Resumen semanal:**
+  - Sale como foto con el pie RS-01, RS-03 o RS-04; RS-03 entra ahora que hay imagen.
+  - La imagen se genera al enviar. Si falla, se registra y sale solo el texto, sin RS-03.
+  - Emite `weekly_summary_sent {withImage}`.
+  - El envío proactivo admite foto (`sendPhoto` con el texto de pie).
+  - [[plantillas-de-mensajes]] v0.19.0: la nota de §1.5 se actualiza; ya no menciona RS-02, que el PO había dejado fuera.
+- **Pruebas:**
+  - Muro en el dominio, con una propiedad.
+  - Imagen: un cuadro por día, sin texto, PNG válido.
+  - Envío como foto.
+  - Resumen con imagen y RS-03, y resumen cuando la imagen falla.
+  - Generé una imagen de ejemplo con el renderizador real.
+- **Pendiente:** verificar el envío a Telegram con el bot real. El criterio de T-080 dice "enviada en local", y aquí no hay token; quedó probado con la API simulada.
+
+## [2026-11-11] decision | T-082 · nueva meta y compromiso en mantenimiento (PO)
+- **[Nueva meta], [Ajustar] y [Extender]** reutilizan la propuesta del onboarding (ON-05 y ON-06/07). Extender suma P-001 semanas; en la pregunta se nombró P-006 por error, que es el IMC mínimo. El objetivo anterior se cierra con su estado (RN-OBJ-007). Cubre lo esencial de T-035.
+- **Mantenimiento:** solo cambia el umbral de la semana cumplida (P-010); el plan sigue con los días declarados.
+- [[plantillas-de-mensajes]] v0.20.0: §2.8 con GO-01 a GO-10, textos nuevos para revisión del PO.
+
+## [2026-11-11] implementar | T-082 Objetivo cumplido, revisión de fase y mantenimiento
+- **Revisión diaria** (`goals/goal-review.ts`, al cerrar cada día):
+  - RN-OBJ-006: la media móvil en la meta P-007 semanas cierra el objetivo como cumplido. Llega GO-01 como aviso con el capítulo, se anota GOAL_DONE y se emite `goal_completed`.
+  - RN-OBJ-008: el fin del plazo sin la meta lo cierra como completado parcial, con el % y GO-02, sin lenguaje de fracaso; emite `goal_partially_completed`.
+  - RN-OBJ-013: cada P-057 semanas revisa la fase y emite `phase_reviewed`; con el ritmo fuera de límites llega GO-03.
+  - RN-MAN-001: si en P-009 días no elige, entra solo en mantenimiento.
+- **Mantenimiento** (RN-MAN-002, RN-MAN-005, FR-006-04): es un objetivo `maintain` con el peso de entrada (zona ± P-011 %, GO-04, o GO-05 sin peso). La intensidad pasa a Baja y se emite `maintenance_entered`. La semana se cumple con P-010 sesiones (`evaluateWeek` con `maintenance`).
+- **`mantenimiento` proactivo** (RN-MAN-003, `messaging/compose-goal.ts`): los lunes, si la media de las últimas P-012 semanas quedó fuera de la zona, sale MA-01 a MA-03 por el motor (`maintenance_band_exited`). [Ver opciones] muestra GO-09; [Mover mi zona] centra la zona (GO-10).
+- **Botones** (`goals/goal-actions.ts`):
+  - [Mantener], [Nueva meta] (ON-05/21 → ON-06/07 o GO-07 → GO-08), [Extender] (GO-06) y [Ajustar].
+  - La propuesta de meta del onboarding se extrajo para reutilizarla, sin cambiar su comportamiento.
+  - Los avisos GO llevan sus botones.
+- **Repositorios:** `goals.close`, `latest` y `extendActive`.
+- **Pruebas:** `goals/goals.test.ts` (11) y RN-MAN-002 en el dominio.
+- **Pendiente:**
+  - El logro MAINTENANCE_4W (4 semanas cumplidas en mantenimiento).
+  - Las temporadas de maestría (RN-MAN-004), que están fuera de la Fase 0.
+  - Que `/ajustes` permita cambiar de objetivo (resto de T-035).
+
+## [2026-11-11] implementar | M8 · correcciones de la revisión de código
+Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 medios y 3 bajos. Se corrigen todos.
+
+- **Alto, fin del plazo tras [Extender]:** la clave del aviso no cambiaba y el segundo GO-02 se perdía; el usuario quedaba sin objetivo ni forma de fijarlo. Ahora la clave lleva el plazo.
+- **Orden idempotente:** el aviso, el logro y el evento se escriben antes de cerrar el objetivo. Si algo falla, el día se repite con el objetivo todavía activo.
+- **Guardas de estado:**
+  - [Mantener] en mantenimiento solo repite GO-04 (no recentra la zona ni pisa la intensidad elegida, RN-MAN-005).
+  - [Extender] no toca el mantenimiento.
+  - GO-01 no se muestra si GO-04 llegó en el mismo lote.
+- **Mantenimiento:** sin barra de objetivo en 0 % en `/progreso`. RS-01 usa el compromiso de mantenimiento, como el cierre de la semana.
+- **Sin datos de peso (RN-OBJ-012):** el fin del plazo usa la última media móvil desde el inicio. Si no hay ninguna, sale GO-11 (texto nuevo, sin porcentaje, para revisión del PO) y `progressPct` queda en null.
+- **RN-SEG-003 en el servidor:** en el modo sin números no se acepta un objetivo de perder grasa aunque llegue el botón.
+- **Bajos:**
+  - El chequeo del mantenimiento proactivo va después de las comprobaciones baratas y no corre en el modo sin números.
+  - [Mover mi zona] usa la media móvil y respeta el modo sin números.
+  - GO-01 cuenta el día recién cerrado.
+  - `resvg` se carga al usarlo: si falta su binario, el resumen sale en texto en vez de tumbar el proceso.
+- **Pruebas:** 5 nuevas en `goals/goals.test.ts` que reproducen los hallazgos.
+

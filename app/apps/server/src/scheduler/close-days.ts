@@ -1,3 +1,4 @@
+import { reviewGoalDay, type GoalDeps } from '../goals/goal-review.js';
 import {
   addDays,
   closePlayerDay,
@@ -39,7 +40,7 @@ import { ensureWeekQuests, evaluateQuests, type QuestDeps } from './quests.js';
  * registros también se cierra: no cuenta, pero no resta.
  */
 
-export interface CloseDaysDeps extends QuestDeps {
+export interface CloseDaysDeps extends QuestDeps, GoalDeps {
   users: UsersRepository;
   streaks: StreakStatesRepository;
   /** En producción, para registrar el error de un usuario sin detener a los demás. */
@@ -105,6 +106,8 @@ export async function closeUserDays(
     await evaluateQuests(user, date, deps);
     if (week) await announceWeek(user, date, week, day.riskPaused, deps);
     await closeDayAchievements(user, date, state, next, deps);
+    // T-082: objetivo cumplido, plazo cumplido, revisión de fase y mantenimiento.
+    await reviewGoalDay(user, date, deps, next.counted.total);
     await ensureWeekQuests(user, weekStartOf(addDays(date, 1)), deps);
     // Si otro proceso guardó antes (cambió `rev`), este ciclo se detiene; el siguiente sigue.
     if (!(await deps.streaks.save(user.id, rev, next))) return closed;

@@ -41,6 +41,10 @@ export type CallbackAction =
   | { action: 'ps'; value: string }
   /** `/ajustes` de mensajes: pantalla u opción elegida (T-073). */
   | { action: 'aj'; value: string }
+  /** `/progreso`: peso (`w`/`s` + unidades), bitácora (`log`) o pantalla (`p`) (T-081). */
+  | { action: 'pg'; value: string }
+  /** Objetivo y mantenimiento: GO-01 a GO-03, GO-09, MA y la propuesta de meta (T-082). */
+  | { action: 'gl'; value: string }
   /** Comida: `<operación>` y el borrador de la comida en curso (T-050, T-051). */
   | { action: 'ml'; op: string; state: string };
 
@@ -79,6 +83,8 @@ export function encodeCallbackData(action: CallbackAction): string {
     case 'td':
     case 'ps':
     case 'aj':
+    case 'pg':
+    case 'gl':
       return checkSize(`${VERSION}:${action.action}:${checkValue(action.value)}`);
   }
 }
@@ -105,7 +111,9 @@ export function parseCallbackData(data: string): CallbackAction | null {
       action === 'rs' ||
       action === 'td' ||
       action === 'ps' ||
-      action === 'aj') &&
+      action === 'aj' ||
+      action === 'pg' ||
+      action === 'gl') &&
     arg !== undefined &&
     value === undefined &&
     VALUE.test(arg)

@@ -1,5 +1,5 @@
 import { PARAMETERS } from '@gymbro/domain';
-import { GrammyError, HttpError, type Api } from 'grammy';
+import { GrammyError, HttpError, InputFile, type Api } from 'grammy';
 import { telegramPayload } from '../bot/create-bot.js';
 import type { Reply } from '../onboarding/replies.js';
 
@@ -23,6 +23,7 @@ export class BotBlockedError extends Error {
 }
 
 const MS_PER_SECOND = 1000;
+const WALL_FILE_NAME = 'muro.png';
 const FORBIDDEN = 403;
 const TOO_MANY_REQUESTS = 429;
 const SERVER_ERROR = 500;
@@ -45,7 +46,7 @@ export function retryDelayMs(error: unknown, attempt: number): number {
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export function telegramSender(
-  api: Pick<Api, 'sendMessage'>,
+  api: Pick<Api, 'sendMessage' | 'sendPhoto'>,
   sleep: (ms: number) => Promise<void> = wait,
 ): MessageSender {
   return {
@@ -53,7 +54,13 @@ export function telegramSender(
       const { text, options } = telegramPayload(reply);
       for (let attempt = 1; ; attempt += 1) {
         try {
-          const message = await api.sendMessage(chatId, text, options);
+          // T-080: con imagen, el texto va como pie de la foto.
+          const message = reply.photo
+            ? await api.sendPhoto(chatId, new InputFile(reply.photo, WALL_FILE_NAME), {
+                ...options,
+                caption: text,
+              })
+            : await api.sendMessage(chatId, text, options);
           return { messageId: message.message_id };
         } catch (error) {
           if (error instanceof GrammyError && error.error_code === FORBIDDEN) {

@@ -16,6 +16,7 @@ import {
   EMPTY_PROFILE,
   type BodyMeasurementsRepository,
   type GoalRecord,
+  type StoredGoal,
   type PlansRepository,
   type AchievementsRepository,
   type ExerciseAdjustmentsRepository,
@@ -673,6 +674,13 @@ export function bodyMeasurementsRepository(db: Db): BodyMeasurementsRepository {
       );
       return (doc?.['weightKg'] as number | undefined) ?? null;
     },
+    async weightsSince(userId, from) {
+      const docs = await collection
+        .find({ userId, date: { $gte: from }, weightKg: { $type: 'number' } })
+        .sort({ date: 1 })
+        .toArray();
+      return docs.map((d) => ({ date: d['date'] as LocalDate, kg: d['weightKg'] as number }));
+    },
   };
 }
 
@@ -717,6 +725,27 @@ export function goalsRepository(db: Db): GoalsRepository {
         horizonWeeks,
       } = doc as unknown as GoalRecord;
       return { userId: id, type, metric, startValue, targetValue, startDate, horizonWeeks };
+    },
+    async close(userId, status, at, progressPct) {
+      const result = await collection.updateOne(
+        { userId, status: 'active' },
+        { $set: { status, closedAt: at, progressPct } },
+      );
+      return result.modifiedCount === 1;
+    },
+    async latest(userId) {
+      const doc = await collection.findOne({ userId }, { sort: { _id: -1 } });
+      if (!doc) return null;
+      const { _id, ...goal } = doc;
+      void _id;
+      return goal as unknown as StoredGoal;
+    },
+    async extendActive(userId, extraWeeks) {
+      const result = await collection.updateOne(
+        { userId, status: 'active' },
+        { $inc: { horizonWeeks: extraWeeks } },
+      );
+      return result.modifiedCount === 1;
     },
   };
 }
@@ -896,6 +925,15 @@ export function personalRecordsRepository(db: Db): PersonalRecordsRepository {
     async countForSession(userId, sessionId) {
       return collection.countDocuments({ userId, setKey: { $regex: `^set:${sessionId}:` } });
     },
+    async list(userId) {
+      const docs = await collection.find({ userId }).sort({ date: 1, _id: 1 }).toArray();
+      return docs.map((d) => ({
+        exerciseCode: d['exerciseCode'] as string,
+        date: d['date'] as LocalDate,
+        loadKg: typeof d['loadKg'] === 'number' ? d['loadKg'] : null,
+        reps: typeof d['reps'] === 'number' ? d['reps'] : null,
+      }));
+    },
   };
 }
 
@@ -909,6 +947,10 @@ export function achievementsRepository(db: Db): AchievementsRepository {
         { upsert: true },
       );
       return { added: result.upsertedCount === 1 };
+    },
+    async list(userId) {
+      const docs = await collection.find({ userId }).sort({ at: 1, _id: 1 }).toArray();
+      return docs.map((d) => ({ code: d['code'] as string, at: d['at'] as Date }));
     },
   };
 }

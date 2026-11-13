@@ -4,6 +4,7 @@ import {
   addDays,
   comebackAction,
   evaluateWeek,
+  wallGrid,
   weekStartOf,
   weekdayOf,
   type LocalDate,
@@ -113,10 +114,13 @@ export const weeklySummary: Composer = async (user, date, deps) => {
   // Una semana sin días que cuentan no tiene nada que reconocer; de eso se ocupa `regreso`.
   if (achieved.countedDays === 0) return { day, options: [] };
   const frase = weeklyPhrase(weekStart);
+  const wall = wallGrid(await deps.days.history(user.id), date);
   const options: TemplateOption[] = [
     { templateId: 'RS-04', variables: { dqc: achieved.countedDays, frase_semana: frase } },
+    // T-080: con la imagen del muro entra RS-03.
+    { templateId: 'RS-03', variables: { frase_semana: frase }, needsImage: true },
   ];
-  if (user.settings.numberFreeMode) return { day, options };
+  if (user.settings.numberFreeMode) return { day, options, wall };
 
   const previous = (await deps.weeks.list(user.id)).find(
     (w) => w.weekStart === addDays(weekStart, -WEEK_LENGTH),
@@ -129,7 +133,8 @@ export const weeklySummary: Composer = async (user, date, deps) => {
   const planned = (await plannedWeekDays(user, weekStart, deps)).filter(
     (d) => d.type === 'TRAINING',
   ).length;
-  const week = evaluateWeek({ planned, completed: achieved.sessions, paused: false });
+  const maintenance = (await deps.goals.active(user.id))?.type === 'maintain';
+  const week = evaluateWeek({ planned, completed: achieved.sessions, paused: false, maintenance });
   if (previous && proteinByDay.length > 0 && week.evaluated) {
     const average = proteinByDay.reduce((a, b) => a + b, 0) / proteinByDay.length;
     options.push({
@@ -144,5 +149,5 @@ export const weeklySummary: Composer = async (user, date, deps) => {
       },
     });
   }
-  return { day, options };
+  return { day, options, wall };
 };

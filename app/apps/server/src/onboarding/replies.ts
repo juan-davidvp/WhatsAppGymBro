@@ -25,6 +25,10 @@ export interface Reply {
   readonly mainKeyboard?: boolean;
   /** Aviso breve sobre el botón tocado, sin mensaje nuevo (p. ej. SC-03). */
   readonly toast?: boolean;
+  /** Pide responder a este mensaje (PG-10: escribir el primer peso). */
+  readonly forceReply?: boolean;
+  /** Imagen PNG; el texto va como pie (resumen semanal con el muro, T-080). */
+  readonly photo?: Uint8Array;
 }
 
 /** Objetivo de cada botón de ON-05, por su texto en la bóveda. */

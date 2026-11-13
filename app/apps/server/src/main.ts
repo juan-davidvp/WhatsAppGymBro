@@ -38,6 +38,7 @@ import { startScheduler } from './scheduler/loop.js';
 import { createBot, type BotDependencies } from './bot/create-bot.js';
 import { dispatchDue } from './messaging/dispatch.js';
 import { settleOutcomes } from './messaging/engagement.js';
+import { wallPng } from './adapters/images/wall.js';
 import { scheduleCandidates } from './messaging/schedule.js';
 import { telegramSender } from './messaging/sender.js';
 import { loadConfig } from './config.js';
@@ -146,13 +147,22 @@ async function main(): Promise<void> {
           weeks,
           quests,
           messageStats,
+          goals: deps.goals,
+          bodyMeasurements: deps.bodyMeasurements,
+          records: deps.records,
           events,
           clock,
           logger,
         });
         if (closed > 0) logger.info('days_closed', { count: closed });
         // T-070/T-072 · mensajes proactivos: cerrar ventanas P-067, programar y enviar (FR-007-03).
-        const messaging = { ...deps, clock, logger, sender: telegramSender(bot.api) };
+        const messaging = {
+          ...deps,
+          clock,
+          logger,
+          sender: telegramSender(bot.api),
+          renderWall: wallPng,
+        };
         await settleOutcomes(messaging);
         await scheduleCandidates(messaging);
         const sent = await dispatchDue(messaging);

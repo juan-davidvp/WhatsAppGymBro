@@ -1,5 +1,6 @@
-import { renderTemplate } from '@gymbro/content';
-import { plain, templateReply, type Reply } from '../onboarding/replies.js';
+import { renderTemplate, templateById } from '@gymbro/content';
+import type { CallbackAction } from '../bot/callback-data.js';
+import { button, plain, templateReply, type Reply } from '../onboarding/replies.js';
 import type {
   NoticeRecord,
   NoticesRepository,
@@ -32,8 +33,13 @@ export async function takeNotices(user: UserRecord, deps: NoticeDeps): Promise<R
   // misiones de la semana) solo queda el más reciente; los logros se muestran todos.
   const shown = pending.filter(
     (notice, i) =>
-      !LATEST_ONLY.has(notice.templateId) ||
-      !pending.slice(i + 1).some((later) => later.templateId === notice.templateId),
+      (!LATEST_ONLY.has(notice.templateId) ||
+        !pending.slice(i + 1).some((later) => later.templateId === notice.templateId)) &&
+      // T-082: si ya entró en mantenimiento, la pregunta de GO-01 sobra.
+      !(
+        notice.templateId === GOAL_DONE_NOTICE &&
+        pending.slice(i + 1).some((later) => MAINTENANCE_NOTICES.has(later.templateId))
+      ),
   );
   const repair = (await deps.streaks.get(user.id))?.state.streak.repair ?? null;
   const repairOpen = repair !== null && now.getTime() <= Date.parse(repair.offeredUntil);
@@ -41,6 +47,9 @@ export async function takeNotices(user: UserRecord, deps: NoticeDeps): Promise<R
     .filter((notice) => notice.templateId !== REPAIR_OFFER || repairOpen)
     .map(noticeReply);
 }
+
+const GOAL_DONE_NOTICE = 'GO-01';
+const MAINTENANCE_NOTICES: ReadonlySet<string> = new Set(['GO-04', 'GO-05']);
 
 /** Avisos que un aviso posterior de la misma plantilla deja sin vigencia. */
 const LATEST_ONLY: ReadonlySet<string> = new Set(['RA-01', 'RA-02', 'MI-01']);
@@ -61,5 +70,33 @@ function noticeReply(notice: NoticeRecord): Reply {
       renderTemplate(REPAIR_OFFER, notice.variables),
     );
   }
-  return plain(notice.templateId, notice.variables);
+  return withLogbookButtons(plain(notice.templateId, notice.variables), notice.templateId);
+}
+
+/**
+ * Botones de los avisos: [Ver bitácora] y [Ver progreso] de RE-01 a RE-05 (T-081)
+ * y los de objetivo de GO-01 a GO-03 (T-082). Un aviso con otros botones va solo.
+ */
+const NOTICE_BUTTONS: Readonly<Record<string, CallbackAction>> = {
+  'Ver bitácora': { action: 'pg', value: 'log' },
+  'Ver progreso': { action: 'pg', value: 'p' },
+  Mantener: { action: 'gl', value: 'keep' },
+  'Nueva meta': { action: 'gl', value: 'new' },
+  Extender: { action: 'gl', value: 'ext' },
+  'Extender plazo': { action: 'gl', value: 'ext' },
+  Ajustar: { action: 'gl', value: 'adj' },
+  'Ajustar meta': { action: 'gl', value: 'adj' },
+  'Seguir así': { action: 'td', value: 'dismiss' },
+};
+
+function withLogbookButtons(reply: Reply, templateId: string): Reply {
+  const labels = templateById(templateId).buttons;
+  if (labels.length === 0 || !labels.every((label) => NOTICE_BUTTONS[label])) return reply;
+  return {
+    ...reply,
+    buttons: labels.flatMap((label) => {
+      const action = NOTICE_BUTTONS[label];
+      return action ? [button(label, action)] : [];
+    }),
+  };
 }

@@ -10,6 +10,7 @@ import {
   PROHIBITED_EXPRESSIONS,
   WEEKLY_PHRASES,
   WEEK_LINE_SYMBOLS,
+  MONTH_ABBREVIATIONS,
   PURPOSE_NAMES,
   QUEST_LABELS,
   type Amount,
@@ -46,6 +47,8 @@ describe('T-003 · plantillas de mensajes', () => {
     /^### 2\.4/,
     /^### 2\.5/,
     /^### 2\.6/,
+    /^### 2\.7/,
+    /^### 2\.8/,
     /^## 3\./,
     /^### 3\.1/,
     /^### 3\.2/,
@@ -88,6 +91,15 @@ describe('T-003 · plantillas de mensajes', () => {
     const marks = line.slice(line.indexOf('Marcas:'));
     const symbols = [...marks.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
     expect(symbols).toEqual(Object.values(WEEK_LINE_SYMBOLS));
+  });
+
+  it('las abreviaturas de los meses de la bitácora ({mes}) coinciden', () => {
+    const line = templatesMd.split('\n').find((l) => l.startsWith('`{mes}`')) ?? '';
+    const months = line
+      .slice(line.indexOf(':') + 1)
+      .split('·')
+      .map((m) => m.trim());
+    expect([...MONTH_ABBREVIATIONS]).toEqual(months);
   });
 
   it('los nombres de los propósitos de /ajustes ({tipo}) coinciden', () => {

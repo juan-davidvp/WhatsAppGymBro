@@ -1,10 +1,11 @@
 import { templateById } from '@gymbro/content';
-import type { DayContext, LocalDate, MessagePurpose } from '@gymbro/domain';
+import type { DayContext, LocalDate, MessagePurpose, WallCell } from '@gymbro/domain';
 import type { CallbackAction } from '../bot/callback-data.js';
 import type { MealDeps } from '../meals/meals.js';
 import { button, type Button } from '../onboarding/replies.js';
 import { plannedDayType } from '../plans/weekly-plan.js';
 import type {
+  GoalsRepository,
   MessageStatsRepository,
   OutboxRepository,
   UserRecord,
@@ -21,6 +22,8 @@ import type {
 
 export interface ComposeDeps extends MealDeps {
   weeks: WeeksRepository;
+  /** T-082: el mantenimiento es el objetivo activo `maintain`. */
+  goals: GoalsRepository;
   outbox: OutboxRepository;
   messageStats: MessageStatsRepository;
 }
@@ -28,6 +31,8 @@ export interface ComposeDeps extends MealDeps {
 export interface TemplateOption {
   readonly templateId: string;
   readonly variables: Readonly<Record<string, string | number>>;
+  /** Solo tiene sentido con la imagen del muro (RS-03). */
+  readonly needsImage?: boolean;
 }
 
 /** RN-MSJ-008: lo que cambia en `message_stats` cuando el mensaje sale. */
@@ -40,6 +45,8 @@ export interface Composition {
   /** Vacío si ya no hay nada que decir (p. ej., no hay sesión planificada). */
   readonly options: readonly TemplateOption[];
   readonly effect?: CompositionEffect;
+  /** HU-006-1: muro de constancia que acompaña el mensaje (T-080). */
+  readonly wall?: readonly (readonly WallCell[])[];
 }
 
 /** `date` es el día al que se refiere el mensaje (la clave de la salida). */
@@ -88,6 +95,10 @@ const BUTTON_ACTIONS: Readonly<Record<string, CallbackAction>> = {
   'Hoy no': td('dismiss'),
   'Ahora no': td('dismiss'),
   Volver: { action: 'nav', target: 'today' },
+  // T-082 · `mantenimiento` (MA-01 a MA-03).
+  'Ver opciones': { action: 'gl', value: 'opt' },
+  'Está bien así': td('dismiss'),
+  'Nueva meta': { action: 'gl', value: 'new' },
   Sí: { action: 'nav', target: 'today' },
   Retomar: { action: 'nav', target: 'today' },
 };

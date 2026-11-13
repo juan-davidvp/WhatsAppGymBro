@@ -205,6 +205,43 @@ describe('RN-MSJ-017 · T-071 · resumen_semanal en texto el domingo a las 19:00
     expect(t.sent[0]?.reply.text).toContain('proteína media 40 g');
   });
 
+  it('T-080 · HU-006-1 · con la imagen del muro: foto con el pie RS-03 y weekly_summary_sent', async () => {
+    const t = await proactiveSetup();
+    await counted(t, '2026-10-19');
+    await counted(t, '2026-10-21');
+    const grids: unknown[] = [];
+    t.deps.renderWall = (grid) => {
+      grids.push(grid);
+      return new Uint8Array([137, 80, 78, 71]);
+    };
+    t.deps.random = () => 0.5; // entre RS-04 y RS-03, la segunda
+    t.goTo(SUNDAY_19H);
+    expect(await t.tick()).toBe(1);
+    expect(t.sentTemplates()).toEqual(['resumen_semanal:RS-03']);
+    expect(t.sent[0]?.reply.photo).toBeDefined();
+    expect(t.sent[0]?.reply.text).toBe(
+      renderTemplate('RS-03', { frase_semana: weeklyPhrase('2026-10-19') }),
+    );
+    expect(grids).toHaveLength(1);
+    expect(t.eventsNamed('weekly_summary_sent')).toEqual([{ withImage: true }]);
+  });
+
+  it('T-080 · si la imagen falla, sale el texto sin RS-03 y queda registrado', async () => {
+    const t = await proactiveSetup();
+    await counted(t, '2026-10-19');
+    await counted(t, '2026-10-21');
+    await counted(t, '2026-10-23');
+    t.deps.renderWall = () => {
+      throw new Error('resvg');
+    };
+    t.deps.random = () => 0.99;
+    t.goTo(SUNDAY_19H);
+    expect(await t.tick()).toBe(1);
+    expect(t.sentTemplates()).toEqual(['resumen_semanal:RS-04']);
+    expect(t.sent[0]?.reply.photo).toBeUndefined();
+    expect(t.eventsNamed('weekly_summary_sent')).toEqual([{ withImage: false }]);
+  });
+
   it('una semana sin días que cuentan no recibe resumen [supuesto, para el PO]', async () => {
     const t = await proactiveSetup();
     t.goTo(SUNDAY_19H);

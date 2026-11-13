@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.17.0
+version: 0.21.0
 creado: 2026-10-18
 actualizado: 2026-11-11
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -68,7 +68,10 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | RS-03 | Así quedó tu muro esta semana. {frase_semana} El plan de la próxima ya está. | [Ver plan] [Ajustar días] |
 | RS-04 | Cerraste otra semana: {dqc} días que cuentan. {frase_semana} | [Ver plan] [Ajustar días] |
 
-> Hasta que llegue la imagen del muro (T-080), el resumen sale en texto: RS-01 (no en el modo sin números), RS-02 (solo si la semana va cumplida) y RS-04. RS-03 espera a la imagen.
+> - El resumen sale con la imagen del muro de las últimas P-102 semanas (T-080). La imagen no lleva texto: cada día es un cuadro según cuente, sea completo o no.
+> - El pie de la imagen rota entre RS-01, RS-03 y RS-04. RS-01 no va en el modo sin números y solo se usa si hay semana anterior y comidas registradas. Si la imagen no se puede generar, sale solo el texto, con RS-01 o RS-04.
+> - RS-02 queda fuera: las misiones nuevas se generan después del cierre del domingo (PO, 2026-11-10).
+> - Una semana sin días que cuentan no recibe resumen `[supuesto]`.
 
 `{frase_semana}` sale de una lista rotativa sin juicios: "Cada día sumó.", "Volviste cuando costaba, y eso también suma.", "Semana sólida.", "Constancia por encima de todo."
 
@@ -152,12 +155,11 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | HN-04 | Ningún día posible | Esta semana no queda un día que respete tu descanso. Seguimos con el plan el próximo día de entreno, sin deuda. |
 | HN-05 | Sesión movida | Listo: {sesion} pasa al {dia}. |
 | KB-01 | Teclado persistente (al terminar el inicio) | Abajo tienes Hoy, Comida y Progreso a un toque. |
-| KB-02 | Sección aún no disponible | Esa sección todavía no está lista. Por ahora tienes Hoy, Comida y /plan. |
 
 > - Hoy en día de entreno usa PL-01 (§1.1) con sus botones.
 > - HN-03 lleva un botón por cada día de esta semana al que se puede mover la sesión (RN-PLAN-007, RN-PLAN-008).
 > - Teclado persistente ([[flujos-de-usuario]] §1): `🏋️ Hoy` · `🍽️ Comida` · `📈 Progreso`.
-> - KB-02 responde a Progreso hasta que llegue M8.
+> - `📈 Progreso` abre PG-01 (§2.7).
 
 
 ### 2.4 Tarjeta de sesión (T-041, T-042)
@@ -187,6 +189,8 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | plan | Tu plan de la semana |
 | privacidad | Tu autorización y la política de datos |
 | borrar_datos | Borrar todos tus datos |
+| progreso | Tu progreso y tu peso |
+| logros | Tu bitácora de logros |
 | pausa | Pausar mis mensajes unos días |
 | ajustes | Cuánto y cuándo te escribo |
 
@@ -246,6 +250,64 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 > - Después de cada cambio se vuelve a AJ-01, con AJ-03 como aviso breve sobre el botón.
 
 `{tipo}` (nombres de los propósitos en AJ-01 y AJ-02): `plan_listo` Plan del día · `cierre_del_dia` Cierre del día · `recordatorio_contextual` Recordatorio · `regreso` Regreso · `resumen_semanal` Resumen de la semana
+
+### 2.7 Progreso y bitácora (`/progreso`, `/logros`, T-081)
+
+| ID | Momento | Texto |
+|---|---|---|
+| PG-01 | `/progreso` o `📈 Progreso` | Llevas **{dias_que_cuentan}** días que cuentan · racha de {racha} · nivel {nivel}, {nombre_nivel}. [Registrar peso] [Ver bitácora] |
+| PG-02 | Línea del objetivo | Objetivo: {barra} {porcentaje} % |
+| PG-03 | Línea del objetivo `ser_constante` | Objetivo: {barra} {semanas} de {meta} semanas cumplidas |
+| PG-04 | Línea del Reto 66 | Reto 66: {dias} de {meta} días que cuentan |
+| PG-05 | Reto 66 cumplido | Reto 66: hábito forjado ✅ |
+| PG-06 | Línea del peso | Peso, media de {dias} días: {peso} kg |
+| PG-07 | Peso sin datos suficientes | Peso: con {minimo} registros en {dias} días ves tu media. |
+| PG-08 | Línea de fuerza | Fuerza (1RM estimado): {lista} |
+| PG-09 | [Registrar peso] con un peso previo | Tu peso de hoy: **{peso}** kg. [Guardar] |
+| PG-10 | [Registrar peso] sin peso previo | Escribe tu peso en kg (por ejemplo, 72,5). |
+| PG-11 | Peso guardado | Peso guardado: {peso} kg. |
+| PG-12 | Respuesta a PG-10 que no es un peso | No entendí ese peso. Escríbelo en kg, por ejemplo 72,5. |
+| BI-01 | `/logros` o [Ver bitácora] | Tu bitácora: {total} entre logros y récords. |
+| BI-02 | Bitácora vacía | Tu bitácora está vacía por ahora. Tu primer logro llega con tu primera sesión. |
+| BI-03 | Línea de un logro | {fecha} · {nombre} |
+| BI-04 | Línea de un récord | {fecha} · Récord {ejercicio}: {carga} × {reps}{e1rm} |
+| BI-05 | Línea de un récord anterior a T-081 | {fecha} · Récord {ejercicio} |
+
+> - PG-01 suma, en líneas aparte y en este orden: PG-02 o PG-03 (si hay objetivo con meta), PG-04 o PG-05, PG-06 o PG-07 y PG-08 (si hay series con carga).
+> - Modo sin números (FR-006-05): no van PG-06, PG-07 ni la barra de un objetivo de peso, ni [Registrar peso]. Tampoco hay [Registrar peso] sin la autorización de medidas corporales (RN-DAT-001).
+> - `{barra}` tiene 10 celdas como CM-04; `{porcentaje}` va sin decimales (RN-OBJ-011). `{peso}` lleva una cifra decimal con coma.
+> - PG-08: por cada patrón (sentadilla, bisagra, empuje y tirón), el ejercicio con más series y su mejor 1RM estimado, separados por " · ": "Sentadilla 93 kg · Peso muerto 120 kg" (decisión del PO, 2026-11-11).
+> - PG-09 parte del último peso y lleva [−{n}] y [+{n}] por cada paso de P-100 (coma decimal), más [Guardar]; se edita en cada toque (decisión del PO, 2026-11-11). PG-10 se usa solo cuando todavía no hay ningún peso y pide responder a ese mensaje. Al guardar: PG-11 como aviso breve y PG-01 actualizado.
+> - BI-01 sigue con una línea por entrada (BI-03, BI-04 o BI-05), de la más antigua a la más reciente, con las últimas P-101. `{e1rm}` es " (e1RM {n} kg)" si la serie tenía carga, o vacío.
+
+`{mes}` (abreviaturas de `{fecha}` "12-nov" en BI-03 a BI-05): ene · feb · mar · abr · may · jun · jul · ago · sep · oct · nov · dic
+
+### 2.8 Objetivo y mantenimiento (T-082)
+
+| ID | Momento | Texto |
+|---|---|---|
+| GO-01 | Objetivo cumplido (RN-OBJ-006) | Sí era posible: cumpliste tu objetivo en {semanas} semanas, con {dias_que_cuentan} días que cuentan y {records} récords. ¿Cómo sigues? [Mantener] [Nueva meta] |
+| GO-02 | Fin del plazo sin la meta (RN-OBJ-008) | Terminó el plazo de tu objetivo y avanzaste un {porcentaje} %. Todo lo que hiciste suma. ¿Cómo seguimos? [Extender] [Ajustar] |
+| GO-03 | Revisión de fase fuera de ritmo (RN-OBJ-013) | Revisé tu fase: vas más rápido de lo que conviene sostener. ¿Cómo seguimos? [Extender plazo] [Ajustar meta] [Seguir así] |
+| GO-04 | Entrada en mantenimiento (RN-MAN-002, RN-MAN-005) | Modo mantenimiento: tu semana se cumple con {sesiones} sesiones y tu zona es de {bajo} a {alto} kg. Te escribo menos. |
+| GO-05 | Entrada en mantenimiento sin peso | Modo mantenimiento: tu semana se cumple con {sesiones} sesiones. Te escribo menos. |
+| GO-06 | Plazo extendido | Listo: tu objetivo sigue {semanas} semanas más. |
+| GO-07 | Objetivo nuevo sin meta de peso | Listo, objetivo nuevo: {objetivo}. Tu plan se ajusta desde la semana que viene. |
+| GO-08 | Objetivo nuevo con meta | Listo, objetivo nuevo: {objetivo}, meta {meta} kg en {semanas} semanas. |
+| GO-09 | [Ver opciones] de MA-01 a MA-03 | ¿Qué prefieres? [Mover mi zona] [Nueva meta] [Está bien así] |
+| GO-10 | Zona movida | Listo: tu zona ahora es de {bajo} a {alto} kg. |
+| GO-11 | Fin del plazo sin datos de peso (RN-OBJ-008, RN-OBJ-012) | Terminó el plazo de tu objetivo. Todo lo que hiciste suma. ¿Cómo seguimos? [Extender] [Ajustar] |
+
+> - GO-01 a GO-03 y GO-11 llegan como aviso en la próxima interacción, igual que los logros (decisión del PO, 2026-11-10). Si GO-04 llega en el mismo lote, GO-01 no se muestra (ya entró en mantenimiento).
+> - GO-02 usa la última media móvil desde el inicio del objetivo; sin ninguna (el peso es opcional, RN-OBJ-012), GO-11, sin porcentaje.
+> - GO-01: `{semanas}` desde el inicio del objetivo y `{records}` récords desde ese día. Al cumplirse queda el logro GOAL_DONE en la bitácora.
+> - [Mantener], o P-009 días sin elegir, entra en mantenimiento (RN-MAN-001) con GO-04, o GO-05 sin peso.
+> - En mantenimiento la semana se cumple con P-010 sesiones y el plan no cambia (decisión del PO, 2026-11-11). La intensidad pasa a Baja (RN-MAN-005) y la zona es ± P-011 % de la media móvil al entrar.
+> - [Nueva meta] muestra ON-05 (u ON-21 tras un tamizaje positivo). Para ganar músculo o perder grasa, con peso y estatura, sigue con ON-06/ON-07 desde el último peso; si no, GO-07. [Mantener] en ON-05 entra en mantenimiento (decisión del PO, 2026-11-11).
+> - [Extender] y [Extender plazo] suman P-001 semanas al plazo (GO-06).
+> - [Ajustar] y [Ajustar meta] proponen otra meta del mismo objetivo con ON-06/ON-07; al elegirla sale GO-08.
+> - [Seguir así] y [Está bien así] no cambian nada.
+> - [Mover mi zona] centra la zona en la media móvil actual (GO-10).
 
 ## 3. Onboarding (textos base)
 
