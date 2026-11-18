@@ -3,13 +3,13 @@ titulo: SPEC-003 · Registro de entrenamiento con un toque
 tipo: sdd-spec
 id: SPEC-003
 hito: H3
-estado: borrador
+estado: implementado
 version: 0.1.1
 fase: 0
 prioridad: P1
 depende_de: [SPEC-002]
 creado: 2026-10-18
-actualizado: 2026-10-20
+actualizado: 2026-11-18
 deriva_de: [registro-sin-friccion, fundamentos-de-entrenamiento, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-005-dia-que-cuenta-y-gamificacion, spec-009-seguridad-y-privacidad, reglas-de-negocio]

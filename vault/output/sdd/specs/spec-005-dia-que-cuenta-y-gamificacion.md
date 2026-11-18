@@ -3,13 +3,13 @@ titulo: SPEC-005 · Día que cuenta, racha y gamificación
 tipo: sdd-spec
 id: SPEC-005
 hito: H3
-estado: borrador
+estado: implementado
 version: 0.2.0
 fase: 0
 prioridad: P1
 depende_de: [SPEC-003, SPEC-004]
 creado: 2026-10-18
-actualizado: 2026-11-08
+actualizado: 2026-11-18
 deriva_de: [cada-dia-cuenta, sistema-de-gamificacion, estrategia-anti-novedad, gamificacion-y-habitos]
 fuentes: [F45, F46]
 relacionados: [spec-006-progreso-logros-y-mantenimiento, spec-007-proactividad-y-mensajes, catalogo-de-logros-y-niveles, parametros]

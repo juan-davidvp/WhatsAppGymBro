@@ -875,3 +875,9 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
 - **`/exportar` (T-090, HU-008-1):** `export_delivered` se emite después de entregar el archivo y, si Telegram falla, responde EX-04. `series.csv` deja de llevar `sesion_id` y el JSON no lleva identificadores internos ([[plantillas-de-mensajes]] v0.25.0).
 - **No se cambia:** pasar a mantenimiento no regenera el plan, por la decisión del PO del 2026-11-11 (el plan no cambia en mantenimiento).
 - **Queda como deuda menor:** un día quitado que sigue en el plan de la semana en curso usa la hora de la franja durante esa semana.
+
+## [2026-11-18] editar | T-104 estado de las specs
+- **Pasan a `implementado`:** SPEC-001, SPEC-002, SPEC-003 y SPEC-005, con todas sus historias hechas. SPEC-007 ya lo estaba.
+- **Siguen en `borrador`:** SPEC-004 (HU-004-4 y HU-004-5, comida con IA), SPEC-006 (HU-006-7 y HU-006-8) y SPEC-008 (HU-008-2 y HU-008-3), por las tareas que el PO dejó fuera de este cierre.
+- **SPEC-009 sigue en `borrador`:** RN-DAT-004 (fotos de comida) depende de T-053 y RN-DAT-007 (política de datos con responsable) de Q5, y ninguna tiene prueba todavía.
+- **T-104 sigue abierta** hasta terminar T-100 (despliegue y 72 horas) y T-103 (prueba manual en el gym).

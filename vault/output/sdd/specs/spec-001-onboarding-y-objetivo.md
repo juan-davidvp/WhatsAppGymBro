@@ -3,13 +3,13 @@ titulo: SPEC-001 · Onboarding, objetivo y hábito
 tipo: sdd-spec
 id: SPEC-001
 hito: H3
-estado: borrador
+estado: implementado
 version: 0.2.0
 fase: 0
 prioridad: P1
 depende_de: [SPEC-009]
 creado: 2026-10-18
-actualizado: 2026-10-20
+actualizado: 2026-11-18
 deriva_de: [objetivos-y-progreso, flujos-de-usuario, usuario-cabeza-01, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-009-seguridad-y-privacidad, spec-002-plan-y-sesion-del-dia, spec-007-proactividad-y-mensajes, reglas-de-negocio]

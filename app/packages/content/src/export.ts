@@ -9,14 +9,7 @@ export const EXPORT_CSV = {
   },
   sets: {
     file: 'series.csv',
-    columns: [
-      'fecha_hora',
-      'ejercicio',
-      'serie',
-      'repeticiones',
-      'carga_kg',
-      'editada',
-    ],
+    columns: ['fecha_hora', 'ejercicio', 'serie', 'repeticiones', 'carga_kg', 'editada'],
   },
   meals: {
     file: 'comidas.csv',

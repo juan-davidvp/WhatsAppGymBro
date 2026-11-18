@@ -3,13 +3,13 @@ titulo: SPEC-002 · Plan semanal y sesión del día (A/B/C)
 tipo: sdd-spec
 id: SPEC-002
 hito: H3
-estado: borrador
+estado: implementado
 version: 0.1.2
 fase: 0
 prioridad: P1
 depende_de: [SPEC-001]
 creado: 2026-10-18
-actualizado: 2026-10-19
+actualizado: 2026-11-18
 deriva_de: [constancia-en-cualquier-lugar, fundamentos-de-entrenamiento, flujos-de-usuario, objetivos-y-progreso]
 fuentes: []
 relacionados: [spec-003-registro-de-entrenamiento, spec-007-proactividad-y-mensajes, catalogo-de-ejercicios-base, parametros]
