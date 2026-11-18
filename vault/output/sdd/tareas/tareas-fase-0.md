@@ -123,7 +123,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
 | T-100 | Despliegue en un servidor siempre encendido + MongoDB Atlas + *webhook* con secreto | [[plan-tecnico]] §10 | M3–M7 | El bot funciona 72 h sin intervención |
-| T-101 [P] | Hoja de línea base A1 y guía del protocolo N-de-1 | [[plan-de-medicion]] §5 | — | Hoja lista antes de iniciar A1 |
+| T-101 [P] ✅ | Hoja de línea base A1 y guía del protocolo N-de-1 | [[plan-de-medicion]] §5 | — | Hoja lista antes de iniciar A1 |
 | T-102 ✅ | *Could:* comando `/lab` para el fundador | [[plan-de-medicion]] §6 | T-022 | Muestra M01, M03, M04 y G06 |
 | T-103 | Prueba de aceptación manual en el gym | [[estrategia-de-pruebas]] §6 | T-043, T-051 | Presupuestos de toques y segundos cumplidos |
 | T-104 | Lint final y actualización de la bóveda (estado de las specs, `wiki/log.md`) | Constitución | Todas | `lint_trazabilidad.py --codigo` sin errores |

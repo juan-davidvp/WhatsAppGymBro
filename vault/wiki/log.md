@@ -855,3 +855,9 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
 - **Cálculo** (`messaging/lab-metrics.ts`, puro): G06 revisa silencio, separación y presupuesto con los ajustes actuales del usuario.
 - **Textos nuevos para revisión del PO:** LB-01 a LB-05 ([[plantillas-de-mensajes]] v0.24.0, §2.10).
 - **Pruebas:** `messaging/lab-metrics.test.ts` (10), `lab/lab.test.ts` (4), configuración (1) y lectura de eventos en MongoDB (1).
+
+## [2026-11-18] implementar | T-101 hoja de línea base y guía N-de-1
+- **Guía:** [[guia-protocolo-n-de-1]], con qué anotar en A1, B y A2 y de dónde sale cada dato.
+- **Hoja:** `vault/output/sdd/plan/hoja-protocolo-n-de-1.xlsx`, plantilla sin datos personales. Las fechas salen del lunes en que empieza A1.
+- **Supuesto para revisión del PO:** SC-000-1 se mide en sesiones completadas por semana, porque las fases duran distinto y la razón completadas ÷ planificadas se satura en 100 %.
+- **Verificación:** 107 fórmulas evaluadas con datos sintéticos fuera de Excel. Falta abrir la hoja en Excel o Google Sheets.
