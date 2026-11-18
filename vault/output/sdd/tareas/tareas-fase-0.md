@@ -115,7 +115,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-090 | `/exportar` (CSV + JSON) | HU-008-1 | T-020 | SC-008-1 |
+| T-090 ✅ | `/exportar` (CSV + JSON) | HU-008-1 | T-020 | SC-008-1 |
 | T-091 | *Could:* puente de ingesta con token, validación y límite de tasa + guía | HU-008-2 | T-060 | Escenarios pasan |
 
 ## M10 · Despliegue y validación

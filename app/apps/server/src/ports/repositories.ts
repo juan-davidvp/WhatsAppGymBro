@@ -287,6 +287,14 @@ export interface ScreeningsRepository {
   }): Promise<void>;
 }
 
+/** Lo guardado de un usuario, por colección (`/exportar`, RN-INT-002). */
+export type UserExport = Readonly<Record<string, readonly Readonly<Record<string, unknown>>[]>>;
+
+export interface UserDataExporter {
+  /** Solo los documentos de este usuario; sin tokens de ingesta ni datos técnicos. */
+  collect(userId: string): Promise<UserExport>;
+}
+
 export interface UserDataEraser {
   /**
    * RN-DAT-003: borra todos los documentos del usuario en todas las colecciones y

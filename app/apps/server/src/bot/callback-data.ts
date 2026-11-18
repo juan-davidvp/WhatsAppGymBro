@@ -43,6 +43,8 @@ export type CallbackAction =
   | { action: 'aj'; value: string }
   /** `/progreso`: peso (`w`/`s` + unidades), bitácora (`log`) o pantalla (`p`) (T-081). */
   | { action: 'pg'; value: string }
+  /** `/exportar`: generar el archivo o cancelar (T-090). */
+  | { action: 'ex'; value: string }
   /** Objetivo y mantenimiento: GO-01 a GO-03, GO-09, MA y la propuesta de meta (T-082). */
   | { action: 'gl'; value: string }
   /** Comida: `<operación>` y el borrador de la comida en curso (T-050, T-051). */
@@ -85,6 +87,7 @@ export function encodeCallbackData(action: CallbackAction): string {
     case 'aj':
     case 'pg':
     case 'gl':
+    case 'ex':
       return checkSize(`${VERSION}:${action.action}:${checkValue(action.value)}`);
   }
 }
@@ -113,7 +116,8 @@ export function parseCallbackData(data: string): CallbackAction | null {
       action === 'ps' ||
       action === 'aj' ||
       action === 'pg' ||
-      action === 'gl') &&
+      action === 'gl' ||
+      action === 'ex') &&
     arg !== undefined &&
     value === undefined &&
     VALUE.test(arg)

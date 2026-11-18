@@ -1,5 +1,5 @@
 import { MAIN_KEYBOARD, templateById } from '@gymbro/content';
-import { Bot, GrammyError, InlineKeyboard, Keyboard, type MiddlewareFn } from 'grammy';
+import { Bot, GrammyError, InlineKeyboard, InputFile, Keyboard, type MiddlewareFn } from 'grammy';
 import type { UserFromGetMe } from 'grammy/types';
 import type { EventEmitter } from '../events/emitter.js';
 import type { Logger } from '../logger.js';
@@ -41,6 +41,7 @@ import type {
   RiskSignalsRepository,
   ScreeningsRepository,
   UserDataEraser,
+  UserDataExporter,
   UsersRepository,
 } from '../ports/repositories.js';
 import { planView } from '../plans/plan-view.js';
@@ -52,6 +53,7 @@ import { answerPlateau, plateauPrompt } from '../sessions/plateau.js';
 import { answerMeal, mealMenu } from '../meals/meals.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
+import { answerExport, exportCommand } from '../privacy/export.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { answerSettings, settingsCommand } from '../messaging/message-settings.js';
 import { answerPause, pauseCommand } from '../messaging/pause.js';
@@ -85,6 +87,7 @@ export interface BotDependencies {
   consents: ConsentsRepository;
   screenings: ScreeningsRepository;
   eraser: UserDataEraser;
+  exporter: UserDataExporter;
   bodyMeasurements: BodyMeasurementsRepository;
   habits: TrainingHabitsRepository;
   goals: GoalsRepository;
@@ -211,6 +214,11 @@ export function telegramPayload(reply: Reply): {
 async function sendAll(ctx: BotContext, replies: readonly Reply[]): Promise<void> {
   for (const reply of replies) {
     if (reply.toast) continue;
+    if (reply.document) {
+      const file = new InputFile(reply.document.bytes, reply.document.name);
+      await ctx.replyWithDocument(file, { caption: reply.text });
+      continue;
+    }
     const formatted = telegramPayload(reply);
     const options = formatted.options;
     if (reply.edit && ctx.callbackQuery?.message && !reply.mainKeyboard) {
@@ -296,6 +304,10 @@ export function createBot({
     if (ctx.user) await sendAll(ctx, await logbookScreen(ctx.user, useCases));
   });
 
+  handlers.command('exportar', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await exportCommand(ctx.user, useCases));
+  });
+
   handlers.command('privacidad', async (ctx) => {
     if (ctx.user) await sendAll(ctx, [privacyCommand(ctx.user)]);
   });
@@ -368,6 +380,8 @@ export function createBot({
         return answerPause(user, action.value, useCases);
       case 'aj':
         return answerSettings(user, action.value, useCases);
+      case 'ex':
+        return answerExport(user, action.value, useCases);
       case 'gl':
         return answerGoal(user, action.value, useCases);
       case 'pg':

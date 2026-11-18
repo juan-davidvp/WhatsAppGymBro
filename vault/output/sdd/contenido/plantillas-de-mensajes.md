@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.21.0
+version: 0.22.0
 creado: 2026-10-18
-actualizado: 2026-11-11
+actualizado: 2026-11-18
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -191,6 +191,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | borrar_datos | Borrar todos tus datos |
 | progreso | Tu progreso y tu peso |
 | logros | Tu bitácora de logros |
+| exportar | Descargar todos tus datos |
 | pausa | Pausar mis mensajes unos días |
 | ajustes | Cuánto y cuándo te escribo |
 
@@ -308,6 +309,26 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 > - [Ajustar] y [Ajustar meta] proponen otra meta del mismo objetivo con ON-06/ON-07; al elegirla sale GO-08.
 > - [Seguir así] y [Está bien así] no cambian nada.
 > - [Mover mi zona] centra la zona en la media móvil actual (GO-10).
+
+### 2.9 Exportar mis datos (`/exportar`, T-090)
+
+| ID | Momento | Texto |
+|---|---|---|
+| EX-01 | `/exportar` | Te preparo un archivo con todos tus datos: sesiones, series, comidas, días, logros y mediciones. ¿Lo genero? [Generar archivo] [Cancelar] |
+| EX-02 | Archivo listo (pie del documento) | Aquí están tus datos en CSV y JSON. Guárdalo en un lugar seguro: es información personal. |
+| EX-03 | [Cancelar] | Listo, no generé nada. |
+| EX-04 | Falla al generar el archivo | No pude generar el archivo. Inténtalo de nuevo en un rato. |
+
+> - El archivo es un ZIP con un CSV por tema y `datos.json` con todo lo guardado del usuario (RN-INT-002). No lleva tokens, claves, identificadores internos ni datos de otros usuarios (HU-008-1).
+
+Columnas de cada CSV:
+
+`sesiones.csv`: fecha, sesion, version, estado, inicio, fin
+`series.csv`: fecha_hora, sesion_id, ejercicio, serie, repeticiones, carga_kg, editada
+`comidas.csv`: fecha, hora, metodo, palmas, manos_ahuecadas, punos, pulgares, proteina_g
+`dias.csv`: fecha, tipo, cuenta, completo, mitad_entreno, mitad_comida
+`logros.csv`: fecha_hora, codigo, valor, contexto
+`mediciones.csv`: fecha, peso_kg, cintura_cm
 
 ## 3. Onboarding (textos base)
 

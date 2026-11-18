@@ -820,3 +820,19 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
   - `resvg` se carga al usarlo: si falta su binario, el resumen sale en texto en vez de tumbar el proceso.
 - **Pruebas:** 5 nuevas en `goals/goals.test.ts` que reproducen los hallazgos.
 
+## [2026-11-18] decision | Cierre de la Fase 0: alcance y despliegue (PO)
+- **Entran:** T-090, T-045, T-035, T-102, T-101, T-100, T-103 y T-104.
+- **Quedan fuera por ahora:** T-053 y T-054 (comida con IA, se decide con la prueba de 20 comidas, H13 y H14), T-084 y T-091.
+- **Despliegue (T-100):** Railway con MongoDB Atlas y *long polling*. El planificador ya exige un proceso siempre encendido, así que el *webhook* no ahorra costo y añadiría superficie expuesta. Esto ajusta el texto de T-100.
+
+## [2026-11-18] implementar | T-090 /exportar
+- **Flujo** (`privacy/export.ts`, HU-008-1, RN-INT-002, FR-008-01): EX-01 pide confirmar; al aceptar, el usuario recibe por Telegram un ZIP generado en el momento, que no se guarda en el servidor. Emite `export_requested` y `export_delivered` (archivos, tamaño y duración).
+- **Contenido** (`privacy/export-files.ts`): `sesiones.csv`, `series.csv`, `comidas.csv`, `dias.csv`, `logros.csv`, `mediciones.csv` y `datos.json` con todo lo guardado.
+- **Protección:**
+  - Se quitan identificadores internos y cualquier campo con nombre de token, clave o *hash*, a cualquier profundidad.
+  - Los tokens de ingesta no se leen.
+  - Las celdas de texto no se ejecutan como fórmula en una hoja de cálculo.
+- **ZIP** (`privacy/zip.ts`): con `node:zlib`, sin dependencias nuevas (constitución XI).
+- **Textos nuevos para revisión del PO:** EX-01 a EX-04 ([[plantillas-de-mensajes]] v0.22.0, §2.9).
+- **Pruebas:** `privacy/export.test.ts` (8) y el exportador contra MongoDB (solo datos del usuario).
+

@@ -188,6 +188,13 @@ export const EVENT_PROPS_SCHEMAS = {
   backoff_applied: z.strictObject({ days: z.number().int().positive() }),
   inactivity_pause_started: z.strictObject({ inactiveDays: z.number().int().nonnegative() }),
   reactivation_sent: z.strictObject({ count: z.number().int().positive() }),
+  /** T-090 (HU-008-1, SC-008-1): tamaño y duración, nunca el contenido. */
+  export_requested: z.strictObject({}),
+  export_delivered: z.strictObject({
+    files: z.number().int().positive(),
+    sizeKb: z.number().int().nonnegative(),
+    durationMs: z.number().int().nonnegative(),
+  }),
   /** T-082 (HU-006-4 a 6). */
   goal_completed: z.strictObject({
     type: z.enum([

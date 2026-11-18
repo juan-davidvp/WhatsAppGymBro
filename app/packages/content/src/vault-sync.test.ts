@@ -10,6 +10,7 @@ import {
   PROHIBITED_EXPRESSIONS,
   WEEKLY_PHRASES,
   WEEK_LINE_SYMBOLS,
+  EXPORT_CSV,
   MONTH_ABBREVIATIONS,
   PURPOSE_NAMES,
   QUEST_LABELS,
@@ -49,6 +50,7 @@ describe('T-003 · plantillas de mensajes', () => {
     /^### 2\.6/,
     /^### 2\.7/,
     /^### 2\.8/,
+    /^### 2\.9/,
     /^## 3\./,
     /^### 3\.1/,
     /^### 3\.2/,
@@ -91,6 +93,18 @@ describe('T-003 · plantillas de mensajes', () => {
     const marks = line.slice(line.indexOf('Marcas:'));
     const symbols = [...marks.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
     expect(symbols).toEqual(Object.values(WEEK_LINE_SYMBOLS));
+  });
+
+  it('los archivos y columnas de /exportar coinciden con §2.9', () => {
+    for (const { file, columns } of Object.values(EXPORT_CSV)) {
+      const line = templatesMd.split('\n').find((l) => l.startsWith(`\`${file}\`:`)) ?? '';
+      expect(
+        line
+          .slice(line.indexOf(':') + 1)
+          .split(',')
+          .map((c) => c.trim()),
+      ).toEqual(columns);
+    }
   });
 
   it('las abreviaturas de los meses de la bitácora ({mes}) coinciden', () => {

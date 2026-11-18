@@ -17,6 +17,7 @@ import {
   type StoredWeeklyPlan,
   type GoalRecord,
   type StoredGoal,
+  type UserExport,
   type ScreeningType,
   type TrainingHabitRecord,
   type UserRecord,
@@ -765,6 +766,26 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         const index = favorites.findIndex((f) => f.userId === userId && f.id === id);
         if (index >= 0) favorites.splice(index, 1);
         return Promise.resolve();
+      },
+    },
+    exporter: {
+      collect(userId) {
+        const mine = <T extends { userId: string }>(rows: readonly T[]) =>
+          rows.filter((row) => row.userId === userId).map((row) => ({ ...row }));
+        return Promise.resolve({
+          users: [...users.values()].filter((u) => u.id === userId).map((u) => ({ ...u })),
+          workout_sessions: mine(workouts),
+          set_entries: mine(setEntries),
+          meals: mine(meals),
+          days: mine(days).map(({ dayStatus, ...day }) => ({
+            ...day,
+            complete: dayStatus?.complete ?? false,
+            trainingHalf: dayStatus?.trainingHalf ?? false,
+            nutritionHalf: dayStatus?.nutritionHalf ?? false,
+          })),
+          achievements: mine(achievements),
+          body_measurements: mine(weights),
+        } as unknown as UserExport);
       },
     },
     eraser: {
