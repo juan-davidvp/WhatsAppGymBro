@@ -1,0 +1,10 @@
+# Nada de secretos ni de archivos locales en la imagen (RN-DAT-006).
+**/.env
+**/.env.*
+infra
+**/node_modules
+**/coverage
+**/dist
+**/*.test.ts
+apps/server/src/testing
+.git

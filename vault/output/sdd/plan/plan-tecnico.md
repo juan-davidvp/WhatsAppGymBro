@@ -179,7 +179,6 @@ Plantillas SVG parametrizadas (muro de constancia, tarjeta de logro) renderizada
 | Variable | Uso |
 |---|---|
 | `TELEGRAM_BOT_TOKEN` | Token de BotFather |
-| `TELEGRAM_WEBHOOK_SECRET` | Secreto del *webhook* (producción) |
 | `MONGODB_URI` | Conexión a la base |
 | `MONGO_DATABASE` | Nombre de la base (por defecto `gymbro`) |
 | `STUDY_PHASE` | Fase de medición que llevan los eventos: `n1_A1`·`n1_B`·`n1_A2`·`alpha` (por defecto `n1_B`; [[plan-de-medicion]] §1) |
@@ -192,7 +191,7 @@ Plantillas SVG parametrizadas (muro de constancia, tarjeta de logro) renderizada
 | Entorno | Bot | Base | Notas |
 |---|---|---|---|
 | Local | *Long polling* | Mongo en Docker | Sin URL pública |
-| Producción (Fase 0) | *Webhook* HTTPS (o *long polling* en un servidor siempre encendido) | MongoDB Atlas | Un contenedor Node siempre encendido (p. ej., Railway, Render, Fly.io o un VPS; **verificar costos vigentes**) |
+| Producción (Fase 0) | *Long polling* | MongoDB Atlas | Un contenedor Node siempre encendido en Railway, construido con `app/Dockerfile`. Pasos y costos en [[guia-despliegue-railway]] |
 
 ## 11. Observabilidad y seguridad técnica
 

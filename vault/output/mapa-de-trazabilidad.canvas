@@ -439,7 +439,7 @@
 			"x": 1840,
 			"y": 0,
 			"width": 360,
-			"height": 358,
+			"height": 510,
 			"color": "4",
 			"label": "Output · plan, contenido y tareas — Plan"
 		},
@@ -453,11 +453,29 @@
 			"height": 60
 		},
 		{
+			"id": "n-guia-despliegue-railway",
+			"type": "file",
+			"file": "output/sdd/plan/guia-despliegue-railway.md",
+			"x": 1860,
+			"y": 122,
+			"width": 320,
+			"height": 60
+		},
+		{
+			"id": "n-guia-protocolo-n-de-1",
+			"type": "file",
+			"file": "output/sdd/plan/guia-protocolo-n-de-1.md",
+			"x": 1860,
+			"y": 198,
+			"width": 320,
+			"height": 60
+		},
+		{
 			"id": "n-modelo-de-datos",
 			"type": "file",
 			"file": "output/sdd/plan/modelo-de-datos.md",
 			"x": 1860,
-			"y": 122,
+			"y": 274,
 			"width": 320,
 			"height": 60
 		},
@@ -466,7 +484,7 @@
 			"type": "file",
 			"file": "output/sdd/plan/plan-de-medicion.md",
 			"x": 1860,
-			"y": 198,
+			"y": 350,
 			"width": 320,
 			"height": 60
 		},
@@ -475,7 +493,7 @@
 			"type": "file",
 			"file": "output/sdd/plan/plan-tecnico.md",
 			"x": 1860,
-			"y": 274,
+			"y": 426,
 			"width": 320,
 			"height": 60
 		},
@@ -483,7 +501,7 @@
 			"id": "grupo-Contenido",
 			"type": "group",
 			"x": 1840,
-			"y": 398,
+			"y": 550,
 			"width": 360,
 			"height": 510,
 			"color": "4",
@@ -494,7 +512,7 @@
 			"type": "file",
 			"file": "output/sdd/contenido/alimentos-accesibles-base.md",
 			"x": 1860,
-			"y": 444,
+			"y": 596,
 			"width": 320,
 			"height": 60
 		},
@@ -503,7 +521,7 @@
 			"type": "file",
 			"file": "output/sdd/contenido/catalogo-de-ejercicios-base.md",
 			"x": 1860,
-			"y": 520,
+			"y": 672,
 			"width": 320,
 			"height": 60
 		},
@@ -512,7 +530,7 @@
 			"type": "file",
 			"file": "output/sdd/contenido/catalogo-de-logros-y-niveles.md",
 			"x": 1860,
-			"y": 596,
+			"y": 748,
 			"width": 320,
 			"height": 60
 		},
@@ -521,7 +539,7 @@
 			"type": "file",
 			"file": "output/sdd/contenido/expresiones-de-alerta.md",
 			"x": 1860,
-			"y": 672,
+			"y": 824,
 			"width": 320,
 			"height": 60
 		},
@@ -530,7 +548,7 @@
 			"type": "file",
 			"file": "output/sdd/contenido/plantillas-de-mensajes.md",
 			"x": 1860,
-			"y": 748,
+			"y": 900,
 			"width": 320,
 			"height": 60
 		},
@@ -539,7 +557,7 @@
 			"type": "file",
 			"file": "output/sdd/contenido/tamizajes.md",
 			"x": 1860,
-			"y": 824,
+			"y": 976,
 			"width": 320,
 			"height": 60
 		},
@@ -547,7 +565,7 @@
 			"id": "grupo-Tareas",
 			"type": "group",
 			"x": 1840,
-			"y": 948,
+			"y": 1100,
 			"width": 360,
 			"height": 130,
 			"color": "4",
@@ -558,7 +576,7 @@
 			"type": "file",
 			"file": "output/sdd/tareas/tareas-fase-0.md",
 			"x": 1860,
-			"y": 994,
+			"y": 1146,
 			"width": 320,
 			"height": 60
 		},

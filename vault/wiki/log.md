@@ -861,3 +861,10 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
 - **Hoja:** `vault/output/sdd/plan/hoja-protocolo-n-de-1.xlsx`, plantilla sin datos personales. Las fechas salen del lunes en que empieza A1.
 - **Supuesto para revisión del PO:** SC-000-1 se mide en sesiones completadas por semana, porque las fases duran distinto y la razón completadas ÷ planificadas se satura en 100 %.
 - **Verificación:** 107 fórmulas evaluadas con datos sintéticos fuera de Excel. Falta abrir la hoja en Excel o Google Sheets.
+
+## [2026-11-18] decision | T-100 preparación del despliegue
+- **Imagen:** `app/Dockerfile` construye un solo proceso con *long polling*, sin puertos y con un usuario sin privilegios. `.dockerignore` deja fuera los `.env` y las pruebas.
+- **Sin `railway.json`:** Railway dejó de admitir Config as Code en servicios nuevos y lo apaga el 2026-12-01 (`F104`). Los ajustes quedan en [[guia-despliegue-railway]].
+- **`TELEGRAM_WEBHOOK_SECRET` sale** de la configuración: con *long polling* no se usa.
+- **Para decisión del PO:** con Railway Hobby no hay IP de salida fija (`F106`), así que Atlas queda abierto a cualquier dirección y lo protege la contraseña. Cerrarlo exige el plan Pro.
+- **Verificado en local:** la imagen arranca, conecta con MongoDB, genera el PNG del muro en Linux y no registra el token. **Pendiente:** el despliegue real y las 72 horas de T-100, que siguen sin ✅.
