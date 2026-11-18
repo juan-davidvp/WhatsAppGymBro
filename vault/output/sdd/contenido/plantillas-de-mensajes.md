@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.22.0
+version: 0.23.0
 creado: 2026-10-18
 actualizado: 2026-11-18
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -241,7 +241,14 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | AJ-01 | `/ajustes` | Tus mensajes: **{intensidad}** · sin mensajes de {inicio} a {fin} · apagados: {apagados}. [Cantidad] [Silencio] [Tipos] |
 | AJ-02 | [Tipos] | Toca un tipo para apagarlo o encenderlo. [Listo] |
 | AJ-03 | Cambio guardado | Listo, guardado. |
+| AJ-04 | `/ajustes` | ¿Qué quieres ajustar? [Mensajes] [Días de entreno] |
+| AJ-05 | Días de entreno guardados (T-045) | Listo. Desde el {fecha} entrenas {dias}. Esta semana sigue como está, con todo lo que registraste. |
 
+> - AJ-04 es la entrada de `/ajustes` cuando el onboarding ya terminó. [Mensajes] abre AJ-01. [Días de entreno] abre ON-10 con los días actuales marcados.
+> - Los días se validan como en el onboarding: fuera de P-074 responde ON-11, y si el plan usa menos días de los marcados, AJ-05 va seguido de ON-12 (RN-PLAN-004).
+> - AJ-05: `{fecha}` es el lunes de la semana siguiente ("lunes 26") y `{dias}` son los días de entreno del plan nuevo ("lunes, miércoles y viernes").
+> - [Ajustar plan] y [Ajustar días] de los mensajes proactivos, [Sí, ajustar] de RG-03 y [Ajustar plan] de CU-06 abren ON-10 de esta misma ruta.
+> - RG-03: `{dias_menos}` es un día de entreno menos que los del plan actual. Solo se usa si ese número sigue dentro de P-074.
 > - PA-01 lleva una opción por cada valor de P-099: [1 día] y «{n} días» para los demás. PA-03 [Cambiar días] vuelve a PA-01.
 > - `{fecha}` es el día de la semana y el número del día en que termina la pausa ("jueves 12").
 > - La semana que toca una pausa no se evalúa (RN-MSJ-013). La pausa por inactividad (RN-MSJ-008) es otra cosa: termina con cualquier interacción.

@@ -836,3 +836,9 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
 - **Textos nuevos para revisión del PO:** EX-01 a EX-04 ([[plantillas-de-mensajes]] v0.22.0, §2.9).
 - **Pruebas:** `privacy/export.test.ts` (8) y el exportador contra MongoDB (solo datos del usuario).
 
+## [2026-11-18] implementar | T-045 ajustar días de entreno
+- **Flujo** (`plans/training-days.ts`, HU-002-4, RN-PLAN-001, RN-PLAN-004): `/ajustes` pasa a ser un menú (AJ-04) con [Mensajes] y [Días de entreno]. Los días usan ON-10, ON-11 y ON-12, igual que en el onboarding.
+- **Al guardar:** la semana en curso queda como está, el hábito sigue a los días y conserva la hora aprendida (RN-PLAN-002), y la semana siguiente se rehace si no tiene entrenos. Emite `plan_days_changed` (días antes, días ahora y días que usa el plan).
+- **Botones que esperaban esta tarea:** [Ajustar plan] y [Ajustar días] de los mensajes proactivos, [Ajustar plan] de CU-06 y [Sí, ajustar] de RG-03 abren los días de entreno. RG-03 vuelve a la rotación de `regreso` cuando bajar un día no sale de P-074.
+- **Textos nuevos para revisión del PO:** AJ-04 y AJ-05 ([[plantillas-de-mensajes]] v0.23.0, §2.6).
+- **Pruebas:** `plans/training-days.test.ts` (9) y 2 de RG-03 en `messaging/candidates.test.ts`.

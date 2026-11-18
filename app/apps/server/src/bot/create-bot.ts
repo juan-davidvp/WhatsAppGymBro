@@ -56,6 +56,7 @@ import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
 import { answerExport, exportCommand } from '../privacy/export.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { answerSettings, settingsCommand } from '../messaging/message-settings.js';
+import { answerTrainingDays, isTrainingDaysValue } from '../plans/training-days.js';
 import { answerPause, pauseCommand } from '../messaging/pause.js';
 import { answerGoal } from '../goals/goal-actions.js';
 import { logbookScreen } from '../progress/logbook.js';
@@ -379,7 +380,9 @@ export function createBot({
       case 'ps':
         return answerPause(user, action.value, useCases);
       case 'aj':
-        return answerSettings(user, action.value, useCases);
+        return isTrainingDaysValue(action.value)
+          ? answerTrainingDays(user, action.value, useCases)
+          : answerSettings(user, action.value, useCases);
       case 'ex':
         return answerExport(user, action.value, useCases);
       case 'gl':

@@ -761,6 +761,20 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     buttons: [],
   },
   {
+    id: 'AJ-04',
+    kind: 'response',
+    when: '`/ajustes`',
+    text: '¿Qué quieres ajustar?',
+    buttons: ['Mensajes', 'Días de entreno'],
+  },
+  {
+    id: 'AJ-05',
+    kind: 'response',
+    when: 'Días de entreno guardados (T-045)',
+    text: 'Listo. Desde el {fecha} entrenas {dias}. Esta semana sigue como está, con todo lo que registraste.',
+    buttons: [],
+  },
+  {
     id: 'PG-01',
     kind: 'response',
     when: '`/progreso` o `📈 Progreso`',

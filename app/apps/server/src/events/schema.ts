@@ -90,6 +90,12 @@ export const EVENT_PROPS_SCHEMAS = {
     intensity: z.enum(['low', 'normal']),
   }),
   plan_viewed: z.strictObject({}),
+  /** HU-002-4 (T-045): cuántos días había, cuántos quedan y cuántos usa el plan nuevo. */
+  plan_days_changed: z.strictObject({
+    previousDays: z.number().int().positive(),
+    days: z.number().int().positive(),
+    trainingDays: z.number().int().nonnegative(),
+  }),
   progression_suggested: z.strictObject({ exercises: z.number().int().positive() }),
   session_variant_chosen: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
   session_started: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),

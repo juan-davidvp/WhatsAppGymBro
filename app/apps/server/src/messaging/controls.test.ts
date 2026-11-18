@@ -99,6 +99,7 @@ describe('HU-007-4 escenario 2 · T-073 · /ajustes de mensajes', () => {
   it('AJ-01 muestra cantidad, silencio y tipos apagados', async () => {
     const t = await proactiveSetup();
     await t.act({ text: '/ajustes' });
+    await t.act('Mensajes');
     const screen = sent(t.calls).at(-1);
     expect(screen?.text).toBe(
       toTelegramHtml(
@@ -116,6 +117,7 @@ describe('HU-007-4 escenario 2 · T-073 · /ajustes de mensajes', () => {
   it('cambia la cantidad y el silencio, con message_settings_changed por campo', async () => {
     const t = await proactiveSetup();
     await t.act({ text: '/ajustes' });
+    await t.act('Mensajes');
     await t.act('Cantidad');
     expect(lastText(t)).toBe(renderTemplate('ON-22'));
     await t.act('Poco');
@@ -145,6 +147,7 @@ describe('HU-007-4 escenario 2 · T-073 · /ajustes de mensajes', () => {
     const t = await proactiveSetup();
     await t.setHabitTime('08:30'); // aviso a las 07:30 = 12:30Z
     await t.act({ text: '/ajustes' });
+    await t.act('Mensajes');
     await t.act('Silencio');
     await t.act('23:30–08:00');
     // Con el silencio por defecto (hasta las 07:00) saldría a las 07:30; ahora cae en
@@ -161,6 +164,7 @@ describe('HU-007-4 escenario 2 · T-073 · /ajustes de mensajes', () => {
     const t = await proactiveSetup();
     await t.setHabitTime('18:00');
     await t.act({ text: '/ajustes' });
+    await t.act('Mensajes');
     await t.act('Tipos');
     expect(
       sent(t.calls)
@@ -189,6 +193,7 @@ describe('T-073 · revisión de código · datos de botón de /ajustes', () => {
   it('un valor sin índice válido no cambia nada (vuelve a AJ-01)', async () => {
     const t = await proactiveSetup();
     await t.act({ text: '/ajustes' });
+    await t.act('Mensajes');
     for (const value of ['i', 'q', 't', 'i9', 'x1']) {
       await t.bot.handleUpdate(callbackUpdate(`v1:aj:${value}`, t.nextUpdateId()));
     }

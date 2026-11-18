@@ -77,17 +77,13 @@ describe('RN-SEG-008 · T-065 · más de P-063 sesiones en un día', () => {
     expect(t.overuse()).toEqual([]);
   });
 
-  it('[Sí, descanso] responde HN-02 y [Ajustar plan] muestra el plan de la semana (PN-01)', async () => {
+  it('[Sí, descanso] responde HN-02 y [Ajustar plan] abre los días de entreno (ON-10)', async () => {
     const t = await setup();
     await t.tapToday('care_rest');
     expect(t.texts().at(-1)).toBe(templateById('HN-02').text);
     await t.tapToday('care_plan');
-    expect(
-      t
-        .texts()
-        .at(-1)
-        ?.startsWith(renderTemplate('PN-01', { lineas: '' })),
-    ).toBe(true);
+    const { min, max } = PARAMETERS.plan.availableDaysRange;
+    expect(t.texts().at(-1)).toBe(renderTemplate('ON-10', { min_dias: min, max_dias: max }));
   });
 });
 

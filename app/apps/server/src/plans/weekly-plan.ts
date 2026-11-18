@@ -23,6 +23,7 @@ import type {
   SetEntriesRepository,
   StoredWeeklyPlan,
   UserRecord,
+  WorkoutSessionsRepository,
 } from '../ports/repositories.js';
 
 /**
@@ -149,6 +150,18 @@ export async function ensureWeek(
     await deps.events.emit('progression_suggested', subject, { exercises: increased });
   }
   return stored;
+}
+
+/** Descarta una semana ya generada si nadie entrenó en ella, para que se rehaga. */
+export async function discardWeekIfUnused(
+  userId: string,
+  weekStart: LocalDate,
+  deps: { plans: PlansRepository; workouts: WorkoutSessionsRepository },
+): Promise<void> {
+  const sessions = await Promise.all(
+    WEEK_DAYS.map((_, i) => deps.workouts.onDate(userId, addDays(weekStart, i))),
+  );
+  if (sessions.every((list) => list.length === 0)) await deps.plans.discardWeek(userId, weekStart);
 }
 
 /**
