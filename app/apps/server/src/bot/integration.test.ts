@@ -76,6 +76,7 @@ function realBot() {
       screenings: screeningsRepository(db),
       eraser: userDataEraser(db),
       exporter: userDataExporter(db),
+      eventLog: eventsRepository(db),
       bodyMeasurements: bodyMeasurementsRepository(db),
       habits: trainingHabitsRepository(db),
       goals: goalsRepository(db),

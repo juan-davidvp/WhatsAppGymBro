@@ -78,8 +78,9 @@ async function main(): Promise<void> {
     await ensureIndexes(db);
     logger.info('db_connected', { database: config.mongoDatabase });
 
+    const eventLog = eventsRepository(db);
     const events = createEventEmitter({
-      repository: eventsRepository(db),
+      repository: eventLog,
       logger,
       appVersion: APP_VERSION,
       phase: config.studyPhase,
@@ -129,8 +130,15 @@ async function main(): Promise<void> {
       meals: mealsRepository(db),
       favorites: favoriteMealsRepository(db),
       events,
+      eventLog,
     };
-    const bot = createBot({ token: config.telegramBotToken, logger, clock, deps });
+    const bot = createBot({
+      token: config.telegramBotToken,
+      logger,
+      clock,
+      deps,
+      founderTelegramId: config.founderTelegramId,
+    });
 
     // T-060 · cierre programado de los días (FR-005-02).
     const scheduler = startScheduler({

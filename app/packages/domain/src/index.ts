@@ -35,6 +35,7 @@ export * from './goals/maintenance.js';
 export * from './training/training.js';
 export * from './nutrition/nutrition.js';
 export * from './messaging/engine.js';
+export * from './messaging/lab-metrics.js';
 export * from './safety/safety.js';
 export * from './plan/plan.js';
 export * from './onboarding/onboarding.js';

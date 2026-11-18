@@ -33,6 +33,7 @@ import {
   type UserDataEraser,
   type UserDataExporter,
   type DaysRepository,
+  type EventLogReader,
   type EventsRepository,
   type FavoriteMealRecord,
   type FavoriteMealsRepository,
@@ -595,11 +596,22 @@ export function riskSignalsRepository(db: Db): RiskSignalsRepository {
   };
 }
 
-export function eventsRepository(db: Db): EventsRepository {
+export function eventsRepository(db: Db): EventsRepository & EventLogReader {
   const collection = db.collection('events');
   return {
     async insert(event) {
       await collection.insertOne({ ...event });
+    },
+    async since(userRef, from) {
+      const documents = await collection
+        .find({ userRef, at: { $gte: from } })
+        .sort({ at: 1 })
+        .toArray();
+      return documents.map((d) => ({
+        name: String(d['name']),
+        at: d['at'] as Date,
+        props: (d['props'] ?? {}) as Record<string, unknown>,
+      }));
     },
   };
 }

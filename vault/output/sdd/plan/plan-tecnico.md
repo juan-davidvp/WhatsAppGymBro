@@ -187,6 +187,7 @@ Plantillas SVG parametrizadas (muro de constancia, tarjeta de logro) renderizada
 | `INGESTION_TOKEN_PEPPER` | *Pepper* para el *hash* de tokens de ingesta |
 | `APP_BASE_URL` | URL pública (ingesta, Mini App) |
 | `DEFAULT_TZ` | `America/Bogota` |
+| `FOUNDER_TELEGRAM_ID` | Cuenta de Telegram que puede usar `/lab` (opcional; sin ella, el comando no responde a nadie) |
 
 | Entorno | Bot | Base | Notas |
 |---|---|---|---|

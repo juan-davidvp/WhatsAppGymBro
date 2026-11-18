@@ -16,6 +16,7 @@ import {
   type Reply,
 } from '../onboarding/onboarding.js';
 import type {
+  EventLogReader,
   BodyMeasurementsRepository,
   GoalsRepository,
   DaysRepository,
@@ -59,6 +60,7 @@ import { answerSettings, settingsCommand } from '../messaging/message-settings.j
 import { answerTrainingDays, isTrainingDaysValue } from '../plans/training-days.js';
 import { answerPause, pauseCommand } from '../messaging/pause.js';
 import { answerGoal } from '../goals/goal-actions.js';
+import { labCommand } from '../lab/lab.js';
 import { logbookScreen } from '../progress/logbook.js';
 import { progressScreen } from '../progress/progress-screen.js';
 import {
@@ -117,6 +119,8 @@ export interface BotDependencies {
   meals: MealsRepository;
   favorites: FavoriteMealsRepository;
   events: EventEmitter;
+  /** Lectura de eventos para `/lab` (T-102). */
+  eventLog: EventLogReader;
 }
 
 export interface CreateBotOptions {
@@ -124,6 +128,8 @@ export interface CreateBotOptions {
   logger: Logger;
   deps: BotDependencies;
   clock?: () => Date;
+  /** Única cuenta que puede usar `/lab` (T-102); null: nadie. */
+  founderTelegramId?: number | null;
   /** Solo en pruebas: evita la llamada a getMe. */
   botInfo?: UserFromGetMe;
 }
@@ -252,6 +258,7 @@ export function createBot({
   deps,
   clock = () => new Date(),
   botInfo,
+  founderTelegramId = null,
 }: CreateBotOptions): Bot<BotContext> {
   const bot = new Bot<BotContext>(token, botInfo ? { botInfo } : {});
 
@@ -291,6 +298,12 @@ export function createBot({
 
   handlers.command('pausa', async (ctx) => {
     if (ctx.user) await sendAll(ctx, await pauseCommand(ctx.user, useCases));
+  });
+
+  // T-102 · comando oculto: para cualquier otra cuenta es un mensaje fuera de dominio.
+  handlers.command('lab', async (ctx) => {
+    if (!ctx.user || ctx.user.telegramUserId !== founderTelegramId) return sendOutOfDomain(ctx);
+    await sendAll(ctx, await labCommand(ctx.user, useCases));
   });
 
   handlers.command('ajustes', async (ctx) => {

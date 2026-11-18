@@ -975,3 +975,18 @@ describe('RN-NUT-004 · T-051 · comidas del día y frecuentes', () => {
     expect(await favorites.list('u31')).toEqual([]);
   });
 });
+
+describe('T-102 · lectura de eventos para /lab', () => {
+  it('devuelve solo los del usuario desde la fecha, en orden de tiempo', async () => {
+    const events = eventsRepository(db);
+    const common = { localDate: '2026-10-19', appVersion: '0.0.0', phase: 'n1_B' as const };
+    const row = (userRef: string, name: 'plan_viewed' | 'set_undone', at: string) =>
+      events.insert({ userRef, name, at: new Date(at), common, props: {} });
+    await row('u40', 'set_undone', '2026-10-20T10:00:00Z');
+    await row('u40', 'plan_viewed', '2026-10-19T10:00:00Z');
+    await row('u40', 'plan_viewed', '2026-10-18T10:00:00Z');
+    await row('otro', 'plan_viewed', '2026-10-19T10:00:00Z');
+    const found = await events.since('u40', new Date('2026-10-19T00:00:00Z'));
+    expect(found.map((e) => e.name)).toEqual(['plan_viewed', 'set_undone']);
+  });
+});

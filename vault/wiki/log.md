@@ -848,3 +848,10 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
 - **Corrección:** GO-07 ya prometía el plan ajustado desde la semana siguiente, pero esa semana estaba generada desde el onboarding y no cambiaba. Ahora se rehace al fijar el objetivo, con meta o sin ella, y la semana en curso no se toca.
 - **Mismo objetivo:** si no hay meta que proponer, no se reinicia su plazo y se vuelve a AJ-04.
 - **Pruebas:** `goals/change-goal.test.ts` (4).
+
+## [2026-11-18] implementar | T-102 /lab del fundador
+- **Flujo** (`lab/lab.ts`, [[plan-de-medicion]] §6): comando oculto con M01, M03, M04 y G06 de la semana en curso. Solo lee eventos y envíos del propio usuario.
+- **Acceso:** variable opcional `FOUNDER_TELEGRAM_ID` ([[plan-tecnico]] §10). Para cualquier otra cuenta, o sin la variable, responde CU-07.
+- **Cálculo** (`messaging/lab-metrics.ts`, puro): G06 revisa silencio, separación y presupuesto con los ajustes actuales del usuario.
+- **Textos nuevos para revisión del PO:** LB-01 a LB-05 ([[plantillas-de-mensajes]] v0.24.0, §2.10).
+- **Pruebas:** `messaging/lab-metrics.test.ts` (10), `lab/lab.test.ts` (4), configuración (1) y lectura de eventos en MongoDB (1).

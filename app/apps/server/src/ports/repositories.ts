@@ -560,6 +560,18 @@ export interface EventsRepository {
   insert(event: AnalyticsEvent): Promise<void>;
 }
 
+/** Lectura de eventos para `/lab` (T-102): categorías y métricas, nunca texto libre. */
+export interface LoggedEvent {
+  readonly name: string;
+  readonly at: Date;
+  readonly props: Readonly<Record<string, unknown>>;
+}
+
+export interface EventLogReader {
+  /** Eventos del usuario desde `from`, en orden de tiempo. */
+  since(userRef: string, from: Date): Promise<LoggedEvent[]>;
+}
+
 /** Día de un plan guardado: la sesión lleva su id (`planned_sessions`). */
 export interface StoredPlanDay {
   readonly date: LocalDate;

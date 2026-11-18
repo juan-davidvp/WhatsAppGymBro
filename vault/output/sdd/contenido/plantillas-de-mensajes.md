@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.23.0
+version: 0.24.0
 creado: 2026-10-18
 actualizado: 2026-11-18
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -336,6 +336,22 @@ Columnas de cada CSV:
 `dias.csv`: fecha, tipo, cuenta, completo, mitad_entreno, mitad_comida
 `logros.csv`: fecha_hora, codigo, valor, contexto
 `mediciones.csv`: fecha, peso_kg, cintura_cm
+
+### 2.10 Panel del fundador (`/lab`, T-102)
+
+| ID | Momento | Texto |
+|---|---|---|
+| LB-01 | `/lab` (solo el fundador) | Semana del {fecha} |
+| LB-02 | Línea de M01 | M01 · Días que cuentan: {dias} |
+| LB-03 | Línea de M03 | M03 · Acción de mensajes: {tasa} ({accionados} de {enviados}) |
+| LB-04 | Línea de M04 | M04 · Toques por serie: {toques} · Segundos por comida: {comida} |
+| LB-05 | Línea de G06 | G06 · Violaciones del motor: {violaciones} |
+
+> - `/lab` es un comando oculto: no aparece en el menú y solo responde a la cuenta de `FOUNDER_TELEGRAM_ID`. Para cualquier otra cuenta se comporta como un mensaje fuera de dominio (CU-07).
+> - Las cinco líneas van en un solo mensaje y cubren la semana en curso, desde el lunes.
+> - `{fecha}` es el lunes de la semana (AAAA-MM-DD). `{tasa}`, `{toques}` y `{comida}` dicen «sin datos» si todavía no hay registros.
+> - `{comida}` lista la mediana por método, separada por ", ": Porciones, Favorita, Repetir, Foto y Texto ("Favorita 3 s, Porciones 12 s").
+> - G06 revisa los mensajes enviados contra el silencio, la separación y el presupuesto con los ajustes actuales del usuario.
 
 ## 3. Onboarding (textos base)
 

@@ -21,6 +21,7 @@ import {
   type ScreeningType,
   type TrainingHabitRecord,
   type UserRecord,
+  type EventLogReader,
 } from '../ports/repositories.js';
 
 /**
@@ -32,9 +33,14 @@ export interface EmittedEvent {
   name: EventName;
   subject: EventSubject | null;
   props: EventProps;
+  at: Date;
 }
 
+const defaultClock = () => new Date('2026-10-19T15:00:00Z');
+
 export interface InMemoryOptions {
+  /** Cuenta de Telegram que puede usar `/lab` (T-102). */
+  founderTelegramId?: number;
   failRiskSignals?: boolean;
   /** Crea los usuarios con el onboarding ya terminado. */
   onboardingCompleted?: boolean;
@@ -143,8 +149,17 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
 
   const emitter: EventEmitter = {
     emit(name, subject, props = {}) {
-      events.push({ name, subject, props });
+      events.push({ name, subject, props, at: (options.clock ?? defaultClock)() });
       return Promise.resolve();
+    },
+  };
+  const eventLog: EventLogReader = {
+    since(userRef, from) {
+      return Promise.resolve(
+        events
+          .filter((e) => e.subject?.userId === userRef && e.at.getTime() >= from.getTime())
+          .map(({ name, at, props }) => ({ name, at, props })),
+      );
     },
   };
 
@@ -833,6 +848,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
       },
     },
     events: emitter,
+    eventLog,
   };
 
   return {

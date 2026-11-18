@@ -31,6 +31,15 @@ describe('T-004 · configuración por variables de entorno', () => {
     expect(() => loadConfig({ ...BASE, STUDY_PHASE: 'beta' })).toThrow('STUDY_PHASE');
   });
 
+  it('T-102 · FOUNDER_TELEGRAM_ID es opcional, vacío equivale a no definirlo y debe ser numérico', () => {
+    expect(loadConfig(BASE).founderTelegramId).toBeNull();
+    expect(loadConfig({ ...BASE, FOUNDER_TELEGRAM_ID: '' }).founderTelegramId).toBeNull();
+    expect(loadConfig({ ...BASE, FOUNDER_TELEGRAM_ID: '42' }).founderTelegramId).toBe(42);
+    expect(() => loadConfig({ ...BASE, FOUNDER_TELEGRAM_ID: 'juan' })).toThrow(
+      'FOUNDER_TELEGRAM_ID',
+    );
+  });
+
   it('falla si falta MONGODB_URI', () => {
     expect(() => loadConfig({ TELEGRAM_BOT_TOKEN: TOKEN })).toThrow('MONGODB_URI: falta');
   });

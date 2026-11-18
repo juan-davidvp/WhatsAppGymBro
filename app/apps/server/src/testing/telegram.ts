@@ -42,6 +42,7 @@ export function setupTestBot(options: InMemoryOptions = {}) {
     deps: memory.deps,
     clock: options.clock ?? (() => new Date('2026-10-19T15:00:00Z')),
     botInfo: TEST_BOT_INFO,
+    founderTelegramId: options.founderTelegramId ?? null,
   });
   const calls: ApiCall[] = [];
   bot.api.config.use(async (_prev, method, payload) => {
