@@ -1,6 +1,7 @@
 import { EXPORT_CSV, EXPORT_JSON_FILE, renderTemplate, templateById } from '@gymbro/content';
 import { inflateRawSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
+import type { Reply } from '../onboarding/replies.js';
 import { ONBOARDED_GYM_LXV, runFlow } from '../testing/onboarding.js';
 import { sent } from '../testing/telegram.js';
 import { answerExport } from './export.js';
@@ -73,7 +74,7 @@ describe('RN-INT-002 · HU-008-1 · T-090 · contenido del archivo', () => {
     const series = files.get('series.csv')?.replace('﻿', '').trim().split('\r\n');
     expect(series).toEqual([
       EXPORT_CSV.sets.columns.join(','),
-      '2026-10-19T23:10:00.000Z,s1,SQ_BB,1,5,80,false',
+      '2026-10-19T23:10:00.000Z,SQ_BB,1,5,80,false',
     ]);
     const json = JSON.parse(files.get(EXPORT_JSON_FILE) ?? '{}') as {
       data: Record<string, unknown[]>;
@@ -96,7 +97,7 @@ describe('RN-INT-002 · HU-008-1 · T-090 · contenido del archivo', () => {
     expect(all).not.toContain('secreto');
     expect(sanitize(sample.integrations)).toEqual([{ nested: { ok: 1 } }]);
     const json = files.get(EXPORT_JSON_FILE) ?? '';
-    expect(json).not.toMatch(/"(_id|userId|idempotencyKey|rev)"/);
+    expect(json).not.toMatch(/"(_id|userId|idempotencyKey|rev|sessionId)"/);
   });
 
   it('una celda de texto no se ejecuta como fórmula en una hoja de cálculo', () => {
@@ -147,11 +148,12 @@ describe('FR-008-01 · T-090 · /exportar en el bot', () => {
     const user = t.user();
     if (!user) throw new Error('sin usuario');
     const logger = { info: () => {}, warn: () => {}, error: () => {} } as never;
-    const [reply] = await answerExport(user, 'go', {
-      ...t.deps,
-      clock: () => NOW,
-      logger,
+    const delivered: Reply[] = [];
+    await answerExport(user, 'go', { ...t.deps, clock: () => NOW, logger }, (reply) => {
+      delivered.push(reply);
+      return Promise.resolve();
     });
+    const [reply] = delivered;
     expect(reply?.document?.name).toBe('gymbro-datos-2026-10-19.zip');
     const files = readZip(reply?.document?.bytes ?? new Uint8Array());
     expect(files.get('mediciones.csv')).toContain('2026-10-19,72.5,');
@@ -163,13 +165,30 @@ describe('FR-008-01 · T-090 · /exportar en el bot', () => {
     if (!user) throw new Error('sin usuario');
     const errors: string[] = [];
     const logger = { info: () => {}, warn: () => {}, error: (e: string) => errors.push(e) };
-    const [reply] = await answerExport(user, 'go', {
-      exporter: { collect: () => Promise.reject(new Error('mongo caído')) },
-      events: t.deps.events,
-      clock: () => NOW,
-      logger: logger as never,
-    });
+    const [reply] = await answerExport(
+      user,
+      'go',
+      {
+        exporter: { collect: () => Promise.reject(new Error('mongo caído')) },
+        events: t.deps.events,
+        clock: () => NOW,
+        logger: logger as never,
+      },
+      () => Promise.resolve(),
+    );
     expect(reply?.text).toBe(renderTemplate('EX-04'));
     expect(errors).toEqual(['export_failed']);
+  });
+
+  it('si Telegram no acepta el archivo, avisa con EX-04 y no lo da por entregado', async () => {
+    const t = await onboarded();
+    const user = t.user();
+    if (!user) throw new Error('sin usuario');
+    const logger = { info: () => {}, warn: () => {}, error: () => {} } as never;
+    const [reply] = await answerExport(user, 'go', { ...t.deps, clock: () => NOW, logger }, () =>
+      Promise.reject(new Error('telegram caído')),
+    );
+    expect(reply?.text).toBe(renderTemplate('EX-04'));
+    expect(t.events.some((e) => e.name === 'export_delivered')).toBe(false);
   });
 });

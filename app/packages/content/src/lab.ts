@@ -8,3 +8,8 @@ export const LAB_MEAL_METHOD_NAMES: Readonly<Record<string, string>> = {
   photo: 'Foto',
   text: 'Texto',
 };
+
+export const labDecimal = (value: number): string => String(value).replace('.', ',');
+export const labPercent = (value: number): string => `${value} %`;
+export const labMealEntry = (method: string, seconds: number): string =>
+  `${LAB_MEAL_METHOD_NAMES[method] ?? method} ${seconds} s`;

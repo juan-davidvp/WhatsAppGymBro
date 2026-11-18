@@ -11,7 +11,6 @@ export const EXPORT_CSV = {
     file: 'series.csv',
     columns: [
       'fecha_hora',
-      'sesion_id',
       'ejercicio',
       'serie',
       'repeticiones',

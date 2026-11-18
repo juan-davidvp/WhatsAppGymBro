@@ -37,17 +37,24 @@ export async function exportCommand(user: UserRecord, deps: ExportDeps): Promise
   ];
 }
 
-/** Botones de EX-01. */
+/** Botones de EX-01. `deliver` envía el archivo: solo si llega se registra como entregado. */
 export async function answerExport(
   user: UserRecord,
   value: string,
   deps: ExportDeps,
+  deliver: (reply: Reply) => Promise<void>,
 ): Promise<Reply[]> {
   if (value !== 'go') return [{ text: renderTemplate('EX-03'), buttons: [], edit: true }];
   const startedAt = deps.clock();
   try {
     const files = exportFiles(await deps.exporter.collect(user.id), startedAt);
     const bytes = createZip(files, startedAt);
+    const date = operationalDate(startedAt, user.timezone);
+    await deliver({
+      text: renderTemplate('EX-02'),
+      buttons: [],
+      document: { name: `${EXPORT_ZIP_PREFIX}-${date}.zip`, bytes },
+    });
     await deps.events.emit(
       'export_delivered',
       { userId: user.id, timezone: user.timezone },
@@ -57,14 +64,7 @@ export async function answerExport(
         durationMs: Math.max(0, deps.clock().getTime() - startedAt.getTime()),
       },
     );
-    const date = operationalDate(startedAt, user.timezone);
-    return [
-      {
-        text: renderTemplate('EX-02'),
-        buttons: [],
-        document: { name: `${EXPORT_ZIP_PREFIX}-${date}.zip`, bytes },
-      },
-    ];
+    return [];
   } catch (error) {
     deps.logger.error('export_failed', { userId: user.id, error });
     return [{ text: renderTemplate('EX-04'), buttons: [], edit: true }];

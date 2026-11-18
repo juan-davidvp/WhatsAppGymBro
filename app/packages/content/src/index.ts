@@ -28,7 +28,7 @@ export {
 } from './onboarding.js';
 export { BOT_COMMANDS, MAIN_KEYBOARD } from './navigation.js';
 export { EXPORT_CSV, EXPORT_JSON_FILE, EXPORT_ZIP_PREFIX, type ExportCsvKey } from './export.js';
-export { LAB_MEAL_METHOD_NAMES, LAB_NO_DATA } from './lab.js';
+export { LAB_NO_DATA, labDecimal, labMealEntry, labPercent } from './lab.js';
 export { WEEK_LINE_SYMBOLS, renderWeekLine, type WeekLineMark } from './week-line.js';
 export { QUEST_LABELS, type QuestLabelKind } from './quests.js';
 export {

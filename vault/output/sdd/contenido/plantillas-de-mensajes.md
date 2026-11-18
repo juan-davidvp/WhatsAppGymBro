@@ -3,7 +3,7 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.24.0
+version: 0.25.0
 creado: 2026-10-18
 actualizado: 2026-11-18
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
@@ -244,7 +244,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | AJ-04 | `/ajustes` | ¿Qué quieres ajustar? [Mensajes] [Días de entreno] [Objetivo] |
 | AJ-05 | Días de entreno guardados (T-045) | Listo. Desde el {fecha} entrenas {dias}. Esta semana sigue como está, con todo lo que registraste. |
 
-> - AJ-04 es la entrada de `/ajustes` cuando el onboarding ya terminó. [Mensajes] abre AJ-01. [Días de entreno] abre ON-10 con los días actuales marcados. [Objetivo] sigue el camino de [Nueva meta] (§2.8); si elige el objetivo que ya tiene y no hay meta que proponer, vuelve a AJ-04.
+> - AJ-04 es la entrada de `/ajustes` cuando el onboarding ya terminó. [Mensajes] abre AJ-01. [Días de entreno] abre ON-10 con los días actuales marcados. [Objetivo] sigue el camino de [Nueva meta] (§2.8); si elige el objetivo que ya tiene, vuelve a AJ-04.
 > - Los días se validan como en el onboarding: fuera de P-074 responde ON-11, y si el plan usa menos días de los marcados, AJ-05 va seguido de ON-12 (RN-PLAN-004).
 > - AJ-05: `{fecha}` es el lunes de la semana siguiente ("lunes 26") y `{dias}` son los días de entreno del plan nuevo ("lunes, miércoles y viernes").
 > - [Ajustar plan] y [Ajustar días] de los mensajes proactivos, [Sí, ajustar] de RG-03 y [Ajustar plan] de CU-06 abren ON-10 de esta misma ruta.
@@ -331,7 +331,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 Columnas de cada CSV:
 
 `sesiones.csv`: fecha, sesion, version, estado, inicio, fin
-`series.csv`: fecha_hora, sesion_id, ejercicio, serie, repeticiones, carga_kg, editada
+`series.csv`: fecha_hora, ejercicio, serie, repeticiones, carga_kg, editada
 `comidas.csv`: fecha, hora, metodo, palmas, manos_ahuecadas, punos, pulgares, proteina_g
 `dias.csv`: fecha, tipo, cuenta, completo, mitad_entreno, mitad_comida
 `logros.csv`: fecha_hora, codigo, valor, contexto
@@ -351,7 +351,8 @@ Columnas de cada CSV:
 > - Las cinco líneas van en un solo mensaje y cubren la semana en curso, desde el lunes.
 > - `{fecha}` es el lunes de la semana (AAAA-MM-DD). `{tasa}`, `{toques}` y `{comida}` dicen «sin datos» si todavía no hay registros.
 > - `{comida}` lista la mediana por método, separada por ", ": Porciones, Favorita, Repetir, Foto y Texto ("Favorita 3 s, Porciones 12 s").
-> - G06 revisa los mensajes enviados contra el silencio, la separación y el presupuesto con los ajustes actuales del usuario.
+> - M01 cuenta los días ya cerrados: el día en curso entra cuando cierra, a las 03:00 del día siguiente.
+> - G06 revisa los mensajes enviados contra el silencio, la separación y el presupuesto, con los ajustes actuales, el tipo de cada día y el retroceso vigente.
 
 ## 3. Onboarding (textos base)
 

@@ -62,6 +62,26 @@ describe('RN-OBJ-007 · HU-001-6 · T-035 · cambiar de objetivo desde /ajustes'
     expect(plansGenerated(t)).toBe(generated + 1);
   });
 
+  it('si abandona la propuesta de meta, el perfil sigue con el objetivo anterior', async () => {
+    const t = await onboarded();
+    await t.deps.users.updateProfile(userId(t), { heightCm: 175 });
+    await t.deps.bodyMeasurements.recordWeight(userId(t), THIS_MONDAY, 80);
+    await openGoals(t);
+    await t.act('Perder grasa');
+    expect(t.user()?.profile.goalType).toBe('gain_muscle');
+    expect(t.goals.map((g) => [g.type, g.status])).toEqual([['gain_muscle', 'active']]);
+  });
+
+  it('con peso y estatura, repetir el mismo objetivo tampoco reinicia su plazo', async () => {
+    const t = await onboarded();
+    await t.deps.users.updateProfile(userId(t), { heightCm: 175 });
+    await t.deps.bodyMeasurements.recordWeight(userId(t), THIS_MONDAY, 80);
+    await openGoals(t);
+    await t.act('Ganar músculo');
+    expect(t.last()?.text).toBe(renderTemplate('AJ-04'));
+    expect(t.goals).toHaveLength(1);
+  });
+
   it('elegir el mismo objetivo no lo reinicia y vuelve al menú', async () => {
     const t = await onboarded();
     const generated = plansGenerated(t);

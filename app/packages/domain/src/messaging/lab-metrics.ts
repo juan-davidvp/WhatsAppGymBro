@@ -1,5 +1,5 @@
 import { PARAMETERS } from '../config/parameters.js';
-import { operationalDate } from '../day/day.js';
+import { operationalDate, type DayType } from '../day/day.js';
 import { weekStartOf } from '../gamification/weekly.js';
 import type { Intensity } from '../goals/maintenance.js';
 import type { LocalDate } from '../time/zoned.js';
@@ -82,8 +82,8 @@ export function labMetrics(events: readonly LabEvent[], weekStart: LocalDate): L
 
 /**
  * G06: envíos desde `from` fuera del silencio, de la separación o del presupuesto,
- * con los ajustes actuales. Los envíos anteriores a `from` solo sirven para medir
- * la separación del primero.
+ * con los ajustes actuales, el tipo de cada día y el retroceso vigente. Los envíos
+ * anteriores a `from` solo sirven para medir la separación del primero.
  */
 export function engineViolations(input: {
   readonly sent: readonly SentMessage[];
@@ -91,16 +91,25 @@ export function engineViolations(input: {
   readonly quietHours: QuietHours;
   readonly timeZone: string;
   readonly intensity: Intensity;
+  /** Tipo de cada día operativo con envíos. */
+  readonly dayTypes: Readonly<Record<LocalDate, DayType>>;
+  readonly backoffUntil: Date | null;
 }): number {
-  const { from, quietHours, timeZone, intensity } = input;
+  const { from, quietHours, timeZone, intensity, dayTypes, backoffUntil } = input;
   const ordered = [...input.sent].sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime());
   const dates = ordered.map((m) => operationalDate(m.sentAt, timeZone));
-  const { perDay, perWeek } = messageBudget(intensity, 'TRAINING', false);
   const minGapMs = PARAMETERS.messages.minGapHours * MS_PER_HOUR;
 
   return ordered.filter((message, i) => {
     if (message.sentAt.getTime() < from.getTime()) return false;
     const date = dates[i] ?? '';
+    const backoffActive =
+      backoffUntil !== null && message.sentAt.getTime() < backoffUntil.getTime();
+    const { perDay, perWeek } = messageBudget(
+      intensity,
+      dayTypes[date] ?? 'TRAINING',
+      backoffActive,
+    );
     const previous = ordered[i - 1];
     const upToHere = dates.slice(0, i + 1);
     const tooSoon =

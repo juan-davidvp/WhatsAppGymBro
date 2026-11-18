@@ -397,7 +397,7 @@ export function createBot({
           ? answerTrainingDays(user, action.value, useCases)
           : answerSettings(user, action.value, useCases);
       case 'ex':
-        return answerExport(user, action.value, useCases);
+        return answerExport(user, action.value, useCases, (reply) => sendAll(ctx, [reply]));
       case 'gl':
         return answerGoal(user, action.value, useCases);
       case 'pg':

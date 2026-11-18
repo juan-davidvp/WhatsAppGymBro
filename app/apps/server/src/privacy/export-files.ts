@@ -17,6 +17,12 @@ const INTERNAL_KEYS: ReadonlySet<string> = new Set([
   'idempotencyKey',
   'setKey',
   'rev',
+  'sessionId',
+  'plannedSessionId',
+  'favoriteMealId',
+  'refId',
+  'chatId',
+  'telegramMessageId',
 ]);
 const SECRET_KEY = /token|secret|password|hash|pepper/i;
 /** Una hoja de cálculo ejecuta como fórmula una celda de texto que empieza así. */
@@ -82,7 +88,6 @@ export function exportFiles(data: UserExport, generatedAt: Date): ZipEntry[] {
       'sets',
       rowsOf(data, 'set_entries').map((s) => [
         s['confirmedAt'],
-        s['sessionId'],
         s['exerciseCode'],
         Number(s['setIndex']) + 1,
         s['reps'],

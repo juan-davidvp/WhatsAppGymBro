@@ -868,3 +868,10 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
 - **`TELEGRAM_WEBHOOK_SECRET` sale** de la configuración: con *long polling* no se usa.
 - **Para decisión del PO:** con Railway Hobby no hay IP de salida fija (`F106`), así que Atlas queda abierto a cualquier dirección y lo protege la contraseña. Cerrarlo exige el plan Pro.
 - **Verificado en local:** la imagen arranca, conecta con MongoDB, genera el PNG del muro en Linux y no registra el token. **Pendiente:** el despliegue real y las 72 horas de T-100, que siguen sin ✅.
+
+## [2026-11-18] implementar | Correcciones de la revisión de código de T-090 a T-102
+- **Objetivo (T-035, RN-OBJ-007):** el perfil cambia solo al activar el objetivo. Abandonar una propuesta de meta ya no deja el perfil distinto del objetivo activo, y repetir el mismo objetivo no reinicia su plazo.
+- **G06 (T-102):** usa el presupuesto real de cada día y el retroceso vigente. Antes daba 0 con dos envíos en un día de descanso.
+- **`/exportar` (T-090, HU-008-1):** `export_delivered` se emite después de entregar el archivo y, si Telegram falla, responde EX-04. `series.csv` deja de llevar `sesion_id` y el JSON no lleva identificadores internos ([[plantillas-de-mensajes]] v0.25.0).
+- **No se cambia:** pasar a mantenimiento no regenera el plan, por la decisión del PO del 2026-11-11 (el plan no cambia en mantenimiento).
+- **Queda como deuda menor:** un día quitado que sigue en el plan de la semana en curso usa la hora de la franja durante esa semana.

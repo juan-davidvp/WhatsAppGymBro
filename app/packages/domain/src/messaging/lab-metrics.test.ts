@@ -16,8 +16,20 @@ const sent = (iso: string) => ({
   templateId: 'PL-01',
   sentAt: new Date(iso),
 });
-const violations = (messages: readonly ReturnType<typeof sent>[], from = FROM) =>
-  engineViolations({ sent: messages, from, quietHours: QUIET, timeZone: TZ, intensity: 'NORMAL' });
+const violations = (
+  messages: readonly ReturnType<typeof sent>[],
+  from = FROM,
+  context: { dayTypes?: Record<string, 'TRAINING' | 'REST'>; backoffUntil?: Date } = {},
+) =>
+  engineViolations({
+    sent: messages,
+    from,
+    quietHours: QUIET,
+    timeZone: TZ,
+    intensity: 'NORMAL',
+    dayTypes: context.dayTypes ?? {},
+    backoffUntil: context.backoffUntil ?? null,
+  });
 
 describe('T-102 · median', () => {
   it('toma el valor central, promedia los dos centrales y no inventa datos', () => {
@@ -98,6 +110,22 @@ describe('T-102 · G06 · violaciones del motor', () => {
       .flatMap((d) => [`2026-10-${d}T13:00:00Z`, `2026-10-${d}T20:00:00Z`])
       .map(sent);
     expect(violations(messages)).toBe(Math.max(0, messages.length - perWeek));
+  });
+
+  it('en un día de descanso el presupuesto es menor que en uno de entreno', () => {
+    const messages = [sent('2026-10-20T13:00:00Z'), sent('2026-10-20T20:00:00Z')];
+    expect(violations(messages)).toBe(0);
+    expect(violations(messages, FROM, { dayTypes: { '2026-10-20': 'REST' } })).toBe(1);
+  });
+
+  it('durante el retroceso el presupuesto semanal baja a la mitad', () => {
+    const { perWeek } = PARAMETERS.messages.budget.NORMAL;
+    const allowed = Math.floor(perWeek / 2);
+    const messages = Array.from({ length: allowed + 1 }, (_, i) =>
+      sent(`2026-10-${19 + i}T14:00:00Z`),
+    );
+    expect(violations(messages)).toBe(0);
+    expect(violations(messages, FROM, { backoffUntil: new Date('2026-11-01T00:00:00Z') })).toBe(1);
   });
 
   it('un mensaje de antes de la semana no se cuenta como violación', () => {
