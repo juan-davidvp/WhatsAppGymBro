@@ -842,3 +842,9 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
 - **Botones que esperaban esta tarea:** [Ajustar plan] y [Ajustar días] de los mensajes proactivos, [Ajustar plan] de CU-06 y [Sí, ajustar] de RG-03 abren los días de entreno. RG-03 vuelve a la rotación de `regreso` cuando bajar un día no sale de P-074.
 - **Textos nuevos para revisión del PO:** AJ-04 y AJ-05 ([[plantillas-de-mensajes]] v0.23.0, §2.6).
 - **Pruebas:** `plans/training-days.test.ts` (9) y 2 de RG-03 en `messaging/candidates.test.ts`.
+
+## [2026-11-18] implementar | T-035 cambiar de objetivo desde /ajustes
+- **Flujo** (`goals/goal-actions.ts`, HU-001-6, RN-OBJ-007): [Objetivo] de AJ-04 sigue el camino de [Nueva meta]. El objetivo anterior queda `cambiado` y el historial se conserva.
+- **Corrección:** GO-07 ya prometía el plan ajustado desde la semana siguiente, pero esa semana estaba generada desde el onboarding y no cambiaba. Ahora se rehace al fijar el objetivo, con meta o sin ella, y la semana en curso no se toca.
+- **Mismo objetivo:** si no hay meta que proponer, no se reinicia su plazo y se vuelve a AJ-04.
+- **Pruebas:** `goals/change-goal.test.ts` (4).

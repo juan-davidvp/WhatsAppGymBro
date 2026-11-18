@@ -1,13 +1,17 @@
 import { renderTemplate, templateById } from '@gymbro/content';
 import {
   PARAMETERS,
+  WEEK_DAYS,
+  addDays,
   foodBodyScreeningOutcome,
   operationalDate,
+  weekStartOf,
   weightGoalOffers,
   type GoalType,
   type LocalDate,
 } from '@gymbro/domain';
 import type { CallbackAction } from '../bot/callback-data.js';
+import { settingsMenu } from '../messaging/message-settings.js';
 import {
   goalProposalReply,
   resolveGoalProposal,
@@ -16,7 +20,8 @@ import {
 import { formatKg } from '../progress/progress-screen.js';
 import { GOAL_BY_LABEL, button, type Reply } from '../onboarding/replies.js';
 import { METRIC_BY_GOAL } from '../onboarding/summary.js';
-import type { UserRecord } from '../ports/repositories.js';
+import { regenerateWeek, type PlanDeps } from '../plans/weekly-plan.js';
+import type { UserRecord, WorkoutSessionsRepository } from '../ports/repositories.js';
 import {
   averageOn,
   enterMaintenanceMode,
@@ -31,6 +36,10 @@ import {
  * Fijar una meta reutiliza la propuesta del onboarding (ON-05, ON-06/07); el
  * objetivo anterior queda con su estado y el historial se conserva (RN-OBJ-007).
  */
+
+export interface GoalActionDeps extends GoalDeps, PlanDeps {
+  workouts: WorkoutSessionsRepository;
+}
 
 const gl = (value: string): CallbackAction => ({ action: 'gl', value });
 const proposalAct = (value: string) => gl(`p_${value}`);
@@ -65,7 +74,20 @@ async function weightProposal(user: UserRecord, deps: GoalDeps): Promise<Reply |
   return { ...goalProposalReply(weightGoalOffers(inputs).proposal, proposalAct), edit: true };
 }
 
-async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps): Promise<Reply[]> {
+/** HU-001-6: la semana en curso no cambia; el plan nuevo empieza el lunes siguiente. */
+async function regenerateNextWeek(
+  user: UserRecord,
+  today: LocalDate,
+  deps: GoalActionDeps,
+): Promise<void> {
+  await regenerateWeek(user, addDays(weekStartOf(today), WEEK_DAYS.length), deps);
+}
+
+async function chooseObjective(
+  user: UserRecord,
+  type: GoalType,
+  deps: GoalActionDeps,
+): Promise<Reply[]> {
   const today = operationalDate(deps.clock(), user.timezone);
   // RN-SEG-003: tras un tamizaje positivo (modo sin números) no hay objetivo de perder grasa.
   if (
@@ -79,6 +101,8 @@ async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps)
   const updated: UserRecord = { ...user, profile: { ...user.profile, goalType: type } };
   const proposal = await weightProposal(updated, deps);
   if (proposal) return [proposal];
+  // HU-001-6: solo cambia si elige otro; repetir el mismo no reinicia su plazo.
+  if ((await deps.goals.active(user.id))?.type === type) return [settingsMenu(true)];
   await deps.goals.activate({
     userId: user.id,
     type,
@@ -93,10 +117,15 @@ async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps)
     horizonWeeks: PARAMETERS.goal.horizonWeeksDefault,
     withTarget: false,
   });
+  await regenerateNextWeek(updated, today, deps);
   return [done(renderTemplate('GO-07', { objetivo: LABEL_BY_GOAL[type] ?? '' }))];
 }
 
-async function answerProposal(user: UserRecord, value: string, deps: GoalDeps): Promise<Reply[]> {
+async function answerProposal(
+  user: UserRecord,
+  value: string,
+  deps: GoalActionDeps,
+): Promise<Reply[]> {
   const inputs = await weightGoalInputs(user, deps);
   if (!inputs || user.settings.numberFreeMode) return [objectiveChooser(user)];
   const outcome = await resolveGoalProposal(inputs, value, proposalAct, deps, user);
@@ -116,6 +145,7 @@ async function answerProposal(user: UserRecord, value: string, deps: GoalDeps): 
     horizonWeeks,
     withTarget: true,
   });
+  await regenerateNextWeek(user, operationalDate(deps.clock(), user.timezone), deps);
   return [
     done(
       renderTemplate('GO-08', {
@@ -205,7 +235,7 @@ async function moveZone(user: UserRecord, deps: GoalDeps): Promise<Reply[]> {
 export async function answerGoal(
   user: UserRecord,
   value: string,
-  deps: GoalDeps,
+  deps: GoalActionDeps,
 ): Promise<Reply[]> {
   const today = operationalDate(deps.clock(), user.timezone);
   if (value === 'keep') return keepMaintaining(user, today, deps);

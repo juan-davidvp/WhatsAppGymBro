@@ -101,13 +101,16 @@ function typesScreen(settings: Settings): Reply {
 
 const saved = (): Reply => ({ text: renderTemplate('AJ-03'), buttons: [], toast: true });
 
-/** AJ-04: entrada de `/ajustes`, con [Mensajes] y [Días de entreno] (T-045). */
+/** AJ-04: entrada de `/ajustes`, con [Mensajes], [Días de entreno] (T-045) y [Objetivo] (T-035). */
 export function settingsMenu(edit = false): Reply {
-  const [messages = '', days = ''] = templateById('AJ-04').buttons;
+  const [messages = '', days = '', goal = ''] = templateById('AJ-04').buttons;
   return {
     text: renderTemplate('AJ-04'),
-    buttons: [button(messages, aj('msg')), button(days, aj('days'))],
-    rowSize: 2,
+    buttons: [
+      button(messages, aj('msg')),
+      button(days, aj('days')),
+      button(goal, { action: 'gl', value: 'new' }),
+    ],
     ...(edit ? { edit } : {}),
   };
 }

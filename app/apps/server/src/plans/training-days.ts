@@ -24,7 +24,7 @@ import type {
   UsersRepository,
   WorkoutSessionsRepository,
 } from '../ports/repositories.js';
-import { discardWeekIfUnused, ensureWeek, type PlanDeps } from './weekly-plan.js';
+import { ensureWeek, regenerateWeek, type PlanDeps } from './weekly-plan.js';
 
 /**
  * Días de entreno desde `/ajustes` (T-045, HU-002-4, RN-PLAN-001, RN-PLAN-004). La
@@ -114,9 +114,8 @@ async function saveDays(
   await ensureWeek(user, monday, deps);
   await deps.users.updateProfile(user.id, { availableDays: days });
   await saveHabit(user, days, deps);
-  await discardWeekIfUnused(user.id, nextMonday, deps);
   const updated = { ...user, profile: { ...user.profile, availableDays: days } };
-  const plan = await ensureWeek(updated, nextMonday, deps);
+  const plan = await regenerateWeek(updated, nextMonday, deps);
   const training = (plan?.days ?? []).filter((d) => d.session !== null).map((d) => d.date);
 
   await deps.events.emit(

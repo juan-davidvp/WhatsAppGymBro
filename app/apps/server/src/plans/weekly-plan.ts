@@ -164,6 +164,16 @@ export async function discardWeekIfUnused(
   if (sessions.every((list) => list.length === 0)) await deps.plans.discardWeek(userId, weekStart);
 }
 
+/** Rehace con el perfil actual una semana sin usar (días en T-045, objetivo en T-035). */
+export async function regenerateWeek(
+  user: UserRecord,
+  weekStart: LocalDate,
+  deps: PlanDeps & { workouts: WorkoutSessionsRepository },
+): Promise<StoredWeeklyPlan | null> {
+  await discardWeekIfUnused(user.id, weekStart, deps);
+  return ensureWeek(user, weekStart, deps);
+}
+
 /**
  * RN-DQC-001: tipo del día según el plan guardado. Si esa semana nunca se
  * guardó (no abrió el bot), el tipo que el plan le habría dado, sin guardarlo

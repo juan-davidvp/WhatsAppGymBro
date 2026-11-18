@@ -58,7 +58,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | T-032 ✅ | Onboarding completo con reanudación | HU-001-1 a 5 | T-031, T-010, T-011 | SC-001-1 medido en local |
 | T-033 ✅ | Respuestas de cuidado y suite de *red-team* | HU-009-4/7 | T-017, T-021 | 0 fallos críticos en ≥ 50 casos |
 | T-034 ✅ | `/borrar_datos` con borrado total | HU-009-6, RN-DAT-003 | T-020 | SC-009-2 |
-| T-035 | *Could:* cambiar de objetivo conservando el historial — lo esencial llega con T-082 ([Nueva meta]); falta abrirlo desde `/ajustes` | HU-001-6, RN-OBJ-007 | T-032 | Escenarios pasan; el objetivo anterior queda `cambiado` |
+| T-035 ✅ | *Could:* cambiar de objetivo conservando el historial — lo esencial llega con T-082 ([Nueva meta]); falta abrirlo desde `/ajustes` | HU-001-6, RN-OBJ-007 | T-032 | Escenarios pasan; el objetivo anterior queda `cambiado` |
 
 ## M4 · Plan y entrenamiento (SPEC-002, SPEC-003)
 

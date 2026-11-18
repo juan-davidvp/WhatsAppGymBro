@@ -765,7 +765,7 @@ export const MESSAGE_TEMPLATES = z.array(messageTemplateSchema).parse([
     kind: 'response',
     when: '`/ajustes`',
     text: '¿Qué quieres ajustar?',
-    buttons: ['Mensajes', 'Días de entreno'],
+    buttons: ['Mensajes', 'Días de entreno', 'Objetivo'],
   },
   {
     id: 'AJ-05',

@@ -241,10 +241,10 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | AJ-01 | `/ajustes` | Tus mensajes: **{intensidad}** · sin mensajes de {inicio} a {fin} · apagados: {apagados}. [Cantidad] [Silencio] [Tipos] |
 | AJ-02 | [Tipos] | Toca un tipo para apagarlo o encenderlo. [Listo] |
 | AJ-03 | Cambio guardado | Listo, guardado. |
-| AJ-04 | `/ajustes` | ¿Qué quieres ajustar? [Mensajes] [Días de entreno] |
+| AJ-04 | `/ajustes` | ¿Qué quieres ajustar? [Mensajes] [Días de entreno] [Objetivo] |
 | AJ-05 | Días de entreno guardados (T-045) | Listo. Desde el {fecha} entrenas {dias}. Esta semana sigue como está, con todo lo que registraste. |
 
-> - AJ-04 es la entrada de `/ajustes` cuando el onboarding ya terminó. [Mensajes] abre AJ-01. [Días de entreno] abre ON-10 con los días actuales marcados.
+> - AJ-04 es la entrada de `/ajustes` cuando el onboarding ya terminó. [Mensajes] abre AJ-01. [Días de entreno] abre ON-10 con los días actuales marcados. [Objetivo] sigue el camino de [Nueva meta] (§2.8); si elige el objetivo que ya tiene y no hay meta que proponer, vuelve a AJ-04.
 > - Los días se validan como en el onboarding: fuera de P-074 responde ON-11, y si el plan usa menos días de los marcados, AJ-05 va seguido de ON-12 (RN-PLAN-004).
 > - AJ-05: `{fecha}` es el lunes de la semana siguiente ("lunes 26") y `{dias}` son los días de entreno del plan nuevo ("lunes, miércoles y viernes").
 > - [Ajustar plan] y [Ajustar días] de los mensajes proactivos, [Sí, ajustar] de RG-03 y [Ajustar plan] de CU-06 abren ON-10 de esta misma ruta.
