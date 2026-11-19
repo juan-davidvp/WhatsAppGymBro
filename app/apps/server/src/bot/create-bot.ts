@@ -1,5 +1,5 @@
 import { MAIN_KEYBOARD, templateById } from '@gymbro/content';
-import { Bot, GrammyError, InlineKeyboard, Keyboard, type MiddlewareFn } from 'grammy';
+import { Bot, GrammyError, InlineKeyboard, InputFile, Keyboard, type MiddlewareFn } from 'grammy';
 import type { UserFromGetMe } from 'grammy/types';
 import type { EventEmitter } from '../events/emitter.js';
 import type { Logger } from '../logger.js';
@@ -16,6 +16,7 @@ import {
   type Reply,
 } from '../onboarding/onboarding.js';
 import type {
+  EventLogReader,
   BodyMeasurementsRepository,
   GoalsRepository,
   DaysRepository,
@@ -41,6 +42,7 @@ import type {
   RiskSignalsRepository,
   ScreeningsRepository,
   UserDataEraser,
+  UserDataExporter,
   UsersRepository,
 } from '../ports/repositories.js';
 import { planView } from '../plans/plan-view.js';
@@ -52,10 +54,13 @@ import { answerPlateau, plateauPrompt } from '../sessions/plateau.js';
 import { answerMeal, mealMenu } from '../meals/meals.js';
 import { answerToday, todayScreen } from '../today/today.js';
 import { answerDeletion, deleteDataCommand } from '../privacy/deletion.js';
+import { answerExport, exportCommand } from '../privacy/export.js';
 import { encodeCallbackData, parseCallbackData, type NavTarget } from './callback-data.js';
 import { answerSettings, settingsCommand } from '../messaging/message-settings.js';
+import { answerTrainingDays, isTrainingDaysValue } from '../plans/training-days.js';
 import { answerPause, pauseCommand } from '../messaging/pause.js';
 import { answerGoal } from '../goals/goal-actions.js';
+import { labCommand } from '../lab/lab.js';
 import { logbookScreen } from '../progress/logbook.js';
 import { progressScreen } from '../progress/progress-screen.js';
 import {
@@ -85,6 +90,7 @@ export interface BotDependencies {
   consents: ConsentsRepository;
   screenings: ScreeningsRepository;
   eraser: UserDataEraser;
+  exporter: UserDataExporter;
   bodyMeasurements: BodyMeasurementsRepository;
   habits: TrainingHabitsRepository;
   goals: GoalsRepository;
@@ -113,6 +119,8 @@ export interface BotDependencies {
   meals: MealsRepository;
   favorites: FavoriteMealsRepository;
   events: EventEmitter;
+  /** Lectura de eventos para `/lab` (T-102). */
+  eventLog: EventLogReader;
 }
 
 export interface CreateBotOptions {
@@ -120,6 +128,8 @@ export interface CreateBotOptions {
   logger: Logger;
   deps: BotDependencies;
   clock?: () => Date;
+  /** Única cuenta que puede usar `/lab` (T-102); null: nadie. */
+  founderTelegramId?: number | null;
   /** Solo en pruebas: evita la llamada a getMe. */
   botInfo?: UserFromGetMe;
 }
@@ -211,6 +221,11 @@ export function telegramPayload(reply: Reply): {
 async function sendAll(ctx: BotContext, replies: readonly Reply[]): Promise<void> {
   for (const reply of replies) {
     if (reply.toast) continue;
+    if (reply.document) {
+      const file = new InputFile(reply.document.bytes, reply.document.name);
+      await ctx.replyWithDocument(file, { caption: reply.text });
+      continue;
+    }
     const formatted = telegramPayload(reply);
     const options = formatted.options;
     if (reply.edit && ctx.callbackQuery?.message && !reply.mainKeyboard) {
@@ -243,6 +258,7 @@ export function createBot({
   deps,
   clock = () => new Date(),
   botInfo,
+  founderTelegramId = null,
 }: CreateBotOptions): Bot<BotContext> {
   const bot = new Bot<BotContext>(token, botInfo ? { botInfo } : {});
 
@@ -284,6 +300,12 @@ export function createBot({
     if (ctx.user) await sendAll(ctx, await pauseCommand(ctx.user, useCases));
   });
 
+  // T-102 · comando oculto: para cualquier otra cuenta es un mensaje fuera de dominio.
+  handlers.command('lab', async (ctx) => {
+    if (!ctx.user || ctx.user.telegramUserId !== founderTelegramId) return sendOutOfDomain(ctx);
+    await sendAll(ctx, await labCommand(ctx.user, useCases));
+  });
+
   handlers.command('ajustes', async (ctx) => {
     if (ctx.user) await sendAll(ctx, settingsCommand(ctx.user));
   });
@@ -294,6 +316,10 @@ export function createBot({
 
   handlers.command('logros', async (ctx) => {
     if (ctx.user) await sendAll(ctx, await logbookScreen(ctx.user, useCases));
+  });
+
+  handlers.command('exportar', async (ctx) => {
+    if (ctx.user) await sendAll(ctx, await exportCommand(ctx.user, useCases));
   });
 
   handlers.command('privacidad', async (ctx) => {
@@ -367,7 +393,11 @@ export function createBot({
       case 'ps':
         return answerPause(user, action.value, useCases);
       case 'aj':
-        return answerSettings(user, action.value, useCases);
+        return isTrainingDaysValue(action.value)
+          ? answerTrainingDays(user, action.value, useCases)
+          : answerSettings(user, action.value, useCases);
+      case 'ex':
+        return answerExport(user, action.value, useCases, (reply) => sendAll(ctx, [reply]));
       case 'gl':
         return answerGoal(user, action.value, useCases);
       case 'pg':

@@ -21,6 +21,7 @@ import {
   exerciseAdjustmentsRepository,
   favoriteMealsRepository,
   bodyMeasurementsRepository,
+  userDataExporter,
   goalsRepository,
   trainingHabitsRepository,
   consentsRepository,
@@ -449,6 +450,27 @@ describe('RN-SEG-001 · RN-SEG-002 · ajustes de seguridad del usuario', () => {
     });
     const doc = await db.collection('screenings').findOne({}, { projection: { _id: 0 } });
     expect(Object.keys(doc ?? {}).sort()).toEqual(['at', 'result', 'type', 'userId']);
+  });
+});
+
+describe('HU-008-1 · T-090 · exportar solo lo del usuario', () => {
+  it('trae sus documentos, ninguno de otro usuario y nunca los tokens de ingesta', async () => {
+    const users = usersRepository(db);
+    const owner = await users.findOrCreate({ telegramUserId: 901, chatId: 901, now });
+    const other = await users.findOrCreate({ telegramUserId: 902, chatId: 902, now });
+    const weights = bodyMeasurementsRepository(db);
+    await weights.recordWeight(owner.id, '2026-10-19', 72.5);
+    await weights.recordWeight(other.id, '2026-10-19', 90);
+    await db.collection('ingestion_tokens').insertOne({ userId: owner.id, tokenHash: 'h' });
+    await db.collection('events').insertOne({ userRef: owner.id, name: 'x', at: now });
+
+    const data = await userDataExporter(db).collect(owner.id);
+
+    expect(data['users']).toHaveLength(1);
+    expect(data['body_measurements']?.map((m) => m['weightKg'])).toEqual([72.5]);
+    expect(data['events']).toHaveLength(1);
+    expect(data['ingestion_tokens']).toBeUndefined();
+    expect(data['processed_updates']).toBeUndefined();
   });
 });
 
@@ -951,5 +973,20 @@ describe('RN-NUT-004 · T-051 · comidas del día y frecuentes', () => {
     expect(await favorites.list('u31')).toHaveLength(1);
     await favorites.remove('u31', created.id);
     expect(await favorites.list('u31')).toEqual([]);
+  });
+});
+
+describe('T-102 · lectura de eventos para /lab', () => {
+  it('devuelve solo los del usuario desde la fecha, en orden de tiempo', async () => {
+    const events = eventsRepository(db);
+    const common = { localDate: '2026-10-19', appVersion: '0.0.0', phase: 'n1_B' as const };
+    const row = (userRef: string, name: 'plan_viewed' | 'set_undone', at: string) =>
+      events.insert({ userRef, name, at: new Date(at), common, props: {} });
+    await row('u40', 'set_undone', '2026-10-20T10:00:00Z');
+    await row('u40', 'plan_viewed', '2026-10-19T10:00:00Z');
+    await row('u40', 'plan_viewed', '2026-10-18T10:00:00Z');
+    await row('otro', 'plan_viewed', '2026-10-19T10:00:00Z');
+    const found = await events.since('u40', new Date('2026-10-19T00:00:00Z'));
+    expect(found.map((e) => e.name)).toEqual(['plan_viewed', 'set_undone']);
   });
 });

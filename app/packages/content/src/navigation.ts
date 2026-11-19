@@ -15,6 +15,7 @@ export const BOT_COMMANDS = [
   { command: 'borrar_datos', description: 'Borrar todos tus datos' },
   { command: 'progreso', description: 'Tu progreso y tu peso' },
   { command: 'logros', description: 'Tu bitácora de logros' },
+  { command: 'exportar', description: 'Descargar todos tus datos' },
   { command: 'pausa', description: 'Pausar mis mensajes unos días' },
   { command: 'ajustes', description: 'Cuánto y cuándo te escribo' },
 ] as const;

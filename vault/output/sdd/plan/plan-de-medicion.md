@@ -81,6 +81,8 @@ relacionados: [modelo-de-datos, estrategia-de-pruebas, spec-000-vision-fase-0]
 | B (6 semanas, con bot) | Eventos del bot + hoja semanal | Todo lo anterior + M03, M04, comodines, costo de IA |
 | A2 (2 semanas, sin bot) | Hoja de cálculo diaria | Igual que A1 |
 
+Guía paso a paso y hoja de registro: [[guia-protocolo-n-de-1]].
+
 Análisis: comparar tasas de sesiones completadas A1 vs. B vs. A2; describir la tendencia (no inferencia estadística con n = 1). Resultado en `vault/raw/` (datos) y `vault/wiki/` (síntesis).
 
 ## 6. Paneles

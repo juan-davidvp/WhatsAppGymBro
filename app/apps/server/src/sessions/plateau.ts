@@ -12,6 +12,7 @@ import {
   type PlateauStrategy,
 } from '@gymbro/domain';
 import { button, plain, type Reply } from '../onboarding/replies.js';
+import { discardWeekIfUnused } from '../plans/weekly-plan.js';
 import type { UserRecord, WorkoutSessionRecord } from '../ports/repositories.js';
 import { exerciseName } from './card.js';
 import type { TrainingDeps } from './deps.js';
@@ -122,12 +123,7 @@ export async function answerPlateau(
       replacementCode,
     });
     // La semana siguiente, si ya estaba generada y sin usar, se rehace con la estrategia.
-    const usedNextWeek = (
-      await Promise.all(
-        WEEK_DAYS.map((_, i) => deps.workouts.onDate(user.id, addDays(fromWeek, i))),
-      )
-    ).some((list) => list.length > 0);
-    if (!usedNextWeek) await deps.plans.discardWeek(user.id, fromWeek);
+    await discardWeekIfUnused(user.id, fromWeek, deps);
   }
   return [reply];
 }

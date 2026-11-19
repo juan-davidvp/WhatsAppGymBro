@@ -3,9 +3,9 @@ titulo: Plantillas de mensajes (contenido versionado)
 tipo: sdd-contenido
 hito: H3
 estado: borrador
-version: 0.21.0
+version: 0.25.0
 creado: 2026-10-18
-actualizado: 2026-11-11
+actualizado: 2026-11-18
 deriva_de: [voz-y-marca, proactividad-sin-spam, cada-dia-cuenta, seguridad-y-cumplimiento]
 fuentes: []
 relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad, reglas-de-negocio]
@@ -191,6 +191,7 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | borrar_datos | Borrar todos tus datos |
 | progreso | Tu progreso y tu peso |
 | logros | Tu bitácora de logros |
+| exportar | Descargar todos tus datos |
 | pausa | Pausar mis mensajes unos días |
 | ajustes | Cuánto y cuándo te escribo |
 
@@ -240,7 +241,14 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 | AJ-01 | `/ajustes` | Tus mensajes: **{intensidad}** · sin mensajes de {inicio} a {fin} · apagados: {apagados}. [Cantidad] [Silencio] [Tipos] |
 | AJ-02 | [Tipos] | Toca un tipo para apagarlo o encenderlo. [Listo] |
 | AJ-03 | Cambio guardado | Listo, guardado. |
+| AJ-04 | `/ajustes` | ¿Qué quieres ajustar? [Mensajes] [Días de entreno] [Objetivo] |
+| AJ-05 | Días de entreno guardados (T-045) | Listo. Desde el {fecha} entrenas {dias}. Esta semana sigue como está, con todo lo que registraste. |
 
+> - AJ-04 es la entrada de `/ajustes` cuando el onboarding ya terminó. [Mensajes] abre AJ-01. [Días de entreno] abre ON-10 con los días actuales marcados. [Objetivo] sigue el camino de [Nueva meta] (§2.8); si elige el objetivo que ya tiene, vuelve a AJ-04.
+> - Los días se validan como en el onboarding: fuera de P-074 responde ON-11, y si el plan usa menos días de los marcados, AJ-05 va seguido de ON-12 (RN-PLAN-004).
+> - AJ-05: `{fecha}` es el lunes de la semana siguiente ("lunes 26") y `{dias}` son los días de entreno del plan nuevo ("lunes, miércoles y viernes").
+> - [Ajustar plan] y [Ajustar días] de los mensajes proactivos, [Sí, ajustar] de RG-03 y [Ajustar plan] de CU-06 abren ON-10 de esta misma ruta.
+> - RG-03: `{dias_menos}` es un día de entreno menos que los del plan actual. Solo se usa si ese número sigue dentro de P-074.
 > - PA-01 lleva una opción por cada valor de P-099: [1 día] y «{n} días» para los demás. PA-03 [Cambiar días] vuelve a PA-01.
 > - `{fecha}` es el día de la semana y el número del día en que termina la pausa ("jueves 12").
 > - La semana que toca una pausa no se evalúa (RN-MSJ-013). La pausa por inactividad (RN-MSJ-008) es otra cosa: termina con cualquier interacción.
@@ -308,6 +316,43 @@ relacionados: [spec-007-proactividad-y-mensajes, spec-009-seguridad-y-privacidad
 > - [Ajustar] y [Ajustar meta] proponen otra meta del mismo objetivo con ON-06/ON-07; al elegirla sale GO-08.
 > - [Seguir así] y [Está bien así] no cambian nada.
 > - [Mover mi zona] centra la zona en la media móvil actual (GO-10).
+
+### 2.9 Exportar mis datos (`/exportar`, T-090)
+
+| ID | Momento | Texto |
+|---|---|---|
+| EX-01 | `/exportar` | Te preparo un archivo con todos tus datos: sesiones, series, comidas, días, logros y mediciones. ¿Lo genero? [Generar archivo] [Cancelar] |
+| EX-02 | Archivo listo (pie del documento) | Aquí están tus datos en CSV y JSON. Guárdalo en un lugar seguro: es información personal. |
+| EX-03 | [Cancelar] | Listo, no generé nada. |
+| EX-04 | Falla al generar el archivo | No pude generar el archivo. Inténtalo de nuevo en un rato. |
+
+> - El archivo es un ZIP con un CSV por tema y `datos.json` con todo lo guardado del usuario (RN-INT-002). No lleva tokens, claves, identificadores internos ni datos de otros usuarios (HU-008-1).
+
+Columnas de cada CSV:
+
+`sesiones.csv`: fecha, sesion, version, estado, inicio, fin
+`series.csv`: fecha_hora, ejercicio, serie, repeticiones, carga_kg, editada
+`comidas.csv`: fecha, hora, metodo, palmas, manos_ahuecadas, punos, pulgares, proteina_g
+`dias.csv`: fecha, tipo, cuenta, completo, mitad_entreno, mitad_comida
+`logros.csv`: fecha_hora, codigo, valor, contexto
+`mediciones.csv`: fecha, peso_kg, cintura_cm
+
+### 2.10 Panel del fundador (`/lab`, T-102)
+
+| ID | Momento | Texto |
+|---|---|---|
+| LB-01 | `/lab` (solo el fundador) | Semana del {fecha} |
+| LB-02 | Línea de M01 | M01 · Días que cuentan: {dias} |
+| LB-03 | Línea de M03 | M03 · Acción de mensajes: {tasa} ({accionados} de {enviados}) |
+| LB-04 | Línea de M04 | M04 · Toques por serie: {toques} · Segundos por comida: {comida} |
+| LB-05 | Línea de G06 | G06 · Violaciones del motor: {violaciones} |
+
+> - `/lab` es un comando oculto: no aparece en el menú y solo responde a la cuenta de `FOUNDER_TELEGRAM_ID`. Para cualquier otra cuenta se comporta como un mensaje fuera de dominio (CU-07).
+> - Las cinco líneas van en un solo mensaje y cubren la semana en curso, desde el lunes.
+> - `{fecha}` es el lunes de la semana (AAAA-MM-DD). `{tasa}`, `{toques}` y `{comida}` dicen «sin datos» si todavía no hay registros.
+> - `{comida}` lista la mediana por método, separada por ", ": Porciones, Favorita, Repetir, Foto y Texto ("Favorita 3 s, Porciones 12 s").
+> - M01 cuenta los días ya cerrados: el día en curso entra cuando cierra, a las 03:00 del día siguiente.
+> - G06 revisa los mensajes enviados contra el silencio, la separación y el presupuesto, con los ajustes actuales, el tipo de cada día y el retroceso vigente.
 
 ## 3. Onboarding (textos base)
 

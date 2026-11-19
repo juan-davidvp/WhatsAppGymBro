@@ -1,13 +1,17 @@
 import { renderTemplate, templateById } from '@gymbro/content';
 import {
   PARAMETERS,
+  WEEK_DAYS,
+  addDays,
   foodBodyScreeningOutcome,
   operationalDate,
+  weekStartOf,
   weightGoalOffers,
   type GoalType,
   type LocalDate,
 } from '@gymbro/domain';
 import type { CallbackAction } from '../bot/callback-data.js';
+import { settingsMenu } from '../messaging/message-settings.js';
 import {
   goalProposalReply,
   resolveGoalProposal,
@@ -16,7 +20,8 @@ import {
 import { formatKg } from '../progress/progress-screen.js';
 import { GOAL_BY_LABEL, button, type Reply } from '../onboarding/replies.js';
 import { METRIC_BY_GOAL } from '../onboarding/summary.js';
-import type { UserRecord } from '../ports/repositories.js';
+import { ensureWeek, regenerateWeek, type PlanDeps } from '../plans/weekly-plan.js';
+import type { GoalRecord, UserRecord, WorkoutSessionsRepository } from '../ports/repositories.js';
 import {
   averageOn,
   enterMaintenanceMode,
@@ -32,8 +37,16 @@ import {
  * objetivo anterior queda con su estado y el historial se conserva (RN-OBJ-007).
  */
 
+export interface GoalActionDeps extends GoalDeps, PlanDeps {
+  workouts: WorkoutSessionsRepository;
+}
+
 const gl = (value: string): CallbackAction => ({ action: 'gl', value });
-const proposalAct = (value: string) => gl(`p_${value}`);
+/** El objetivo de la propuesta viaja en el botón: el perfil cambia solo al aceptarla. */
+const PROPOSAL_CODE = { gain_muscle: 'm', lose_fat: 'f' } as const;
+const PROPOSAL_VALUE = /^([mf])_(.+)$/;
+const proposalAct = (type: keyof typeof PROPOSAL_CODE) => (value: string) =>
+  gl(`p_${PROPOSAL_CODE[type]}_${value}`);
 const DISMISS: CallbackAction = { action: 'td', value: 'dismiss' };
 
 const LABEL_BY_GOAL: Readonly<Partial<Record<GoalType, string>>> = Object.fromEntries(
@@ -57,15 +70,41 @@ function objectiveChooser(user: UserRecord): Reply {
   };
 }
 
-/** Propuesta de meta de peso (ON-06) para el objetivo del perfil, o null si no aplica. */
-async function weightProposal(user: UserRecord, deps: GoalDeps): Promise<Reply | null> {
-  if (user.settings.numberFreeMode) return null;
-  const inputs = await weightGoalInputs(user, deps);
+const withGoal = (user: UserRecord, goalType: GoalType): UserRecord => ({
+  ...user,
+  profile: { ...user.profile, goalType },
+});
+
+/** Propuesta de meta de peso (ON-06) para ese objetivo, o null si no aplica. */
+async function weightProposal(
+  user: UserRecord,
+  type: GoalType | null,
+  deps: GoalDeps,
+): Promise<Reply | null> {
+  if (user.settings.numberFreeMode || !type) return null;
+  const inputs = await weightGoalInputs(withGoal(user, type), deps);
   if (!inputs) return null;
-  return { ...goalProposalReply(weightGoalOffers(inputs).proposal, proposalAct), edit: true };
+  const offer = weightGoalOffers(inputs).proposal;
+  return { ...goalProposalReply(offer, proposalAct(inputs.type)), edit: true };
 }
 
-async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps): Promise<Reply[]> {
+/**
+ * RN-OBJ-007 y HU-001-6: fija el objetivo nuevo. La semana en curso queda con el
+ * anterior y el plan nuevo empieza el lunes siguiente.
+ */
+async function switchGoal(user: UserRecord, goal: GoalRecord, deps: GoalActionDeps): Promise<void> {
+  const monday = weekStartOf(goal.startDate);
+  await ensureWeek(user, monday, deps);
+  await deps.users.updateProfile(user.id, { goalType: goal.type });
+  await deps.goals.activate(goal);
+  await regenerateWeek(withGoal(user, goal.type), addDays(monday, WEEK_DAYS.length), deps);
+}
+
+async function chooseObjective(
+  user: UserRecord,
+  type: GoalType,
+  deps: GoalActionDeps,
+): Promise<Reply[]> {
   const today = operationalDate(deps.clock(), user.timezone);
   // RN-SEG-003: tras un tamizaje positivo (modo sin números) no hay objetivo de perder grasa.
   if (
@@ -75,11 +114,11 @@ async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps)
     return [objectiveChooser(user)];
   }
   if (type === 'maintain') return keepMaintaining(user, today, deps);
-  await deps.users.updateProfile(user.id, { goalType: type });
-  const updated: UserRecord = { ...user, profile: { ...user.profile, goalType: type } };
-  const proposal = await weightProposal(updated, deps);
+  // HU-001-6: solo cambia si elige otro; repetir el mismo no reinicia su plazo.
+  if ((await deps.goals.active(user.id))?.type === type) return [settingsMenu(true)];
+  const proposal = await weightProposal(user, type, deps);
   if (proposal) return [proposal];
-  await deps.goals.activate({
+  const goal: GoalRecord = {
     userId: user.id,
     type,
     metric: METRIC_BY_GOAL[type],
@@ -87,7 +126,8 @@ async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps)
     targetValue: null,
     startDate: today,
     horizonWeeks: PARAMETERS.goal.horizonWeeksDefault,
-  });
+  };
+  await switchGoal(user, goal, deps);
   await deps.events.emit('goal_set', subjectOf(user), {
     type,
     horizonWeeks: PARAMETERS.goal.horizonWeeksDefault,
@@ -96,13 +136,19 @@ async function chooseObjective(user: UserRecord, type: GoalType, deps: GoalDeps)
   return [done(renderTemplate('GO-07', { objetivo: LABEL_BY_GOAL[type] ?? '' }))];
 }
 
-async function answerProposal(user: UserRecord, value: string, deps: GoalDeps): Promise<Reply[]> {
-  const inputs = await weightGoalInputs(user, deps);
+async function answerProposal(
+  user: UserRecord,
+  value: string,
+  deps: GoalActionDeps,
+): Promise<Reply[]> {
+  const [, code, answer = ''] = PROPOSAL_VALUE.exec(value) ?? [];
+  const proposed: GoalType | null = code === 'm' ? 'gain_muscle' : code === 'f' ? 'lose_fat' : null;
+  const inputs = proposed ? await weightGoalInputs(withGoal(user, proposed), deps) : null;
   if (!inputs || user.settings.numberFreeMode) return [objectiveChooser(user)];
-  const outcome = await resolveGoalProposal(inputs, value, proposalAct, deps, user);
+  const outcome = await resolveGoalProposal(inputs, answer, proposalAct(inputs.type), deps, user);
   if ('reply' in outcome) return [{ ...outcome.reply, edit: true }];
   const { targetKg, horizonWeeks } = outcome.accepted;
-  await deps.goals.activate({
+  const goal: GoalRecord = {
     userId: user.id,
     type: inputs.type,
     metric: 'weight_kg',
@@ -110,7 +156,8 @@ async function answerProposal(user: UserRecord, value: string, deps: GoalDeps): 
     targetValue: targetKg,
     startDate: operationalDate(deps.clock(), user.timezone),
     horizonWeeks,
-  });
+  };
+  await switchGoal(user, goal, deps);
   await deps.events.emit('goal_set', subjectOf(user), {
     type: inputs.type,
     horizonWeeks,
@@ -205,13 +252,15 @@ async function moveZone(user: UserRecord, deps: GoalDeps): Promise<Reply[]> {
 export async function answerGoal(
   user: UserRecord,
   value: string,
-  deps: GoalDeps,
+  deps: GoalActionDeps,
 ): Promise<Reply[]> {
   const today = operationalDate(deps.clock(), user.timezone);
   if (value === 'keep') return keepMaintaining(user, today, deps);
   if (value === 'new') return [objectiveChooser(user)];
   if (value === 'ext') return extend(user, deps);
-  if (value === 'adj') return [(await weightProposal(user, deps)) ?? objectiveChooser(user)];
+  if (value === 'adj') {
+    return [(await weightProposal(user, user.profile.goalType, deps)) ?? objectiveChooser(user)];
+  }
   if (value === 'opt') return [maintenanceOptions()];
   if (value === 'zone') return moveZone(user, deps);
   if (value.startsWith('p_')) return answerProposal(user, value.slice(2), deps);

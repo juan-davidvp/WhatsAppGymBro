@@ -11,7 +11,7 @@ relacionados: [index, propuesta-de-valor]
 
 # Registro de fuentes
 
-> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81) y **2026-10-19** (F82–F102). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
+> Catálogo de todas las fuentes externas de la bóveda. Fechas de consulta: **2026-10-05** (F01–F44) y **2026-10-18** (F45–F81) **2026-10-19** (F82–F102) y **2026-11-18** (F103–F108). Nivel de confianza según §5 de `CLAUDE.md`: **A** primaria/oficial/revisada por pares · **B** prensa especializada o reporte de industria · **C** blog de proveedor o competidor, estimación de terceros o fuente secundaria (contrastar antes de decidir).
 >
 > Para conservar el original de una fuente pública, guardarlo en `raw/` con el nombre `F##_titulo-corto.ext`.
 
@@ -186,6 +186,17 @@ relacionados: [index, propuesta-de-valor]
 | F100 | Rueda et al. — *Validación de la encuesta SCOFF para tamizaje de trastornos de la conducta alimentaria en mujeres universitarias*, Biomédica 25(2):196–202 (traducción colombiana, CC BY; sensibilidad 78,4 %, especificidad 75,8 %) | 2005 | A | https://doi.org/10.7705/biomedica.v25i2.1342 |
 | F101 | Coop, Clark, Morgan, Reid y Lacey — *The use and misuse of the SCOFF screening measure over two decades*, Eat Weight Disord 29:29 (usar solo como tamizaje; no cambiar el punto de corte sin validación) | 2024 | A | https://doi.org/10.1007/s40519-024-01656-6 |
 | F102 | Kutz et al. — *Eating Disorder Screening: a Systematic Review and Meta-analysis of the SCOFF*, J Gen Intern Med 35(3):885–93 (menor sensibilidad en estudios con más hombres) | 2020 | A | https://doi.org/10.1007/s11606-019-05478-6 |
+
+## Despliegue (2026-11-18)
+
+| ID | Fuente | Fecha | Nivel | URL |
+|---|---|---|---|---|
+| F103 | Railway — *Plans* (precios, uso incluido y límites por plan) | 2026 | A | https://docs.railway.com/pricing/plans |
+| F104 | Railway — *Config as Code* (obsoleto; corte el 2026-12-01) | 2026 | A | https://docs.railway.com/config-as-code |
+| F105 | Railway — *Deployment Teardown* (superposición y drenaje entre despliegues) | 2026 | A | https://docs.railway.com/deployments/deployment-teardown |
+| F106 | Railway — *Static Outbound IPs* (disponibles en el plan Pro) | 2026 | A | https://docs.railway.com/networking/static-outbound-ips |
+| F107 | MongoDB — *Atlas Free Cluster Limits* | 2026 | A | https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/ |
+| F108 | MongoDB — *Pricing* (planes Free y Flex) | 2026 | A | https://www.mongodb.com/pricing |
 
 ## Pendientes de contraste
 

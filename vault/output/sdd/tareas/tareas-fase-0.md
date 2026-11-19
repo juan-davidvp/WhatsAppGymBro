@@ -58,7 +58,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | T-032 ✅ | Onboarding completo con reanudación | HU-001-1 a 5 | T-031, T-010, T-011 | SC-001-1 medido en local |
 | T-033 ✅ | Respuestas de cuidado y suite de *red-team* | HU-009-4/7 | T-017, T-021 | 0 fallos críticos en ≥ 50 casos |
 | T-034 ✅ | `/borrar_datos` con borrado total | HU-009-6, RN-DAT-003 | T-020 | SC-009-2 |
-| T-035 | *Could:* cambiar de objetivo conservando el historial — lo esencial llega con T-082 ([Nueva meta]); falta abrirlo desde `/ajustes` | HU-001-6, RN-OBJ-007 | T-032 | Escenarios pasan; el objetivo anterior queda `cambiado` |
+| T-035 ✅ | *Could:* cambiar de objetivo conservando el historial — lo esencial llega con T-082 ([Nueva meta]); falta abrirlo desde `/ajustes` | HU-001-6, RN-OBJ-007 | T-032 | Escenarios pasan; el objetivo anterior queda `cambiado` |
 
 ## M4 · Plan y entrenamiento (SPEC-002, SPEC-003)
 
@@ -69,7 +69,7 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 | T-042 ✅ | Tarjeta de sesión editable, 1 toque por serie, deshacer, idempotencia | HU-003-1, FR-003-01 a 04 | T-041 | SC-003-1 y SC-003-2 |
 | T-043 ✅ | "La hice tal cual" y terminar sesión | HU-003-2/3 | T-042 | Escenarios pasan |
 | T-044 ✅ | *Should:* récords, progresión, estancamiento y dolor | HU-003-4 a 6 | T-043 | Escenarios pasan |
-| T-045 | *Should:* ajustar días disponibles y regenerar el plan sin perder el progreso | HU-002-4, RN-PLAN-001/004 | T-040 | Escenarios pasan |
+| T-045 ✅ | *Should:* ajustar días disponibles y regenerar el plan sin perder el progreso | HU-002-4, RN-PLAN-001/004 | T-040 | Escenarios pasan |
 
 ## M5 · Nutrición (SPEC-004)
 
@@ -115,16 +115,16 @@ relacionados: [plan-tecnico, modelo-de-datos, plan-de-medicion, reglas-de-negoci
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-090 | `/exportar` (CSV + JSON) | HU-008-1 | T-020 | SC-008-1 |
+| T-090 ✅ | `/exportar` (CSV + JSON) | HU-008-1 | T-020 | SC-008-1 |
 | T-091 | *Could:* puente de ingesta con token, validación y límite de tasa + guía | HU-008-2 | T-060 | Escenarios pasan |
 
 ## M10 · Despliegue y validación
 
 | ID | Tarea | Referencias | Depende | Terminado cuando… |
 |---|---|---|---|---|
-| T-100 | Despliegue en un servidor siempre encendido + MongoDB Atlas + *webhook* con secreto | [[plan-tecnico]] §10 | M3–M7 | El bot funciona 72 h sin intervención |
-| T-101 [P] | Hoja de línea base A1 y guía del protocolo N-de-1 | [[plan-de-medicion]] §5 | — | Hoja lista antes de iniciar A1 |
-| T-102 | *Could:* comando `/lab` para el fundador | [[plan-de-medicion]] §6 | T-022 | Muestra M01, M03, M04 y G06 |
+| T-100 | Despliegue en Railway con MongoDB Atlas y *long polling* ([[guia-despliegue-railway]]) | [[plan-tecnico]] §10 | M3–M7 | El bot funciona 72 h sin intervención |
+| T-101 [P] ✅ | Hoja de línea base A1 y guía del protocolo N-de-1 | [[plan-de-medicion]] §5 | — | Hoja lista antes de iniciar A1 |
+| T-102 ✅ | *Could:* comando `/lab` para el fundador | [[plan-de-medicion]] §6 | T-022 | Muestra M01, M03, M04 y G06 |
 | T-103 | Prueba de aceptación manual en el gym | [[estrategia-de-pruebas]] §6 | T-043, T-051 | Presupuestos de toques y segundos cumplidos |
 | T-104 | Lint final y actualización de la bóveda (estado de las specs, `wiki/log.md`) | Constitución | Todas | `lint_trazabilidad.py --codigo` sin errores |
 

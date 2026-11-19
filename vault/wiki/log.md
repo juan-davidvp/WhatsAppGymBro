@@ -820,3 +820,64 @@ Revisión del diff de M8 (T-080 a T-082): sin hallazgos críticos, 1 alto, 6 med
   - `resvg` se carga al usarlo: si falta su binario, el resumen sale en texto en vez de tumbar el proceso.
 - **Pruebas:** 5 nuevas en `goals/goals.test.ts` que reproducen los hallazgos.
 
+## [2026-11-18] decision | Cierre de la Fase 0: alcance y despliegue (PO)
+- **Entran:** T-090, T-045, T-035, T-102, T-101, T-100, T-103 y T-104.
+- **Quedan fuera por ahora:** T-053 y T-054 (comida con IA, se decide con la prueba de 20 comidas, H13 y H14), T-084 y T-091.
+- **Despliegue (T-100):** Railway con MongoDB Atlas y *long polling*. El planificador ya exige un proceso siempre encendido, así que el *webhook* no ahorra costo y añadiría superficie expuesta. Esto ajusta el texto de T-100.
+
+## [2026-11-18] implementar | T-090 /exportar
+- **Flujo** (`privacy/export.ts`, HU-008-1, RN-INT-002, FR-008-01): EX-01 pide confirmar; al aceptar, el usuario recibe por Telegram un ZIP generado en el momento, que no se guarda en el servidor. Emite `export_requested` y `export_delivered` (archivos, tamaño y duración).
+- **Contenido** (`privacy/export-files.ts`): `sesiones.csv`, `series.csv`, `comidas.csv`, `dias.csv`, `logros.csv`, `mediciones.csv` y `datos.json` con todo lo guardado.
+- **Protección:**
+  - Se quitan identificadores internos y cualquier campo con nombre de token, clave o *hash*, a cualquier profundidad.
+  - Los tokens de ingesta no se leen.
+  - Las celdas de texto no se ejecutan como fórmula en una hoja de cálculo.
+- **ZIP** (`privacy/zip.ts`): con `node:zlib`, sin dependencias nuevas (constitución XI).
+- **Textos nuevos para revisión del PO:** EX-01 a EX-04 ([[plantillas-de-mensajes]] v0.22.0, §2.9).
+- **Pruebas:** `privacy/export.test.ts` (8) y el exportador contra MongoDB (solo datos del usuario).
+
+## [2026-11-18] implementar | T-045 ajustar días de entreno
+- **Flujo** (`plans/training-days.ts`, HU-002-4, RN-PLAN-001, RN-PLAN-004): `/ajustes` pasa a ser un menú (AJ-04) con [Mensajes] y [Días de entreno]. Los días usan ON-10, ON-11 y ON-12, igual que en el onboarding.
+- **Al guardar:** la semana en curso queda como está, el hábito sigue a los días y conserva la hora aprendida (RN-PLAN-002), y la semana siguiente se rehace si no tiene entrenos. Emite `plan_days_changed` (días antes, días ahora y días que usa el plan).
+- **Botones que esperaban esta tarea:** [Ajustar plan] y [Ajustar días] de los mensajes proactivos, [Ajustar plan] de CU-06 y [Sí, ajustar] de RG-03 abren los días de entreno. RG-03 vuelve a la rotación de `regreso` cuando bajar un día no sale de P-074.
+- **Textos nuevos para revisión del PO:** AJ-04 y AJ-05 ([[plantillas-de-mensajes]] v0.23.0, §2.6).
+- **Pruebas:** `plans/training-days.test.ts` (9) y 2 de RG-03 en `messaging/candidates.test.ts`.
+
+## [2026-11-18] implementar | T-035 cambiar de objetivo desde /ajustes
+- **Flujo** (`goals/goal-actions.ts`, HU-001-6, RN-OBJ-007): [Objetivo] de AJ-04 sigue el camino de [Nueva meta]. El objetivo anterior queda `cambiado` y el historial se conserva.
+- **Corrección:** GO-07 ya prometía el plan ajustado desde la semana siguiente, pero esa semana estaba generada desde el onboarding y no cambiaba. Ahora se rehace al fijar el objetivo, con meta o sin ella, y la semana en curso no se toca.
+- **Mismo objetivo:** si no hay meta que proponer, no se reinicia su plazo y se vuelve a AJ-04.
+- **Pruebas:** `goals/change-goal.test.ts` (4).
+
+## [2026-11-18] implementar | T-102 /lab del fundador
+- **Flujo** (`lab/lab.ts`, [[plan-de-medicion]] §6): comando oculto con M01, M03, M04 y G06 de la semana en curso. Solo lee eventos y envíos del propio usuario.
+- **Acceso:** variable opcional `FOUNDER_TELEGRAM_ID` ([[plan-tecnico]] §10). Para cualquier otra cuenta, o sin la variable, responde CU-07.
+- **Cálculo** (`messaging/lab-metrics.ts`, puro): G06 revisa silencio, separación y presupuesto con los ajustes actuales del usuario.
+- **Textos nuevos para revisión del PO:** LB-01 a LB-05 ([[plantillas-de-mensajes]] v0.24.0, §2.10).
+- **Pruebas:** `messaging/lab-metrics.test.ts` (10), `lab/lab.test.ts` (4), configuración (1) y lectura de eventos en MongoDB (1).
+
+## [2026-11-18] implementar | T-101 hoja de línea base y guía N-de-1
+- **Guía:** [[guia-protocolo-n-de-1]], con qué anotar en A1, B y A2 y de dónde sale cada dato.
+- **Hoja:** `vault/output/sdd/plan/hoja-protocolo-n-de-1.xlsx`, plantilla sin datos personales. Las fechas salen del lunes en que empieza A1.
+- **Supuesto para revisión del PO:** SC-000-1 se mide en sesiones completadas por semana, porque las fases duran distinto y la razón completadas ÷ planificadas se satura en 100 %.
+- **Verificación:** 107 fórmulas evaluadas con datos sintéticos fuera de Excel. Falta abrir la hoja en Excel o Google Sheets.
+
+## [2026-11-18] decision | T-100 preparación del despliegue
+- **Imagen:** `app/Dockerfile` construye un solo proceso con *long polling*, sin puertos y con un usuario sin privilegios. `.dockerignore` deja fuera los `.env` y las pruebas.
+- **Sin `railway.json`:** Railway dejó de admitir Config as Code en servicios nuevos y lo apaga el 2026-12-01 (`F104`). Los ajustes quedan en [[guia-despliegue-railway]].
+- **`TELEGRAM_WEBHOOK_SECRET` sale** de la configuración: con *long polling* no se usa.
+- **Para decisión del PO:** con Railway Hobby no hay IP de salida fija (`F106`), así que Atlas queda abierto a cualquier dirección y lo protege la contraseña. Cerrarlo exige el plan Pro.
+- **Verificado en local:** la imagen arranca, conecta con MongoDB, genera el PNG del muro en Linux y no registra el token. **Pendiente:** el despliegue real y las 72 horas de T-100, que siguen sin ✅.
+
+## [2026-11-18] implementar | Correcciones de la revisión de código de T-090 a T-102
+- **Objetivo (T-035, RN-OBJ-007):** el perfil cambia solo al activar el objetivo. Abandonar una propuesta de meta ya no deja el perfil distinto del objetivo activo, y repetir el mismo objetivo no reinicia su plazo.
+- **G06 (T-102):** usa el presupuesto real de cada día y el retroceso vigente. Antes daba 0 con dos envíos en un día de descanso.
+- **`/exportar` (T-090, HU-008-1):** `export_delivered` se emite después de entregar el archivo y, si Telegram falla, responde EX-04. `series.csv` deja de llevar `sesion_id` y el JSON no lleva identificadores internos ([[plantillas-de-mensajes]] v0.25.0).
+- **No se cambia:** pasar a mantenimiento no regenera el plan, por la decisión del PO del 2026-11-11 (el plan no cambia en mantenimiento).
+- **Queda como deuda menor:** un día quitado que sigue en el plan de la semana en curso usa la hora de la franja durante esa semana.
+
+## [2026-11-18] editar | T-104 estado de las specs
+- **Pasan a `implementado`:** SPEC-001, SPEC-002, SPEC-003 y SPEC-005, con todas sus historias hechas. SPEC-007 ya lo estaba.
+- **Siguen en `borrador`:** SPEC-004 (HU-004-4 y HU-004-5, comida con IA), SPEC-006 (HU-006-7 y HU-006-8) y SPEC-008 (HU-008-2 y HU-008-3), por las tareas que el PO dejó fuera de este cierre.
+- **SPEC-009 sigue en `borrador`:** RN-DAT-004 (fotos de comida) depende de T-053 y RN-DAT-007 (política de datos con responsable) de Q5, y ninguna tiene prueba todavía.
+- **T-104 sigue abierta** hasta terminar T-100 (despliegue y 72 horas) y T-103 (prueba manual en el gym).

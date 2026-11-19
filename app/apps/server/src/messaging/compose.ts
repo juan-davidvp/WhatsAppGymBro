@@ -77,8 +77,8 @@ const td = (value: string): CallbackAction => ({ action: 'td', value });
 /**
  * Acción de cada botón de las plantillas proactivas, por su texto. [Exprés 15']
  * de `regreso` y `recordatorio_contextual` abre la exprés de la sesión que faltó
- * (RN-GAM-003); [Ajustar plan] y [Ajustar días] muestran el plan mientras no
- * exista T-045 (decisión del PO, 2026-11-10).
+ * (RN-GAM-003); [Ajustar plan], [Ajustar días] y [Sí, ajustar] abren los días de
+ * entreno (T-045).
  */
 const BUTTON_ACTIONS: Readonly<Record<string, CallbackAction>> = {
   Gym: td('gym'),
@@ -86,8 +86,9 @@ const BUTTON_ACTIONS: Readonly<Record<string, CallbackAction>> = {
   "Exprés 15'": td('express'),
   'Hoy no puedo': td('cant'),
   'Hoy descanso': td('care_rest'),
-  'Ajustar plan': { action: 'nav', target: 'plan' },
-  'Ajustar días': { action: 'nav', target: 'plan' },
+  'Ajustar plan': { action: 'aj', value: 'days' },
+  'Ajustar días': { action: 'aj', value: 'days' },
+  'Sí, ajustar': { action: 'aj', value: 'days' },
   'Ver plan': { action: 'nav', target: 'plan' },
   'Lo de siempre': { action: 'nav', target: 'food' },
   Porciones: { action: 'nav', target: 'food' },

@@ -34,6 +34,11 @@ const envSchema = z.object({
     .default('gymbro'),
   /** Fase del protocolo de medición que llevan los eventos (plan de medición §1). */
   STUDY_PHASE: z.enum(STUDY_PHASES).default('n1_B'),
+  /** Cuenta que puede usar `/lab` (T-102). Vacía equivale a no definirla. */
+  FOUNDER_TELEGRAM_ID: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.coerce.number().int().positive().optional(),
+  ),
 });
 
 export interface Config {
@@ -43,6 +48,7 @@ export interface Config {
   mongodbUri: string;
   mongoDatabase: string;
   studyPhase: StudyPhase;
+  founderTelegramId: number | null;
   /** Valores que el registrador debe redactar dondequiera que aparezcan. */
   secrets: string[];
 }
@@ -57,8 +63,15 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     });
     throw new Error(`Configuración inválida → ${problems.join('; ')}`);
   }
-  const { TELEGRAM_BOT_TOKEN, DEFAULT_TZ, LOG_LEVEL, MONGODB_URI, MONGO_DATABASE, STUDY_PHASE } =
-    parsed.data;
+  const {
+    TELEGRAM_BOT_TOKEN,
+    DEFAULT_TZ,
+    LOG_LEVEL,
+    MONGODB_URI,
+    MONGO_DATABASE,
+    STUDY_PHASE,
+    FOUNDER_TELEGRAM_ID,
+  } = parsed.data;
   return {
     telegramBotToken: TELEGRAM_BOT_TOKEN,
     defaultTimezone: DEFAULT_TZ,
@@ -66,6 +79,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     mongodbUri: MONGODB_URI,
     mongoDatabase: MONGO_DATABASE,
     studyPhase: STUDY_PHASE,
+    founderTelegramId: FOUNDER_TELEGRAM_ID ?? null,
     // La URI lleva la contraseña de la base: se redacta completa y también la contraseña sola.
     secrets: [TELEGRAM_BOT_TOKEN, MONGODB_URI, ...uriPassword(MONGODB_URI)],
   };

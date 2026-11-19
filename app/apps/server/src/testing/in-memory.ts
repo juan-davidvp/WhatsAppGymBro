@@ -17,9 +17,11 @@ import {
   type StoredWeeklyPlan,
   type GoalRecord,
   type StoredGoal,
+  type UserExport,
   type ScreeningType,
   type TrainingHabitRecord,
   type UserRecord,
+  type EventLogReader,
 } from '../ports/repositories.js';
 
 /**
@@ -31,9 +33,14 @@ export interface EmittedEvent {
   name: EventName;
   subject: EventSubject | null;
   props: EventProps;
+  at: Date;
 }
 
+const defaultClock = () => new Date('2026-10-19T15:00:00Z');
+
 export interface InMemoryOptions {
+  /** Cuenta de Telegram que puede usar `/lab` (T-102). */
+  founderTelegramId?: number;
   failRiskSignals?: boolean;
   /** Crea los usuarios con el onboarding ya terminado. */
   onboardingCompleted?: boolean;
@@ -142,8 +149,17 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
 
   const emitter: EventEmitter = {
     emit(name, subject, props = {}) {
-      events.push({ name, subject, props });
+      events.push({ name, subject, props, at: (options.clock ?? defaultClock)() });
       return Promise.resolve();
+    },
+  };
+  const eventLog: EventLogReader = {
+    since(userRef, from) {
+      return Promise.resolve(
+        events
+          .filter((e) => e.subject?.userId === userRef && e.at.getTime() >= from.getTime())
+          .map(({ name, at, props }) => ({ name, at, props })),
+      );
     },
   };
 
@@ -767,6 +783,26 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
         return Promise.resolve();
       },
     },
+    exporter: {
+      collect(userId) {
+        const mine = <T extends { userId: string }>(rows: readonly T[]) =>
+          rows.filter((row) => row.userId === userId).map((row) => ({ ...row }));
+        return Promise.resolve({
+          users: [...users.values()].filter((u) => u.id === userId).map((u) => ({ ...u })),
+          workout_sessions: mine(workouts),
+          set_entries: mine(setEntries),
+          meals: mine(meals),
+          days: mine(days).map(({ dayStatus, ...day }) => ({
+            ...day,
+            complete: dayStatus?.complete ?? false,
+            trainingHalf: dayStatus?.trainingHalf ?? false,
+            nutritionHalf: dayStatus?.nutritionHalf ?? false,
+          })),
+          achievements: mine(achievements),
+          body_measurements: mine(weights),
+        } as unknown as UserExport);
+      },
+    },
     eraser: {
       eraseUser(userId) {
         if (options.failErase) return Promise.reject(new Error('mongo caído'));
@@ -812,6 +848,7 @@ export function inMemoryDependencies(options: InMemoryOptions = {}) {
       },
     },
     events: emitter,
+    eventLog,
   };
 
   return {

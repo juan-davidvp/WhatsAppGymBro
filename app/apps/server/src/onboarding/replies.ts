@@ -29,6 +29,8 @@ export interface Reply {
   readonly forceReply?: boolean;
   /** Imagen PNG; el texto va como pie (resumen semanal con el muro, T-080). */
   readonly photo?: Uint8Array;
+  /** Archivo para descargar; el texto va como pie (`/exportar`, T-090). */
+  readonly document?: { readonly name: string; readonly bytes: Uint8Array };
 }
 
 /** Objetivo de cada botón de ON-05, por su texto en la bóveda. */

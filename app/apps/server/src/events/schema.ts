@@ -90,6 +90,12 @@ export const EVENT_PROPS_SCHEMAS = {
     intensity: z.enum(['low', 'normal']),
   }),
   plan_viewed: z.strictObject({}),
+  /** HU-002-4 (T-045): cuántos días había, cuántos quedan y cuántos usa el plan nuevo. */
+  plan_days_changed: z.strictObject({
+    previousDays: z.number().int().positive(),
+    days: z.number().int().positive(),
+    trainingDays: z.number().int().nonnegative(),
+  }),
   progression_suggested: z.strictObject({ exercises: z.number().int().positive() }),
   session_variant_chosen: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
   session_started: z.strictObject({ variant: z.enum(['GYM', 'HOME', 'EXPRESS']) }),
@@ -188,6 +194,13 @@ export const EVENT_PROPS_SCHEMAS = {
   backoff_applied: z.strictObject({ days: z.number().int().positive() }),
   inactivity_pause_started: z.strictObject({ inactiveDays: z.number().int().nonnegative() }),
   reactivation_sent: z.strictObject({ count: z.number().int().positive() }),
+  /** T-090 (HU-008-1, SC-008-1): tamaño y duración, nunca el contenido. */
+  export_requested: z.strictObject({}),
+  export_delivered: z.strictObject({
+    files: z.number().int().positive(),
+    sizeKb: z.number().int().nonnegative(),
+    durationMs: z.number().int().nonnegative(),
+  }),
   /** T-082 (HU-006-4 a 6). */
   goal_completed: z.strictObject({
     type: z.enum([

@@ -11,7 +11,7 @@ import {
   type DayType,
   type LocalDate,
 } from '@gymbro/domain';
-import { MongoServerError, ObjectId, type Db } from 'mongodb';
+import { MongoServerError, ObjectId, type Db, type Document, type Filter } from 'mongodb';
 import {
   EMPTY_PROFILE,
   type BodyMeasurementsRepository,
@@ -31,7 +31,9 @@ import {
   type ConsentsRepository,
   type ScreeningsRepository,
   type UserDataEraser,
+  type UserDataExporter,
   type DaysRepository,
+  type EventLogReader,
   type EventsRepository,
   type FavoriteMealRecord,
   type FavoriteMealsRepository,
@@ -594,11 +596,22 @@ export function riskSignalsRepository(db: Db): RiskSignalsRepository {
   };
 }
 
-export function eventsRepository(db: Db): EventsRepository {
+export function eventsRepository(db: Db): EventsRepository & EventLogReader {
   const collection = db.collection('events');
   return {
     async insert(event) {
       await collection.insertOne({ ...event });
+    },
+    async since(userRef, from) {
+      const documents = await collection
+        .find({ userRef, at: { $gte: from } })
+        .sort({ at: 1 })
+        .toArray();
+      return documents.map((d) => ({
+        name: String(d['name']),
+        at: d['at'] as Date,
+        props: (d['props'] ?? {}) as Record<string, unknown>,
+      }));
     },
   };
 }
@@ -657,6 +670,28 @@ export function userDataEraser(db: Db): UserDataEraser {
       }
       await db.collection('events').updateMany({ userRef: userId }, { $set: { userRef: null } });
       await db.collection('users').deleteOne({ _id: new ObjectId(userId) });
+    },
+  };
+}
+
+/** Colecciones que no son datos del usuario o guardan credenciales (HU-008-1). */
+const NOT_EXPORTED = new Set(['processed_updates', 'ingestion_tokens', 'notices']);
+
+export function userDataExporter(db: Db): UserDataExporter {
+  const filterFor = (name: string, userId: string): Filter<Document> => {
+    if (name === 'users') return { _id: new ObjectId(userId) };
+    return name === 'events' ? { userRef: userId } : { userId };
+  };
+  return {
+    async collect(userId) {
+      const names = Object.keys(COLLECTIONS).filter((name) => !NOT_EXPORTED.has(name));
+      const entries = await Promise.all(
+        names.map(async (name) => {
+          const docs = await db.collection(name).find(filterFor(name, userId)).toArray();
+          return [name, docs] as const;
+        }),
+      );
+      return Object.fromEntries(entries);
     },
   };
 }

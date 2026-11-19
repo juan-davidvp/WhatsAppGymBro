@@ -1,9 +1,11 @@
 import { WEEKLY_PHRASES } from '@gymbro/content';
 import {
+  PARAMETERS,
   WEEK_DAYS,
   addDays,
   comebackAction,
   evaluateWeek,
+  trainingDaysFor,
   wallGrid,
   weekStartOf,
   weekdayOf,
@@ -23,8 +25,8 @@ async function countedTotal(userId: string, deps: Parameters<Composer>[2]): Prom
  * RN-MSJ-008 · `regreso`. Se vuelve a decidir al enviar: si entrenó, comió o
  * tocó algo entretanto, no queda nada que decir.
  * - Tras P-052 días de entreno planificados sin actividad: RG-01 o RG-02 (si ya
- *   hay días que cuentan), con [Exprés 15'] [Ajustar plan]. RG-03 queda fuera
- *   hasta T-045 (PO, 2026-11-10).
+ *   hay días que cuentan), con [Exprés 15'] [Ajustar plan], o RG-03 si todavía
+ *   se puede bajar un día de entreno sin salir de P-074.
  * - Tras P-053 días sin actividad: el final (RG-04, RG-05) y la pausa.
  * - En pausa, el lunes RG-06 y el día 1 del mes RG-07 (reactivación).
  */
@@ -45,6 +47,11 @@ export const comeback: Composer = async (user, date, deps) => {
       const total = await countedTotal(user.id, deps);
       const options: TemplateOption[] = [{ templateId: 'RG-01', variables: {} }];
       if (total > 0) options.push({ templateId: 'RG-02', variables: { dias_que_cuentan: total } });
+      const { level, availableDays } = user.profile;
+      const fewer = trainingDaysFor(level ?? 'novice', availableDays.length) - 1;
+      if (fewer >= PARAMETERS.plan.availableDaysRange.min) {
+        options.push({ templateId: 'RG-03', variables: { dias_menos: fewer } });
+      }
       return { day, options };
     }
     case 'send_final_and_pause':

@@ -2,7 +2,8 @@ import { renderTemplate, templateById } from '@gymbro/content';
 import { operationalDate, type DayStatus, type LocalDate } from '@gymbro/domain';
 import { describe, expect, it } from 'vitest';
 import { proactiveSetup } from '../testing/proactive.js';
-import { weeklyPhrase } from './compose-week.js';
+import { proactiveButtons } from './compose.js';
+import { comeback, weeklyPhrase } from './compose-week.js';
 
 /**
  * T-071 · candidatos de M7 (HU-007-3, HU-007-5, RN-MSJ-008, 016, 017). Onboarding
@@ -117,6 +118,29 @@ describe('RN-MSJ-008 · T-071 · un solo regreso tras P-052 días de entreno sin
     const comeback = t.sent.find((m) => m.reply.text === templateById('RG-01').text);
     expect(comeback?.reply.buttons.map((b) => b.label)).toEqual(templateById('RG-01').buttons);
     expect(operationalDate(comeback?.at ?? new Date(0), 'America/Bogota')).toBe('2026-10-24');
+  });
+
+  it('T-045 · RG-03 propone un día de entreno menos y [Sí, ajustar] abre los días', async () => {
+    const t = await proactiveSetup();
+    t.goTo('2026-10-24T12:00:00Z');
+    const user = t.user();
+    if (!user) throw new Error('sin usuario');
+    const { options } = await comeback(user, '2026-10-24', t.deps);
+    expect(options).toContainEqual({ templateId: 'RG-03', variables: { dias_menos: 2 } });
+    expect(proactiveButtons('RG-03', 'regreso')[0]?.data).toBe('v1:aj:days');
+  });
+
+  it('T-045 · sin margen bajo P-074 no se ofrece RG-03', async () => {
+    const t = await proactiveSetup();
+    t.goTo('2026-10-24T12:00:00Z');
+    const user = t.user();
+    if (!user) throw new Error('sin usuario');
+    const twoDays = {
+      ...user,
+      profile: { ...user.profile, availableDays: ['monday', 'friday'] as const },
+    };
+    const { options } = await comeback(twoDays, '2026-10-24', t.deps);
+    expect(options.map((o) => o.templateId)).not.toContain('RG-03');
   });
 
   it('si vuelve a entrenar, el conteo empieza de nuevo y no sale regreso', async () => {

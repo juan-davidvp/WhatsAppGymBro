@@ -29,6 +29,8 @@ relacionados: [constitucion, spec-000-vision-fase-0, tareas-fase-0, inicio]
 | [[plan-tecnico]] | Stack, arquitectura hexagonal, estructura del repositorio, flujo de una actualización, planificador, IA acotada, despliegue | 0.1.0 | borrador |
 | [[modelo-de-datos]] | Colecciones, índices, invariantes, borrado total y retención | 0.1.0 | borrador |
 | [[plan-de-medicion]] | Eventos, métricas M00–M08 y salvaguardas G01–G06, protocolo N-de-1 | 0.1.0 | borrador |
+| [[guia-despliegue-railway]] | Pasos, costos y verificación del despliegue en Railway con MongoDB Atlas | 0.1.0 | borrador |
+| [[guia-protocolo-n-de-1]] | Cómo correr las 10 semanas de uso propio, con la hoja `hoja-protocolo-n-de-1.xlsx` | 0.1.0 | borrador |
 | [[estrategia-de-pruebas]] | Niveles, pruebas nombradas por `RN`, invariantes, *red-team*, aceptación manual en el gym, integración continua | 0.1.0 | borrador |
 | [[plantillas-de-mensajes]] · [[catalogo-de-logros-y-niveles]] · [[catalogo-de-ejercicios-base]] · [[alimentos-accesibles-base]] · [[expresiones-de-alerta]] · [[tamizajes]] | Contenido versionado que el código carga desde `app/packages/content/` | 0.1.0 | borrador |
 | [[tareas-fase-0]] | Tareas T-001…T-104 por hito, con dependencias, paralelismo y criterio de terminado | 0.1.0 | borrador |

@@ -16,7 +16,7 @@ import type { UserRecord, UsersRepository } from '../ports/repositories.js';
  * `/ajustes` de mensajes (T-073, HU-007-4 escenario 2): cantidad (intensidad,
  * RN-MSJ-002), horas de silencio (RN-MSJ-004, P-047 y P-086) y tipos encendidos
  * (RN-MSJ-001). El motor lo respeta desde la siguiente evaluación porque lee los
- * ajustes al enviar. Por ahora `/ajustes` abre directo esta pantalla (PO, 2026-11-11).
+ * ajustes al enviar. Se llega por [Mensajes] del menú de `/ajustes` (AJ-04).
  */
 
 export interface MessageSettingsDeps {
@@ -101,9 +101,23 @@ function typesScreen(settings: Settings): Reply {
 
 const saved = (): Reply => ({ text: renderTemplate('AJ-03'), buttons: [], toast: true });
 
-/** `/ajustes`. */
+/** AJ-04: entrada de `/ajustes`, con [Mensajes], [Días de entreno] (T-045) y [Objetivo] (T-035). */
+export function settingsMenu(edit = false): Reply {
+  const [messages = '', days = '', goal = ''] = templateById('AJ-04').buttons;
+  return {
+    text: renderTemplate('AJ-04'),
+    buttons: [
+      button(messages, aj('msg')),
+      button(days, aj('days')),
+      button(goal, { action: 'gl', value: 'new' }),
+    ],
+    ...(edit ? { edit } : {}),
+  };
+}
+
+/** `/ajustes`: sin plan todavía (onboarding en curso) solo hay ajustes de mensajes. */
 export function settingsCommand(user: UserRecord): Reply[] {
-  return [settingsScreen(user.settings)];
+  return [user.onboarding.completedAt ? settingsMenu() : settingsScreen(user.settings)];
 }
 
 /** Cambio de un ajuste: lo guarda, registra el campo y devuelve los ajustes nuevos. */
@@ -129,6 +143,7 @@ export async function answerSettings(
   deps: MessageSettingsDeps,
 ): Promise<Reply[]> {
   const settings = user.settings;
+  if (value === 'msg') return [settingsScreen(settings, true)];
   if (value === 'amount') return [amountScreen()];
   if (value === 'quiet') return [quietScreen(settings)];
   if (value === 'types') return [typesScreen(settings)];
